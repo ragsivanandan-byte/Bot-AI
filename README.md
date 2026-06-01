@@ -45,10 +45,28 @@ fonctionne quand même, les signaux de tendance sont alors marqués « à valide
 
 ```bash
 python main.py                 # run complet (récupère les concurrents live)
+python main.py --selftest      # diagnostic : config, modules, accès Etsy/Trends
 python main.py --discover      # + découverte de nouveaux concurrents via recherche
 python main.py --no-network    # mode hors-ligne (rapports dégradés, aucune requête)
 python main.py --demo          # rapport de DÉMONSTRATION avec données FICTIVES
 python main.py --verbose       # logs détaillés (utile pour diagnostiquer)
+```
+
+> 💡 **Lance d'abord `python main.py --selftest`** sur ta machine : il te dira en
+> quelques secondes si Etsy et Google Trends sont joignables depuis ton réseau,
+> et si tout est prêt pour un run complet.
+
+### Veille jour à jour (historisation)
+
+À chaque run, l'état public des concurrents est enregistré dans une base SQLite
+locale (`cache/history.sqlite3`). Le rapport de veille affiche alors une section
+**« Évolution depuis le dernier run »** (Δ ventes, Δ fiches, Δ avis, Δ prix) — le
+meilleur signal pour repérer la fiche/le set d'un concurrent qui décolle.
+
+### Tests
+
+```bash
+python tests/test_core.py      # suite de non-régression (sans réseau, sans pytest)
 ```
 
 Les rapports sont écrits dans **`reports/AAAA-MM-JJ/`** (un dossier par jour).

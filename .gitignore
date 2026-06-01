@@ -1,6 +1,9 @@
 # Cache HTTP local (régénérable, ne pas versionner)
 cache/*.html
 
+# Base d'historique SQLite (données locales, régénérable)
+cache/*.sqlite3
+
 # Logs de run
 logs/*.log
 

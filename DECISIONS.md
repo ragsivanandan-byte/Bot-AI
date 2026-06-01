@@ -110,6 +110,15 @@ dans le rapport.
 - Génération des 5 prompts Grok au format imposé (solid filled / no outline /
   negative prompt), ciblant les sous-niches non saturées.
 - Rendu des 3 rapports markdown horodatés dans `reports/AAAA-MM-JJ/`.
+- **Historisation SQLite + diffs** (`storage.py`) : section « Évolution depuis le
+  dernier run » dans la veille (Δ ventes/fiches/avis/prix). Vérifié par tests.
+- **Diagnostic `--selftest`** : vérifie config, moteurs, historique, pytrends, et
+  l'accès live Etsy/Trends — pour savoir en 5 s ce qui marche sur une machine.
+- **Suite de tests** (`tests/test_core.py`, 24 assertions, sans réseau ni pytest) :
+  config, estimation CA, inférence IA, structure des prompts, parsing HTML
+  défensif, historisation/diffs. **Toutes passent.** Le test de parsing valide
+  l'extraction sur du HTML réaliste (donc l'extraction marchera en live si Etsy
+  est joignable).
 - Documentation complète : README, LIMITS, ce fichier, requirements, config commentée.
 
 ### 🔌 Ce qui est dégradé (à cause de l'environnement, pas du code)
@@ -125,10 +134,11 @@ dans le rapport.
 4. Consulter manuellement Pinterest Trends + eRank (pas d'API gratuite fiable).
 5. Personnaliser l'email du `user_agent` dans `config.yaml`.
 
-### 🚀 3 prochaines améliorations possibles
+### 🚀 Prochaines améliorations possibles
+> (L'historisation + diff, initialement prévue ici, a été **implémentée** —
+> voir `storage.py` et la section « Évolution » de la veille.)
 1. **Connecteur eRank/Marmalead** (via clés API en variables d'environnement)
    pour de vrais volumes de recherche au lieu de l'intérêt relatif.
-2. **Historisation + diff** : stocker les snapshots concurrents (SQLite) et
-   afficher les évolutions jour à jour (croissance des ventes, nouveaux sets).
-3. **Rendu HTML/PDF + envoi par e-mail** du rapport quotidien, et tableau de
-   bord d'évolution de l'AOV et du nombre d'avis de ma propre boutique.
+2. **Rendu HTML/PDF + envoi par e-mail** du rapport quotidien (lecture mobile).
+3. **Graphe d'évolution** : à partir des snapshots SQLite, tracer la courbe des
+   ventes/avis des top concurrents et de ma propre boutique (AOV, nb d'avis).

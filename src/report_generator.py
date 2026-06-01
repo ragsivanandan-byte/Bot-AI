@@ -33,7 +33,7 @@ _DISCLAIMER = (
 # --- OUTPUT 1 : veille concurrents -------------------------------------------
 
 def render_competitors(profiles: list[CompetitorProfile], my_shop: dict,
-                       degraded: bool) -> str:
+                       degraded: bool, deltas: dict | None = None) -> str:
     lines: list[str] = []
     lines.append(f"# Veille concurrentielle — {today_str()}")
     lines.append(f"_Généré le {now_iso()}_\n")
@@ -44,6 +44,9 @@ def render_competitors(profiles: list[CompetitorProfile], my_shop: dict,
                      "bloqué ou pages non récupérées). Les profils ci-dessous sont "
                      "donc majoritairement « donnée indisponible ». Relance l'outil "
                      "depuis ta machine (réseau ouvert) pour des données réelles.\n")
+
+    # --- Évolution depuis le dernier run (historisation SQLite) --------------
+    lines.append(_render_deltas_section(deltas or {}))
 
     # --- Tableau de synthèse top 10 ------------------------------------------
     lines.append("## Top concurrents (classés par ventes publiques)\n")
@@ -115,6 +118,42 @@ def render_competitors(profiles: list[CompetitorProfile], my_shop: dict,
         lines.append(f"\n**1 faille exploitable** : {p.exploitable_gap}\n")
 
     return "\n".join(lines) + "\n"
+
+
+def _render_deltas_section(deltas: dict) -> str:
+    """Section 'évolution depuis le dernier run' à partir des diffs SQLite."""
+    changed = [d for d in deltas.values() if getattr(d, "has_change", False)]
+    if not deltas:
+        return ("## Évolution depuis le dernier run\n\n_Premier run enregistré "
+                "(ou historique indisponible) : pas encore de comparaison. "
+                "Les écarts apparaîtront dès le prochain lancement._\n")
+    if not changed:
+        return ("## Évolution depuis le dernier run\n\n_Aucun changement détecté "
+                "sur les données publiques depuis le dernier snapshot._\n")
+
+    out = ["## Évolution depuis le dernier run\n"]
+    out.append("| Boutique | Depuis | Δ ventes | Δ fiches | Δ avis | Δ prix moyen |")
+    out.append("|----------|--------|----------|----------|--------|--------------|")
+    for d in sorted(changed, key=lambda x: -(x.sales_delta or 0)):
+        out.append(
+            f"| {d.slug} | {d.prev_date} | {_signed(d.sales_delta)} | "
+            f"{_signed(d.listings_delta)} | {_signed(d.reviews_delta)} | "
+            f"{_signed(d.price_delta, is_money=True)} |")
+    out.append("\n> 📈 Une forte hausse de ventes/avis sur un concurrent signale "
+               "une fiche ou un set qui marche → à étudier et à concurrencer.\n")
+    return "\n".join(out)
+
+
+def _signed(v, is_money: bool = False) -> str:
+    """Affiche un delta signé (+/-) ou '—' si indisponible."""
+    if v is None:
+        return "—"
+    if v == 0:
+        return "0"
+    sign = "+" if v > 0 else ""
+    if is_money:
+        return f"{sign}{v:.2f} €"
+    return f"{sign}{v}"
 
 
 def _yesno(v) -> str:

@@ -36,8 +36,9 @@ from src.prompt_generator import generate_daily_prompts
 from src.report_generator import (render_competitors, render_grok_prompts,
                                    render_guidelines, write_reports)
 from src.seo import build_opportunities
+from src.storage import HistoryStore
 from src.trends import fetch_trends
-from src.utils import setup_logging
+from src.utils import setup_logging, today_str
 
 
 def shop_url(slug: str, market: str) -> str:
@@ -134,6 +135,82 @@ def discover_competitors(cfg, fetcher, logger):
     return sorted(found)
 
 
+def run_selftest(cfg, logger) -> int:
+    """
+    Diagnostic d'environnement. Vérifie ce qui marche AVANT un vrai run, sans
+    rien écrire. Très utile au premier lancement sur une nouvelle machine pour
+    savoir si Etsy/Trends sont joignables depuis ton réseau.
+    """
+    print("\n=== SELF-TEST — diagnostic de l'environnement ===\n")
+    results: list[tuple[str, str, str]] = []  # (composant, statut, détail)
+
+    # 1. Config
+    n_comp = len(cfg.get("competitors", []))
+    results.append(("config.yaml", "OK", f"{n_comp} concurrent(s) configuré(s)"))
+
+    # 2. Moteurs d'analyse sur données fictives
+    try:
+        from src.analysis import build_profile
+        from src.demo_fixtures import demo_competitors
+        prof = build_profile(demo_competitors()[0], cfg["shop"],
+                             cfg.get("revenue_estimation", {}),
+                             cfg.get("ai_inference", {}))
+        ok = prof.revenue.available and prof.ai.score > 0
+        results.append(("moteurs d'analyse", "OK" if ok else "ANOMALIE",
+                        "estimation CA + inférence IA fonctionnelles"))
+    except Exception as e:
+        results.append(("moteurs d'analyse", "ÉCHEC", str(e)))
+
+    # 3. Historique SQLite
+    store = HistoryStore()
+    results.append(("historique SQLite",
+                    "OK" if store.available else "DÉGRADÉ",
+                    str(store.db_path) if store.available else "indisponible"))
+    store.close()
+
+    # 4. pytrends
+    try:
+        import pytrends  # noqa: F401
+        results.append(("pytrends (Trends)", "OK", "installé"))
+    except Exception:
+        results.append(("pytrends (Trends)", "DÉGRADÉ",
+                        "non installé (optionnel) -> tendances 'à valider'"))
+
+    # 5. Accès réseau Etsy (une seule requête respectueuse)
+    fetcher = RespectfulFetcher(cfg["network"])
+    test_url = shop_url(cfg["competitors"][0]["slug"] if cfg.get("competitors")
+                        else "NeutralWallDesign",
+                        cfg["competitors"][0].get("market", "com")
+                        if cfg.get("competitors") else "com")
+    res = fetcher.get(test_url, use_cache=False)
+    if res.ok:
+        results.append(("accès Etsy (live)", "OK", f"{test_url} joignable"))
+    elif res.blocked_by_robots:
+        results.append(("accès Etsy (live)", "BLOQUÉ", "robots.txt interdit"))
+    else:
+        results.append(("accès Etsy (live)", "INDISPONIBLE",
+                        f"{res.error or res.status} — relance depuis ta machine"))
+
+    # 6. Accès Google Trends (probe HTTP simple)
+    tr = fetcher.get("https://trends.google.com/trends/", use_cache=False)
+    results.append(("accès Google Trends", "OK" if tr.ok else "INDISPONIBLE",
+                    "joignable" if tr.ok else f"{tr.error or tr.status}"))
+
+    # Affichage
+    width = max(len(c) for c, _, _ in results)
+    for comp, status, detail in results:
+        icon = {"OK": "✅", "DÉGRADÉ": "🟡", "BLOQUÉ": "🚫",
+                "INDISPONIBLE": "🔌", "ANOMALIE": "⚠️", "ÉCHEC": "❌"}.get(status, "•")
+        print(f"  {icon} {comp.ljust(width)}  [{status}]  {detail}")
+
+    degraded = any(s in ("INDISPONIBLE", "BLOQUÉ", "ÉCHEC")
+                   for _, s, _ in results if s != "DÉGRADÉ")
+    print("\nVerdict :", "⚠️ run live partiel attendu (sources externes bloquées)"
+          if degraded else "✅ environnement prêt pour un run complet.")
+    print()
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Outil d'intelligence marché "
                                                  "Etsy pour NeutralWallDesign.")
@@ -145,6 +222,9 @@ def main(argv=None) -> int:
     parser.add_argument("--demo", action="store_true",
                         help="Génère un rapport avec des DONNÉES FICTIVES de "
                              "démonstration (pour voir l'analyse à l'œuvre).")
+    parser.add_argument("--selftest", action="store_true",
+                        help="Diagnostic d'environnement : config, modules, "
+                             "accès Etsy/Trends. N'écrit aucun rapport.")
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
 
@@ -155,6 +235,10 @@ def main(argv=None) -> int:
         return 2
 
     logger = setup_logging(cfg["output"]["logs_dir"], verbose=args.verbose)
+
+    if args.selftest:
+        return run_selftest(cfg, logger)
+
     logger.info("=== Démarrage du run %s ===", date.today().isoformat())
 
     allow_network = not args.no_network
@@ -200,8 +284,17 @@ def main(argv=None) -> int:
     prompts = generate_daily_prompts(cfg["grok_prompts"], niche_cfg,
                                       opportunities)
 
+    # --- 4bis. Historisation + diffs (vraie veille jour à jour) --------------
+    deltas = {}
+    if not args.demo:  # on n'historise pas les données fictives
+        store = HistoryStore()
+        shops_now = [p.shop for p in profiles]
+        deltas = store.compute_deltas(shops_now, today_str())
+        store.save_snapshot(today_str(), shops_now)
+        store.close()
+
     # --- 5. Rendu des rapports -----------------------------------------------
-    competitors_md = render_competitors(profiles, cfg["shop"], degraded)
+    competitors_md = render_competitors(profiles, cfg["shop"], degraded, deltas)
     prompts_md = render_grok_prompts(prompts)
     guidelines_md = render_guidelines(profiles, opportunities, cfg["shop"],
                                       cfg.get("goals", {}), degraded)
