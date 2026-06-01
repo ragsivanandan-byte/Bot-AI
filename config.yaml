@@ -52,24 +52,28 @@ niche:
     - "minimalist mountain range"
 
 # --- Concurrents à suivre ----------------------------------------------------
-# IMPORTANT : ces slugs sont des POINTS DE DEPART non confirmés (identifiés par
-# connaissance générale de la niche printable). L'environnement de build bloque
-# l'accès live a Etsy (voir DECISIONS.md), donc ils n'ont PAS pu etre verifies
-# automatiquement. Au premier lancement live sur ta machine, l'outil tentera de
-# recuperer leurs donnees publiques ; supprime ceux qui n'existent pas et
-# ajoute ceux que la decouverte automatique (discover) te remonte.
+# Concurrentes RÉELLES identifiées par Ragavan (juin 2026), validées à la main
+# sur Etsy. Le slug = dernier segment de l'URL /shop/<slug>. Le 'market' ne sert
+# qu'à l'affichage de l'URL ; l'API Etsy retrouve la boutique par son nom.
 competitors:
-  # Renseigne juste le slug (dernier segment de l'URL /shop/<slug>) + le marché.
   - slug: "NeutralWallDesign"   # toi-meme, pour reference dans le classement
     market: "au"
     note: "ma boutique (reference)"
-  # --- A VERIFIER : seeds non confirmes -------------------------------------
-  - slug: "EXAMPLE_COMPETITOR_1"
+  - slug: "MusingsOfMeiMei"
     market: "com"
-    note: "A VERIFIER - remplacer par un vrai slug repere via discover"
-  - slug: "EXAMPLE_COMPETITOR_2"
+    note: "Poids lourd nursery/boho neutre (Adelaide AU). ~28k ventes, 9 ans, sets de 3, 15 JPG/5 ratios via PDF->Drive, promo permanente -40%, about tres personnel + video."
+  - slug: "MyAestheticAlley"
     market: "com"
-    note: "A VERIFIER - remplacer par un vrai slug repere via discover"
+    note: "MIROIR le plus proche (Allemagne UE, 2 ans, ~1.2k ventes). Japandi neutre, sets de 3, IA-assistee assumee, taille perso en add-on payant. A etudier en priorite."
+  - slug: "EmaParaschivArt"
+    market: "com"
+    note: "Wabi-sabi / earth tone (mocha/taupe/cream). Star Seller. Tier 2."
+  - slug: "Digivites"
+    market: "com"
+    note: "Specialiste nursery/kids. Star Seller. Livraison via Dropbox. Concurrent direct Tier Nursery."
+  - slug: "ZegaStudio"
+    market: "com"
+    note: "Boho neutre / sun & celestial decor, instant download. Concurrent coeur boho/celestial."
 
 # --- Découverte automatique de concurrents -----------------------------------
 # Requetes de recherche Etsy publique utilisees pour decouvrir de nouveaux
