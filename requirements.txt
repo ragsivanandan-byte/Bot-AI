@@ -1,0 +1,13 @@
+# Dépendances de l'outil d'intelligence marché NeutralWallDesign
+# Installer avec : pip install -r requirements.txt
+
+# --- Indispensables ----------------------------------------------------------
+requests>=2.31,<3        # requêtes HTTP respectueuses
+PyYAML>=6.0,<7           # lecture de config.yaml
+beautifulsoup4>=4.12,<5  # parsing HTML des pages Etsy
+lxml>=4.9                # parseur rapide pour BeautifulSoup
+
+# --- Optionnel ---------------------------------------------------------------
+# Google Trends. Si absent, le module trends dégrade gracieusement (les
+# rapports marquent l'intérêt comme "à valider" au lieu de planter).
+pytrends>=4.9

@@ -1,0 +1,14 @@
+# Cache HTTP local (régénérable, ne pas versionner)
+cache/*.html
+
+# Logs de run
+logs/*.log
+
+# Environnements virtuels Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store

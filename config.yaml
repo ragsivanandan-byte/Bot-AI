@@ -1,0 +1,178 @@
+# =============================================================================
+# config.yaml — Configuration de l'outil d'intelligence marché NeutralWallDesign
+# -----------------------------------------------------------------------------
+# Tu peux modifier ce fichier SANS toucher au code Python.
+# Tout ce qui est paramétrable est ici : mots-clés, concurrents, palette, etc.
+# Chaque champ est commenté. Les valeurs marquées "# A VERIFIER" sont des
+# hypothèses de départ non confirmées (voir LIMITS.md).
+# =============================================================================
+
+# --- Ma boutique -------------------------------------------------------------
+# Sert de référentiel pour les comparaisons "ce que les concurrents font mieux".
+# Mets à jour ces chiffres à la main quand ils changent (ils ne sont pas scrapés
+# automatiquement sur ta propre boutique pour éviter toute donnée périmée).
+shop:
+  name: "NeutralWallDesign"
+  url: "https://www.etsy.com/au/shop/NeutralWallDesign"
+  market: "au"                 # code marché Etsy utilisé dans l'URL (au, fr, com...)
+  active_listings: 16
+  total_sales: 1               # ventes publiques affichées
+  reviews: 1
+  avg_rating: 5.0
+  avg_price_eur: 6.0           # prix moyen affiché de tes fiches (à ajuster)
+  age_months: 2
+  formats: ["single"]          # ce que tu vends aujourd'hui : single / set / bundle
+  ratios_delivered: 5          # nb de ratios livrés par fiche (ex: 2:3, 3:4, 4:5, A, ISO)
+
+# --- Niche et mots-clés ------------------------------------------------------
+# Le coeur du ciblage. Ajoute/retire librement.
+niche:
+  # Piliers de la niche (utilisés pour la recherche concurrentielle et le SEO)
+  pillars:
+    - "boho wall art printable"
+    - "terracotta wall art"
+    - "japandi wall art"
+    - "wabi sabi art print"
+    - "neutral nursery wall art"
+    - "organic minimalist wall art"
+    - "celestial wall art neutral"
+    - "warm minimalist print set"
+  # Sous-niches montantes à surveiller (hypothèses à valider via Trends/recherche)
+  emerging_subniches:
+    - "scandi japandi gallery wall"
+    - "earthy abstract arch print"
+    - "muted boho line art"
+    - "neutral textured beige art"
+    - "sun and moon terracotta set"
+  # Sujets considérés comme saturés/cannibalisés -> à EVITER dans les prompts
+  saturated_topics:
+    - "highland cow"
+    - "boho rainbow generic"
+    - "single line face one line drawing"
+    - "minimalist mountain range"
+
+# --- Concurrents à suivre ----------------------------------------------------
+# IMPORTANT : ces slugs sont des POINTS DE DEPART non confirmés (identifiés par
+# connaissance générale de la niche printable). L'environnement de build bloque
+# l'accès live a Etsy (voir DECISIONS.md), donc ils n'ont PAS pu etre verifies
+# automatiquement. Au premier lancement live sur ta machine, l'outil tentera de
+# recuperer leurs donnees publiques ; supprime ceux qui n'existent pas et
+# ajoute ceux que la decouverte automatique (discover) te remonte.
+competitors:
+  # Renseigne juste le slug (dernier segment de l'URL /shop/<slug>) + le marché.
+  - slug: "NeutralWallDesign"   # toi-meme, pour reference dans le classement
+    market: "au"
+    note: "ma boutique (reference)"
+  # --- A VERIFIER : seeds non confirmes -------------------------------------
+  - slug: "EXAMPLE_COMPETITOR_1"
+    market: "com"
+    note: "A VERIFIER - remplacer par un vrai slug repere via discover"
+  - slug: "EXAMPLE_COMPETITOR_2"
+    market: "com"
+    note: "A VERIFIER - remplacer par un vrai slug repere via discover"
+
+# --- Découverte automatique de concurrents -----------------------------------
+# Requetes de recherche Etsy publique utilisees pour decouvrir de nouveaux
+# concurrents (mode live uniquement). Resultats a valider a la main.
+discovery:
+  enabled: true
+  search_queries:
+    - "japandi wall art printable"
+    - "terracotta boho print set"
+    - "neutral nursery printable set"
+    - "wabi sabi wall art"
+  max_results_per_query: 24
+
+# --- Estimation de CA (transparence totale, voir LIMITS.md) ------------------
+# Le CA reel d'une boutique Etsy n'est PAS public. On l'ESTIME uniquement.
+# Formule utilisee : voir src/analysis.py (estimate_revenue).
+revenue_estimation:
+  # Hypothese de duree de vie moyenne d'une boutique pour repartir les ventes
+  # lifetime en run-rate mensuel. Tres approximatif -> marge d'erreur enorme.
+  assumed_min_monthly_growth: false
+  # Fourchette de prix moyen si le prix d'une fiche est indisponible (EUR)
+  fallback_avg_price_eur_low: 4.0
+  fallback_avg_price_eur_high: 12.0
+  # Part des ventes survenant sur les 30 derniers jours (heuristique grossiere
+  # pour les boutiques etablies). Marge d'erreur tres elevee.
+  recent_sales_share_low: 0.02
+  recent_sales_share_high: 0.08
+
+# --- Heuristique "probablement IA" (INFERENCE, jamais une certitude) ---------
+# Chaque signal ajoute des points. Au-dela du seuil -> marque "INFERENCE IA".
+ai_inference:
+  enabled: true
+  threshold: 4                 # score min pour marquer "probablement IA"
+  weights:
+    low_price: 2               # prix moyen tres bas
+    high_listing_count: 2      # depot massif de fiches
+    high_sales_velocity: 1     # ventes elevees vs anciennete
+    keyword_stuffed_titles: 2  # titres a rallonge / mots-cles empiles
+    young_shop_high_volume: 1  # boutique jeune + gros volume
+  low_price_threshold_eur: 3.5
+  high_listing_count_threshold: 150
+  young_shop_months_threshold: 6
+
+# --- Paramètres réseau / scraping respectueux --------------------------------
+network:
+  # User-agent honnete : identifie l'outil et un contact. Personnalise l'email.
+  user_agent: "NeutralWallDesign-MarketIntel/1.0 (+contact: r.sivanandan@me.com) respectful-research"
+  request_timeout_seconds: 20
+  # Delai mini entre deux requetes vers le meme domaine (rate limiting strict)
+  min_delay_seconds: 4.0
+  max_delay_jitter_seconds: 3.0   # delai aleatoire ajoute pour ne pas marteler
+  max_retries: 4
+  backoff_base_seconds: 2.0       # 2s, 4s, 8s, 16s
+  respect_robots_txt: true        # NE PAS desactiver (CGU)
+  cache_ttl_hours: 12             # reutilise le cache local sous ce delai
+  cache_dir: "cache"
+
+# --- Génération des prompts Grok ---------------------------------------------
+grok_prompts:
+  count_per_day: 5
+  # Palette warm/neutre (noms + codes hex indicatifs)
+  palette:
+    - "terracotta #C66B3D"
+    - "warm clay #B5651D"
+    - "muted sand #D8C3A5"
+    - "soft cream #F3EBDD"
+    - "olive sage #8A8B6C"
+    - "burnt sienna #A0522D"
+    - "warm taupe #B9A88F"
+    - "dusty rose clay #C9A29A"
+    - "deep umber #6F4E37"
+    - "oat beige #E7DCC8"
+  styles:
+    - "gouache flat graphic"
+    - "wabi-sabi organic"
+    - "organic modern minimal"
+    - "japandi flat illustration"
+  # Pool de sujets/formes a decliner. Le selecteur du jour pioche dedans en
+  # croisant avec emerging_subniches et en evitant saturated_topics.
+  shape_pool:
+    - "abstract arch"
+    - "organic blob / pebble"
+    - "rolling hill landscape"
+    - "sun disc"
+    - "crescent moon"
+    - "vase silhouette"
+    - "leaf / botanical frond"
+    - "torii-inspired gate"
+    - "stacked stones (wabi-sabi balance)"
+    - "wavy horizon bands"
+    - "ginkgo leaf"
+    - "abstract female torso silhouette"
+    - "mountain + sun arch"
+    - "raked sand zen circle (enso)"
+
+# --- Sortie ------------------------------------------------------------------
+output:
+  reports_dir: "reports"
+  logs_dir: "logs"
+
+# --- Roadmap revenu ----------------------------------------------------------
+goals:
+  target_net_eur_per_month: 5000
+  budget_ads_eur_per_month_low: 100
+  budget_ads_eur_per_month_high: 250
+  hours_per_day: 4.5
