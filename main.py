@@ -391,8 +391,15 @@ def main(argv=None) -> int:
         competitors_md = banner + competitors_md
         guidelines_md = banner + guidelines_md
 
+    # guidelines_claude_chat.md = SUR-ENSEMBLE (stratégie + veille + prompts) pour
+    # que Claude chat ait tout le contexte en un seul copier-coller. Les fichiers
+    # veille_concurrents.md et prompts_grok_du_jour.md restent générés séparément.
+    from src.report_generator import build_merged_guidelines
+    guidelines_merged = build_merged_guidelines(guidelines_md, competitors_md,
+                                                prompts_md)
+
     paths = write_reports(cfg["output"]["reports_dir"], competitors_md,
-                          prompts_md, guidelines_md)
+                          prompts_md, guidelines_merged)
 
     logger.info("=== Run terminé %s ===", "(MODE DÉGRADÉ)" if degraded else "")
     print("\n✅ Rapports générés :")

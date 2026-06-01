@@ -304,6 +304,47 @@ def render_guidelines(profiles: list[CompetitorProfile],
     return "\n".join(lines) + "\n"
 
 
+def build_merged_guidelines(guidelines_md: str, competitors_md: str,
+                            prompts_md: str) -> str:
+    """
+    Fusionne les 3 rapports en UN seul document pour Claude chat : stratégie +
+    veille concurrentielle (Annexe A) + prompts Grok du jour (Annexe B). Les
+    fichiers séparés restent générés par ailleurs ; ceci est un SUR-ENSEMBLE
+    pensé pour un copier-coller unique, et pour que Claude chat puisse juger les
+    images Grok que tu lui enverras.
+    """
+    judging = (
+        "## 8. Mission : juger les images Grok que je t'enverrai\n\n"
+        "Ce document est **autosuffisant** : il contient ma stratégie (ci-dessus), "
+        "la **veille concurrentielle complète** (Annexe A) et les **5 prompts Grok "
+        "du jour** (Annexe B). Tu as donc TOUT le contexte en un seul copier-coller.\n\n"
+        "Quand je t'enverrai des **captures d'écran d'images générées par Grok** "
+        "(à partir des prompts de l'Annexe B), évalue rapidement lesquelles "
+        "**GARDER** selon ces critères :\n"
+        "- **Cohérence niche** : warm organic minimalism, palette neutre/terracotta, "
+        "formes pleines sans contour.\n"
+        "- **Différenciation** : se démarque-t-elle de ce que font déjà les "
+        "concurrentes (Annexe A) ?\n"
+        "- **Potentiel SEO/commercial** : colle au pilier SEO visé par le prompt "
+        "(Annexe B) et à une demande confirmée.\n"
+        "- **Qualité technique** : pas de contour/ligne, fond propre, composition "
+        "centrée, marges généreuses, rendu imprimable haute résolution.\n"
+        "- **Déclinable** : se prête-t-elle à un **set de 3** et à plusieurs ratios "
+        "(comme les concurrentes) ?\n\n"
+        "Pour **chaque image** : verdict **GARDER / RETRAVAILLER / JETER** + 1 phrase "
+        "de justification. Si GARDER → propose un **titre Etsy SEO** + **3 tags "
+        "long-tail**.\n"
+    )
+    sep = "\n\n---\n\n"
+    return (
+        guidelines_md.rstrip() + "\n\n" + judging
+        + sep + "# 📎 ANNEXE A — Veille concurrentielle (détail complet)\n\n"
+        + competitors_md.rstrip()
+        + sep + "# 📎 ANNEXE B — Prompts Grok du jour (images à générer & juger)\n\n"
+        + prompts_md.rstrip() + "\n"
+    )
+
+
 def _build_insights(profiles, opportunities, degraded) -> list[str]:
     insights = []
     if degraded:

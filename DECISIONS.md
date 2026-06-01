@@ -165,6 +165,19 @@ totale sans clé** (l'outil retombe sur le comportement HTML/Trends d'origine).
   y compris le scénario « clé API présente mais réseau injoignable » (dégradation
   propre, sans traceback).
 
+### 🆕 Bot v2 (sur demande de l'opérateur)
+- **Automatisation quotidienne 7h00** : `automation/install_daily.sh` génère et
+  charge un agent `launchd` (plist validé par test : Label, Hour=7, commande).
+  Wrapper `run_daily.sh` (génère les rapports + ouvre le dossier, best-effort).
+  Désinstallation via `uninstall_daily.sh`. Heure = locale du Mac (note Paris).
+- **Fusion des rapports** : `guidelines_claude_chat.md` devient un **sur-ensemble**
+  (stratégie + Annexe A veille + Annexe B prompts + section « juger les images
+  Grok »), pour un copier-coller unique vers Claude chat. Les fichiers
+  `veille_concurrents.md` et `prompts_grok_du_jour.md` restent générés à part.
+- Audit v2 : **143 assertions** vertes, pyflakes propre, `bash -n` OK sur les 3
+  scripts, plist généré validé via `plistlib`, `run_daily.sh` produit bien les
+  rapports de bout en bout, tous les modes CLI sortent en 0.
+
 ### 🚀 Prochaines améliorations possibles
 1. **Conversion de devises** : faite (`currency.py`). Reste : élargir la table de
    repli et ajouter une 2e source de taux en secours.

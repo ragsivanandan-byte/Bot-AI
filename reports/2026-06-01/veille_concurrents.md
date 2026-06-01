@@ -1,7 +1,7 @@
 > 🧪 **RAPPORT DE DÉMONSTRATION — DONNÉES FICTIVES.** Les boutiques, ventes et prix « DEMO_* » ci-dessous sont INVENTÉS pour illustrer le fonctionnement des moteurs d'analyse. Ne PAS les prendre pour des données réelles.
 
 # Veille concurrentielle — 2026-06-01
-_Généré le 2026-06-01T23:14:48_
+_Généré le 2026-06-01T23:31:46_
 
 > ⚠️ **Note d'honnêteté** : le CA réel d'une boutique Etsy n'est pas public ; tous les montants ci-dessous sont des **ESTIMATIONS** avec marge d'erreur élevée (calcul montré). La mention « probablement IA » est une **INFÉRENCE** (faisceau d'indices), jamais une certitude. Les champs « donnée indisponible » n'ont pas pu être lus automatiquement — voir LIMITS.md.
 

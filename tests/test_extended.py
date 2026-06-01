@@ -364,6 +364,35 @@ def test_reports():
                     "Opportunités SEO"):
         check(section in gm, f"guidelines : section '{section}' présente")
 
+    # Fusion : guidelines_claude_chat = stratégie + veille + prompts en un seul doc
+    from src.report_generator import build_merged_guidelines
+    merged = build_merged_guidelines(gm, comp, pm)
+    check("Mission : juger les images Grok" in merged,
+          "fusion : section de jugement d'images présente")
+    check("ANNEXE A" in merged and "Top concurrents" in merged,
+          "fusion : veille intégrée (Annexe A)")
+    check("ANNEXE B" in merged and "solid filled" in merged,
+          "fusion : prompts Grok intégrés (Annexe B)")
+    check("Roadmap vers 5000" in merged, "fusion : stratégie d'origine conservée")
+    # Les fichiers séparés restent intacts (pas d'annexe dedans)
+    check("ANNEXE A" not in comp and "ANNEXE A" not in pm,
+          "fusion : veille et prompts restent autonomes (pas d'annexe injectée)")
+
+
+def test_automation_scripts():
+    print("\n[automation : scripts launchd valides]")
+    import subprocess
+    base = Path(__file__).resolve().parent.parent / "automation"
+    for name in ("run_daily.sh", "install_daily.sh", "uninstall_daily.sh"):
+        p = base / name
+        check(p.exists(), f"script présent : {name}")
+        rc = subprocess.run(["bash", "-n", str(p)], capture_output=True).returncode
+        check(rc == 0, f"syntaxe bash valide : {name}")
+    # Le script d'install doit programmer 7h00 et viser le bon dossier.
+    txt = (base / "install_daily.sh").read_text(encoding="utf-8")
+    check("HOUR=7" in txt, "install : programmé à 7h00")
+    check("run_daily.sh" in txt, "install : pointe vers run_daily.sh")
+
 
 # --- storage (compléments) ---------------------------------------------------
 
@@ -552,11 +581,17 @@ def test_main_wiring():
         rc = cli.main(["--verbose"])
         check(rc == 0, "main() avec clés simulées -> exit 0")
         from datetime import date
-        rep = (Path("reports") / date.today().isoformat() / "veille_concurrents.md")
-        text = rep.read_text(encoding="utf-8")
+        day = Path("reports") / date.today().isoformat()
+        text = (day / "veille_concurrents.md").read_text(encoding="utf-8")
         check("API Etsy (simulée)" in text, "rapport contient les données de l'API")
         check("5000" in text, "ventes (5000) présentes dans le rapport")
         check("d'origine" in text, "conversion de devise appliquée dans le rapport")
+        # Le fichier guidelines doit être le sur-ensemble fusionné.
+        gtext = (day / "guidelines_claude_chat.md").read_text(encoding="utf-8")
+        check("ANNEXE A" in gtext and "ANNEXE B" in gtext,
+              "guidelines fusionné contient veille + prompts (1 copier-coller)")
+        check("5000" in gtext and "solid filled" in gtext,
+              "guidelines fusionné : données concurrents + prompts présents")
     finally:
         etsy_mod.EtsyApiClient = saved_e
         kwe_mod.KeywordsEverywhereClient = saved_k
@@ -575,6 +610,7 @@ def run() -> int:
     test_seo_extras()
     test_prompts_extras()
     test_reports()
+    test_automation_scripts()
     test_storage_extras()
     test_currency_extras()
     test_etsy_api_http()

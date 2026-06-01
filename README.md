@@ -12,7 +12,11 @@ printable, niche « Warm Organic Minimalism ») :
    des demandes confirmées, au format « formes pleines / solid filled / no
    outline » imposé.
 3. **`guidelines_claude_chat.md`** — brief stratégique (SEO, Pinterest, pricing,
-   pub, roadmap 5000 €/mois) destiné à un assistant en chat.
+   pub, roadmap 5000 €/mois) destiné à un assistant en chat. **C'est un
+   sur-ensemble** : il intègre aussi, en annexes, le contenu complet de la veille
+   (Annexe A) et des prompts Grok (Annexe B), pour que Claude chat reçoive **tout
+   le contexte en un seul copier-coller** et puisse juger les images Grok. Les
+   fichiers 1 et 2 restent générés séparément.
 
 > ⚠️ **Lis [`LIMITS.md`](LIMITS.md) avant de te fier aux chiffres.** Le CA réel
 > d'une boutique Etsy n'est pas public (tout CA est une **estimation**), et la
@@ -146,45 +150,31 @@ Tout est paramétrable **sans toucher au code** :
 
 ---
 
-## Planifier un lancement quotidien
+## Planifier un lancement quotidien (macOS, automatique)
 
-### macOS (recommandé : `launchd`)
-
-Crée `~/Library/LaunchAgents/com.neutralwall.marketintel.plist` :
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key><string>com.neutralwall.marketintel</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>/CHEMIN/VERS/Bot-AI/.venv/bin/python</string>
-    <string>/CHEMIN/VERS/Bot-AI/main.py</string>
-  </array>
-  <key>WorkingDirectory</key><string>/CHEMIN/VERS/Bot-AI</string>
-  <key>StartCalendarInterval</key>
-  <dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
-  <key>StandardOutPath</key><string>/CHEMIN/VERS/Bot-AI/logs/launchd.out.log</string>
-  <key>StandardErrorPath</key><string>/CHEMIN/VERS/Bot-AI/logs/launchd.err.log</string>
-</dict>
-</plist>
-```
-
-Puis :
+Un script tout prêt installe le lancement automatique **chaque jour à 7h00**
+(heure locale du Mac) via `launchd`. À lancer **une seule fois** :
 
 ```bash
-launchctl load ~/Library/LaunchAgents/com.neutralwall.marketintel.plist
+cd ~/Bot-AI
+bash automation/install_daily.sh
 ```
 
-### Linux / macOS (alternative : `cron`)
+- L'outil se lancera seul tous les matins, générera les rapports du jour et
+  ouvrira le dossier (si une session graphique est active).
+- Si le Mac est en veille à 7h, le run se fait au réveil.
+- ⚠️ L'heure est l'heure **locale du Mac** : pour « 7h heure française », assure-toi
+  que ton Mac est sur le fuseau **Europe/Paris** (Réglages > Général > Date et heure).
+- Logs : `logs/launchd.out.log`.
 
+Tester immédiatement sans attendre 7h :
 ```bash
-crontab -e
-# Tous les jours à 8h00 :
-0 8 * * * cd /CHEMIN/VERS/Bot-AI && .venv/bin/python main.py >> logs/cron.log 2>&1
+bash automation/run_daily.sh
+```
+
+Désactiver l'automatisation :
+```bash
+bash automation/uninstall_daily.sh
 ```
 
 ---

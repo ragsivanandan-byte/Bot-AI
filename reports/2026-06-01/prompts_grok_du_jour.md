@@ -1,5 +1,5 @@
 # 5 prompts Grok du jour — 2026-06-01
-_Généré le 2026-06-01T23:14:48_
+_Généré le 2026-06-01T23:31:46_
 
 > Chaque prompt cible une demande issue de l'analyse concurrentielle + tendances. Structure imposée pour formes pleines (solid filled, no outline). Copie-colle le bloc **Prompt** dans Grok.
 
