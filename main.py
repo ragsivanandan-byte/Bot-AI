@@ -34,6 +34,7 @@ import argparse
 import os
 import sys
 from datetime import date
+from pathlib import Path
 
 from src.analysis import build_profile, rank_competitors
 from src.config_loader import ConfigError, load_config
@@ -57,7 +58,7 @@ def shop_url(slug: str, market: str) -> str:
 
 
 def collect_competitors(cfg, fetcher, logger, allow_network: bool,
-                        etsy_client=None):
+                        etsy_client=None, converter=None):
     """
     Récupère et parse chaque concurrent listé dans la config.
 
@@ -68,6 +69,7 @@ def collect_competitors(cfg, fetcher, logger, allow_network: bool,
 
     Renvoie (profiles, degraded) où degraded=True si AUCUNE donnée n'a été obtenue.
     """
+    from src.currency import convert_shop_prices
     competitors = cfg.get("competitors", [])
     my_shop = cfg["shop"]
     rev_cfg = cfg.get("revenue_estimation", {})
@@ -113,6 +115,10 @@ def collect_competitors(cfg, fetcher, logger, allow_network: bool,
                     shop = ShopData(slug=slug, market=market, url=url,
                                     fetched=False, source_note=reason)
                     logger.warning("Concurrent %s non récupéré : %s", slug, reason)
+
+        # Conversion des prix en EUR (si devise connue et convertisseur fourni).
+        if converter is not None:
+            convert_shop_prices(shop, converter)
 
         profiles.append(build_profile(shop, my_shop, rev_cfg, ai_cfg))
 
@@ -197,11 +203,11 @@ def run_selftest(cfg, logger) -> int:
                     str(store.db_path) if store.available else "indisponible"))
     store.close()
 
-    # 4. pytrends
-    try:
-        import pytrends  # noqa: F401
+    # 4. pytrends (présence sans l'importer réellement)
+    import importlib.util
+    if importlib.util.find_spec("pytrends") is not None:
         results.append(("pytrends (Trends)", "OK", "installé"))
-    except Exception:
+    else:
         results.append(("pytrends (Trends)", "DÉGRADÉ",
                         "non installé (optionnel) -> tendances 'à valider'"))
 
@@ -298,6 +304,16 @@ def main(argv=None) -> int:
     if kwe_client and kwe_client.available:
         logger.info("Keywords Everywhere ACTIF (clé détectée).")
 
+    # Convertisseur de devises -> EUR (gratuit, cache + repli statique).
+    from src.currency import CurrencyConverter
+    fx_cfg = cfg.get("currency_conversion", {})
+    converter = (CurrencyConverter(
+        cache_path=str(Path(cfg["network"]["cache_dir"]) / "fx_rates.json"),
+        ttl_hours=fx_cfg.get("cache_ttl_hours", 24),
+        allow_network=allow_network,
+        api_url=fx_cfg.get("api_url", "https://api.frankfurter.dev/v1/latest"))
+        if fx_cfg.get("enabled", True) else None)
+
     # --- Découverte optionnelle (non bloquante) ------------------------------
     if args.discover and allow_network:
         try:
@@ -309,16 +325,21 @@ def main(argv=None) -> int:
     if args.demo:
         logger.warning("MODE DÉMO : utilisation de DONNÉES FICTIVES "
                        "(aucune donnée réelle).")
+        from src.currency import convert_shop_prices
         from src.demo_fixtures import demo_competitors
         rev_cfg = cfg.get("revenue_estimation", {})
         ai_cfg = cfg.get("ai_inference", {})
+        demo_shops = demo_competitors()
+        if converter is not None:
+            for s in demo_shops:
+                convert_shop_prices(s, converter)  # montre la conversion en EUR
         profiles = rank_competitors([
-            build_profile(s, cfg["shop"], rev_cfg, ai_cfg)
-            for s in demo_competitors()])
+            build_profile(s, cfg["shop"], rev_cfg, ai_cfg) for s in demo_shops])
         degraded = False  # on a des données (fictives mais complètes)
     else:
         profiles, degraded = collect_competitors(cfg, fetcher, logger,
-                                                 allow_network, etsy_client)
+                                                 allow_network, etsy_client,
+                                                 converter)
 
     # --- 2. Tendances (optionnel, dégrade gracieusement) ---------------------
     niche_cfg = cfg["niche"]

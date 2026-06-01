@@ -11,7 +11,7 @@ absolu. On ne convertit jamais ça en "X recherches/mois" : ce serait inventer.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .utils import UNAVAILABLE
 

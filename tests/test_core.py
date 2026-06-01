@@ -18,14 +18,12 @@ from pathlib import Path
 # Permet `python tests/test_core.py` depuis la racine du repo.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.analysis import (ai_inference, build_profile, estimate_revenue,
-                          rank_competitors)
+from src.analysis import ai_inference, estimate_revenue
 from src.config_loader import load_config
 from src.etsy_parser import ShopData, parse_shop_page
 from src.prompt_generator import generate_daily_prompts
 from src.seo import build_opportunities
 from src.storage import HistoryStore
-from src.trends import TrendResult
 
 _FAILURES: list[str] = []
 
@@ -239,6 +237,98 @@ def test_seo_with_volumes():
           is None, "sans clé KWE, pas de volume inventé")
 
 
+def test_currency():
+    print("\n[conversion devises -> EUR]")
+    from src.currency import CurrencyConverter, convert_shop_prices
+
+    # Convertisseur en mode hors-ligne -> utilise la table de repli statique.
+    conv = CurrencyConverter(cache_path=tempfile.mktemp(suffix=".json"),
+                             allow_network=False)
+
+    # EUR -> EUR : identité, pas de conversion
+    val, note = conv.to_eur(10.0, "EUR")
+    check(val == 10.0 and "aucune conversion" in note, "EUR->EUR inchangé")
+
+    # USD -> EUR : 108 USD / 1.08 (taux repli) = 100 €
+    val, note = conv.to_eur(108.0, "USD")
+    check(val is not None and abs(val - 100.0) < 0.01, "USD->EUR via repli (108->100)")
+    check("USD" in note, "note de conversion mentionne la devise source")
+
+    # Devise inconnue -> None (jamais inventé)
+    val, note = conv.to_eur(10.0, "XYZ")
+    check(val is None, "devise inconnue -> pas de conversion inventée")
+
+    # Application sur un ShopData (prix passe de USD à EUR, original conservé)
+    shop = ShopData("S", "com", "u", avg_price_eur=21.6, price_min_eur=10.8,
+                    price_max_eur=32.4, currency="USD", fetched=True)
+    convert_shop_prices(shop, conv)
+    check(abs(shop.avg_price_eur - 20.0) < 0.01, "prix moyen converti (21.6 USD->20€)")
+    check(shop.avg_price_original == 21.6, "prix d'origine conservé (transparence)")
+    check(shop.fx_note is not None, "note de conversion attachée au ShopData")
+    check(abs(shop.price_min_eur - 10.0) < 0.01, "prix min aussi converti")
+
+
+def test_integration_full_pipeline():
+    print("\n[intégration : pipeline complet avec API + volumes + conversion]")
+    import main as cli
+    from src.currency import CurrencyConverter
+    from src.keywords_api import KeywordVolume
+
+    # Faux client Etsy : renvoie une boutique en USD avec prix.
+    class FakeEtsy:
+        available = True
+        def get_shop(self, slug, market="com"):
+            return ShopData(slug=slug, market=market, url="u", fetched=True,
+                            source_note="API Etsy (simulée)", total_sales=5000,
+                            active_listings=120, reviews=800, avg_rating=4.9,
+                            avg_price_eur=10.8, price_min_eur=5.4,
+                            price_max_eur=21.6, currency="USD",
+                            sample_titles=["Japandi Wall Art Set of 3"])
+
+    cfg = load_config("config.yaml")
+    cfg["competitors"] = [{"slug": "FakeShopUSD", "market": "com"}]
+    conv = CurrencyConverter(cache_path=tempfile.mktemp(suffix=".json"),
+                             allow_network=False)
+
+    profiles, degraded = cli.collect_competitors(
+        cfg, fetcher=None, logger=cli_logger(), allow_network=True,
+        etsy_client=FakeEtsy(), converter=conv)
+    check(not degraded, "pipeline non dégradé quand l'API fournit des données")
+    p = profiles[0]
+    check(abs(p.shop.avg_price_eur - 10.0) < 0.01, "prix API USD converti en EUR (10.8->10)")
+    check(p.revenue.available, "CA estimé à partir des données API")
+    # Le CA utilise bien le prix EUR converti : 5000 * 10 = 50000 € lifetime low
+    check(p.revenue.lifetime_low_eur == 50000, "CA lifetime cohérent avec prix converti")
+
+    # Volumes réels -> opportunités confirmées
+    vols = {"japandi wall art": KeywordVolume("japandi wall art", volume=3000,
+                                              competition=0.2)}
+    ops = build_opportunities({"emerging_subniches": ["japandi wall art"],
+                               "pillars": [], "saturated_topics": []}, [], vols)
+    check(ops[0].search_volume == 3000, "volume réel propagé dans le pipeline SEO")
+
+
+def cli_logger():
+    import logging
+    lg = logging.getLogger("market_intel")
+    lg.addHandler(logging.NullHandler())
+    return lg
+
+
+def test_cli_smoke():
+    print("\n[smoke CLI : les modes tournent sans erreur]")
+    import main as cli
+    rc1 = cli.main(["--no-network"])
+    check(rc1 == 0, "`main.py --no-network` se termine proprement (code 0)")
+    rc2 = cli.main(["--demo", "--no-network"])
+    check(rc2 == 0, "`main.py --demo --no-network` se termine proprement (code 0)")
+    from datetime import date
+    rep = Path("reports") / date.today().isoformat()
+    for f in ("veille_concurrents.md", "prompts_grok_du_jour.md",
+              "guidelines_claude_chat.md"):
+        check((rep / f).exists(), f"rapport généré : {f}")
+
+
 def main() -> int:
     print("=== TESTS — outil intelligence marché ===")
     test_config()
@@ -250,6 +340,9 @@ def main() -> int:
     test_api_connectors()
     test_etsy_api_mapping()
     test_seo_with_volumes()
+    test_currency()
+    test_integration_full_pipeline()
+    test_cli_smoke()
     print(f"\n{'='*42}")
     if _FAILURES:
         print(f"❌ {len(_FAILURES)} test(s) en échec :")

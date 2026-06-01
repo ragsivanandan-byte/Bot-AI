@@ -4,6 +4,9 @@ cache/*.html
 # Base d'historique SQLite (données locales, régénérable)
 cache/*.sqlite3
 
+# Cache des taux de change (régénérable)
+cache/*.json
+
 # Logs de run
 logs/*.log
 

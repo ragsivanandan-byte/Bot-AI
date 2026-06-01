@@ -1,7 +1,7 @@
 > 🧪 **RAPPORT DE DÉMONSTRATION — DONNÉES FICTIVES.** Les boutiques, ventes et prix « DEMO_* » ci-dessous sont INVENTÉS pour illustrer le fonctionnement des moteurs d'analyse. Ne PAS les prendre pour des données réelles.
 
 # Guidelines stratégiques pour Claude Chat (projet Etsy) — 2026-06-01
-_Généré le 2026-06-01T12:09:41_
+_Généré le 2026-06-01T12:21:50_
 
 > Brief destiné à un assistant en chat pour affiner SEO, trafic et ventes de **NeutralWallDesign**. Données honnêtes : estimations marquées, incertitudes assumées.
 

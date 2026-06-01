@@ -179,6 +179,15 @@ api:
   keywords_country: "fr"     # marché ciblé pour les volumes (fr, us, gb, au...)
   keywords_currency: "eur"
 
+# --- Conversion des devises en EUR -------------------------------------------
+# Les prix de l'API Etsy sont dans la devise de la boutique : on les convertit
+# en EUR. Source gratuite sans clé (BCE via Frankfurter), avec cache et repli
+# statique si le réseau est indisponible (voir LIMITS.md).
+currency_conversion:
+  enabled: true
+  api_url: "https://api.frankfurter.dev/v1/latest"
+  cache_ttl_hours: 24
+
 # --- Sortie ------------------------------------------------------------------
 output:
   reports_dir: "reports"

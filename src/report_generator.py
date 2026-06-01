@@ -17,7 +17,8 @@ from pathlib import Path
 from .analysis import CompetitorProfile
 from .prompt_generator import GrokPrompt
 from .seo import SeoOpportunity
-from .utils import UNAVAILABLE, fmt_eur, now_iso, report_dir, today_str
+from .utils import (UNAVAILABLE, fmt_eur, fmt_price, now_iso, report_dir,
+                    today_str)
 
 logger = logging.getLogger("market_intel")
 
@@ -60,7 +61,7 @@ def render_competitors(profiles: list[CompetitorProfile], my_shop: dict,
         listings = s.active_listings if s.active_listings is not None else "—"
         reviews = s.reviews if s.reviews is not None else "—"
         rating = s.avg_rating if s.avg_rating is not None else "—"
-        price = fmt_eur(s.avg_price_eur) if s.avg_price_eur else UNAVAILABLE
+        price = fmt_price(s.avg_price_eur) if s.avg_price_eur else UNAVAILABLE
         if p.revenue.available:
             ca = f"{fmt_eur(p.revenue.monthly_low_eur)}–{fmt_eur(p.revenue.monthly_high_eur)}"
         else:
@@ -85,8 +86,14 @@ def render_competitors(profiles: list[CompetitorProfile], my_shop: dict,
                      f"{s.active_listings if s.active_listings is not None else UNAVAILABLE}")
         lines.append(f"- Avis : {s.reviews if s.reviews is not None else UNAVAILABLE}"
                      f" | Note : {s.avg_rating if s.avg_rating is not None else UNAVAILABLE}")
-        lines.append(f"- Prix : moyen {fmt_eur(s.avg_price_eur)} "
-                     f"(min {fmt_eur(s.price_min_eur)} / max {fmt_eur(s.price_max_eur)})")
+        price_line = (f"- Prix : moyen {fmt_price(s.avg_price_eur)} "
+                      f"(min {fmt_price(s.price_min_eur)} / max {fmt_price(s.price_max_eur)})")
+        if s.fx_note and s.avg_price_original is not None:
+            price_line += (f"  _[{s.avg_price_original:.2f} {s.currency} d'origine, "
+                           f"{s.fx_note}]_")
+        elif s.fx_note:
+            price_line += f"  _[{s.fx_note}]_"
+        lines.append(price_line)
         lines.append(f"- Prix barré (promo) : "
                      f"{_yesno(s.has_strikethrough_price)}")
         lines.append(f"- Ancienneté : {s.age_text or UNAVAILABLE}")

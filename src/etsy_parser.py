@@ -38,10 +38,12 @@ class ShopData:
     active_listings: int | None = None
     reviews: int | None = None
     avg_rating: float | None = None
-    avg_price_eur: float | None = None
+    avg_price_eur: float | None = None    # prix moyen CONVERTI en EUR si possible
     price_min_eur: float | None = None
     price_max_eur: float | None = None
     currency: str | None = None           # devise réelle (API). None si inconnue.
+    avg_price_original: float | None = None  # prix moyen dans la devise d'origine
+    fx_note: str | None = None            # note de conversion (taux/source) si appliquée
     age_text: str | None = None           # ancienneté brute si trouvée
     has_strikethrough_price: bool | None = None  # prix barré (promo) détecté ?
     languages: list[str] = field(default_factory=list)

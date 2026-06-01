@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 
 from .seo import SeoOpportunity
@@ -80,7 +80,6 @@ def generate_daily_prompts(grok_cfg: dict, niche_cfg: dict,
     palette = list(grok_cfg.get("palette", []))
     styles = list(grok_cfg.get("styles", ["gouache flat graphic"]))
     shapes = list(grok_cfg.get("shape_pool", []))
-    saturated = {s.lower() for s in niche_cfg.get("saturated_topics", [])}
 
     # On privilégie les opportunités les plus confirmées et NON saturées.
     ranked_ops = [o for o in opportunities if not o.saturated] or opportunities

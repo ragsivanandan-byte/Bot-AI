@@ -7,7 +7,6 @@ duplication. Aucune logique métier lourde ici.
 from __future__ import annotations
 
 import logging
-import os
 from datetime import date, datetime
 from pathlib import Path
 
@@ -71,10 +70,17 @@ def setup_logging(logs_dir: str, verbose: bool = False) -> logging.Logger:
 
 
 def fmt_eur(value: float | None) -> str:
-    """Formate un montant en EUR de façon lisible, ou renvoie le marqueur."""
+    """Formate un GROS montant en EUR (CA), arrondi à l'euro, ou le marqueur."""
     if value is None:
         return UNAVAILABLE
     return f"{value:,.0f} €".replace(",", " ")
+
+
+def fmt_price(value: float | None) -> str:
+    """Formate un PRIX en EUR avec 2 décimales (les printables sont bon marché)."""
+    if value is None:
+        return UNAVAILABLE
+    return f"{value:,.2f} €".replace(",", " ")
 
 
 def safe_div(num: float, den: float) -> float | None:

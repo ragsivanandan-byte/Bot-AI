@@ -165,7 +165,6 @@ def ai_inference(shop: ShopData, ai_cfg: dict) -> AiInference:
         signals.append(f"titres à rallonge / mots-clés empilés [+{w}]")
 
     # Vélocité de ventes vs ancienneté (si on connaît l'année d'ouverture).
-    young_th = int(ai_cfg.get("young_shop_months_threshold", 6))
     if shop.age_text and shop.total_sales and shop.active_listings:
         if (shop.active_listings >= high_list_th and shop.total_sales > 1000):
             w = int(weights.get("high_sales_velocity", 1))

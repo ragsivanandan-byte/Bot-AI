@@ -48,11 +48,15 @@ base des rapports.
   concurrent : à consulter manuellement (pas d'API gratuite fiable ici).
 
 ## 6bis. Précisions sur les connecteurs API (si tu les actives)
-- **API Etsy** : fiable et autorisée, mais les **prix sont dans la devise de la
-  boutique** (ex. USD, GBP), pas convertis en EUR. La devise réelle est
-  conservée (`currency`) ; les estimations de CA traitent le nombre tel quel —
-  pour un concurrent en USD, lis « $ » même si l'étiquette dit « € ». Une
-  conversion fiable nécessiterait une API de taux (amélioration future).
+- **Conversion en EUR** : les prix de l'API Etsy (devise de la boutique) sont
+  désormais **convertis automatiquement en EUR**. Taux récupérés via une source
+  gratuite (BCE/Frankfurter), mis en cache 24 h. Si le réseau est indisponible,
+  l'outil utilise une **table de repli statique APPROXIMATIVE et datée** (≈ janv.
+  2026) — la conversion est alors un ordre de grandeur, pas un taux du jour. La
+  devise et le prix d'origine restent affichés entre crochets pour transparence.
+- ⚠️ Les prix récupérés par **scraping HTML** (mode sans clé API) ne sont PAS
+  convertis de façon fiable : la devise n'y est pas toujours identifiable. La
+  conversion en EUR est garantie surtout via l'**API Etsy** (devise connue).
 - **API Etsy** : nécessite une clé validée par Etsy, soumise à des quotas
   (≈ 10 req/s, 10 000 req/jour). Sur de longues listes de concurrents, le run
   prend plus de temps.

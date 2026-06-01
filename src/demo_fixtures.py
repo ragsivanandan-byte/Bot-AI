@@ -27,7 +27,7 @@ def demo_competitors() -> list[ShopData]:
             name="DEMO_MassVolumeStudio",
             total_sales=48000, active_listings=620, reviews=9100,
             avg_rating=4.8, avg_price_eur=2.9, price_min_eur=1.5,
-            price_max_eur=6.0, age_text="On Etsy since 2022",
+            price_max_eur=6.0, currency="USD", age_text="On Etsy since 2022",
             has_strikethrough_price=True, languages=["en-US"],
             sample_titles=[
                 "Boho Wall Art Printable Set Terracotta Neutral Minimalist "
