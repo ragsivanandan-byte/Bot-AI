@@ -78,8 +78,10 @@ def generate_daily_prompts(grok_cfg: dict, niche_cfg: dict,
 
     count = int(grok_cfg.get("count_per_day", 5))
     palette = list(grok_cfg.get("palette", []))
-    styles = list(grok_cfg.get("styles", ["gouache flat graphic"]))
-    shapes = list(grok_cfg.get("shape_pool", []))
+    # `or [...]` couvre aussi le cas d'une liste explicitement vide dans la config
+    # (sinon styles[i % 0] -> division par zéro). Pareil pour les formes plus bas.
+    styles = list(grok_cfg.get("styles") or []) or ["gouache flat graphic"]
+    shapes = list(grok_cfg.get("shape_pool") or [])
 
     # On privilégie les opportunités les plus confirmées et NON saturées.
     ranked_ops = [o for o in opportunities if not o.saturated] or opportunities

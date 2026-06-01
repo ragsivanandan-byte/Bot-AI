@@ -150,8 +150,24 @@ totale sans clé** (l'outil retombe sur le comportement HTML/Trends d'origine).
 - Honnêteté ajoutée dans LIMITS.md : prix Etsy en devise réelle non convertie ;
   volumes KWE d'origine Google, pas Etsy ; crédits KWE consommés à chaque appel.
 
+### 🧪 Audit exhaustif (sur demande de l'opérateur)
+- Suite de tests portée à **128 assertions** (`tests/run_all.py` agrège
+  `test_core.py` + `test_extended.py`), exécutées dans un **virtualenv neuf**
+  reproduisant exactement le poste Mac (`pip install -r requirements.txt`).
+- Couverture des chemins **succès ET échec** via doublures réseau
+  (`tests/_fakes.py`) : robots.txt, cache, retry 5xx, 403 sans retry, pannes
+  réseau, 401/402 des API, fetch de taux de change, pipeline `main()` complet
+  avec connecteurs simulés.
+- **Bug réel trouvé et corrigé pendant l'audit** : une liste `styles` vide dans
+  `config.yaml` provoquait une division par zéro dans le générateur de prompts.
+  Corrigé (repli sur un style par défaut) + test de non-régression ajouté.
+- `pyflakes` : aucun import/variable inutilisé. Tous les modes CLI sortent en 0,
+  y compris le scénario « clé API présente mais réseau injoignable » (dégradation
+  propre, sans traceback).
+
 ### 🚀 Prochaines améliorations possibles
-1. **Conversion de devises** (API de taux) pour normaliser les prix Etsy en EUR.
+1. **Conversion de devises** : faite (`currency.py`). Reste : élargir la table de
+   repli et ajouter une 2e source de taux en secours.
 2. **Rendu HTML/PDF + envoi par e-mail** du rapport quotidien (lecture mobile).
 3. **Graphe d'évolution** : à partir des snapshots SQLite, tracer la courbe des
    ventes/avis des top concurrents et de ma propre boutique (AOV, nb d'avis).

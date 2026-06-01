@@ -102,8 +102,16 @@ meilleur signal pour repérer la fiche/le set d'un concurrent qui décolle.
 ### Tests
 
 ```bash
-python tests/test_core.py      # suite de non-régression (sans réseau, sans pytest)
+python tests/run_all.py        # TOUTES les suites (128 assertions, sans réseau)
+# ou individuellement :
+python tests/test_core.py      # cœur métier
+python tests/test_extended.py  # couverture exhaustive (réseau simulé)
 ```
+
+Les tests couvrent config, fetcher (robots/cache/retry/403/panne), parsing,
+analyse, tendances, SEO, prompts, rapports, historique, conversion de devises,
+les connecteurs API (succès + erreurs simulés) et le pipeline complet — sans
+aucun accès réseau réel.
 
 Les rapports sont écrits dans **`reports/AAAA-MM-JJ/`** (un dossier par jour).
 Les logs vont dans `logs/run_AAAA-MM-JJ.log`.

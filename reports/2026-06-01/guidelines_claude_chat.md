@@ -1,12 +1,9 @@
-> 🧪 **RAPPORT DE DÉMONSTRATION — DONNÉES FICTIVES.** Les boutiques, ventes et prix « DEMO_* » ci-dessous sont INVENTÉS pour illustrer le fonctionnement des moteurs d'analyse. Ne PAS les prendre pour des données réelles.
-
 # Guidelines stratégiques pour Claude Chat (projet Etsy) — 2026-06-01
-_Généré le 2026-06-01T12:21:50_
+_Généré le 2026-06-01T12:31:08_
 
 > Brief destiné à un assistant en chat pour affiner SEO, trafic et ventes de **NeutralWallDesign**. Données honnêtes : estimations marquées, incertitudes assumées.
 
 ## 1. Insights majeurs du jour
-- Boutiques **probablement IA** (INFÉRENCE) à étudier pour leurs patterns : DEMO_MassVolumeStudio — copier leur structure de sets/pricing, battre leur qualité.
 - Sous-niches montantes à tester : scandi japandi gallery wall, earthy abstract arch print, muted boho line art, neutral textured beige art, sun and moon terracotta set.
 
 ## 2. Opportunités SEO (long-tail prioritaires)
