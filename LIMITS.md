@@ -47,6 +47,20 @@ base des rapports.
 - **Pinterest Trends**, **eRank**, le détail des **sections/ratios** d'un
   concurrent : à consulter manuellement (pas d'API gratuite fiable ici).
 
+## 6bis. Précisions sur les connecteurs API (si tu les actives)
+- **API Etsy** : fiable et autorisée, mais les **prix sont dans la devise de la
+  boutique** (ex. USD, GBP), pas convertis en EUR. La devise réelle est
+  conservée (`currency`) ; les estimations de CA traitent le nombre tel quel —
+  pour un concurrent en USD, lis « $ » même si l'étiquette dit « € ». Une
+  conversion fiable nécessiterait une API de taux (amélioration future).
+- **API Etsy** : nécessite une clé validée par Etsy, soumise à des quotas
+  (≈ 10 req/s, 10 000 req/jour). Sur de longues listes de concurrents, le run
+  prend plus de temps.
+- **Keywords Everywhere** : les volumes sont d'origine **Google**, pas Etsy. Ils
+  approchent l'intention de recherche mais ne sont **pas** le volume Etsy exact.
+  Le seul volume Etsy « officieux » reste celui d'eRank/Marmalead, sans API
+  (consultation manuelle). Chaque appel **consomme des crédits payants**.
+
 ## 7. Ce que l'outil ne fait pas (volontairement)
 - Il ne crée pas d'images (il génère des **prompts** pour Grok, à toi de lancer).
 - Il ne publie rien sur Etsy/Pinterest.

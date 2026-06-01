@@ -16,15 +16,22 @@ Robustesse : si une source externe échoue, l'outil CONTINUE en mode dégradé e
 le note dans les rapports + les logs. `python main.py` ne doit jamais crasher
 à cause d'un blocage réseau.
 
+Sources de données (par ordre de priorité, dégradation gracieuse) :
+    - API officielle Etsy (si ETSY_API_KEY défini) -> sinon parsing HTML public
+    - Keywords Everywhere (si KEYWORDS_EVERYWHERE_API_KEY défini) -> sinon Trends
+
 Usage :
     python main.py                 # run complet
+    python main.py --selftest      # diagnostic (config, clés API, accès live)
     python main.py --no-network    # force le mode hors-ligne (rapports dégradés)
     python main.py --discover      # tente la découverte de nouveaux concurrents
+    python main.py --demo          # rapport de démonstration (données fictives)
     python main.py --verbose       # logs détaillés
 """
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from datetime import date
 
@@ -49,15 +56,23 @@ def shop_url(slug: str, market: str) -> str:
     return f"https://www.etsy.com/{market}/shop/{slug}"
 
 
-def collect_competitors(cfg, fetcher, logger, allow_network: bool):
+def collect_competitors(cfg, fetcher, logger, allow_network: bool,
+                        etsy_client=None):
     """
     Récupère et parse chaque concurrent listé dans la config.
-    Renvoie (profiles, degraded) où degraded=True si AUCUNE page n'a été obtenue.
+
+    Stratégie par concurrent :
+      1. si une clé API Etsy est dispo -> API officielle (propre, fiable) ;
+      2. sinon (ou si l'API échoue) -> parsing HTML public respectueux ;
+      3. sinon -> marqué indisponible (mode dégradé).
+
+    Renvoie (profiles, degraded) où degraded=True si AUCUNE donnée n'a été obtenue.
     """
     competitors = cfg.get("competitors", [])
     my_shop = cfg["shop"]
     rev_cfg = cfg.get("revenue_estimation", {})
     ai_cfg = cfg.get("ai_inference", {})
+    use_api = bool(etsy_client and etsy_client.available)
 
     profiles = []
     any_fetched = False
@@ -68,22 +83,36 @@ def collect_competitors(cfg, fetcher, logger, allow_network: bool):
             continue
         market = comp.get("market", "com")
         url = shop_url(slug, market)
+        shop = None
 
         if not allow_network:
             shop = ShopData(slug=slug, market=market, url=url, fetched=False,
                             source_note="mode hors-ligne (--no-network)")
         else:
-            logger.info("Récupération concurrent : %s (%s)", slug, url)
-            res = fetcher.get(url)
-            if res.ok:
-                any_fetched = True
-                shop = parse_shop_page(res.text, slug, market, url)
-            else:
-                reason = ("bloqué par robots.txt" if res.blocked_by_robots
-                          else f"échec réseau ({res.error or res.status})")
-                shop = ShopData(slug=slug, market=market, url=url, fetched=False,
-                                source_note=reason)
-                logger.warning("Concurrent %s non récupéré : %s", slug, reason)
+            # 1) API officielle Etsy en priorité si clé présente
+            if use_api:
+                logger.info("API Etsy : récupération de %s", slug)
+                try:
+                    shop = etsy_client.get_shop(slug, market)
+                except Exception as e:  # l'API ne doit jamais tuer le run
+                    logger.warning("API Etsy en échec pour %s (%s) -> repli HTML",
+                                   slug, e)
+                if shop is not None:
+                    any_fetched = True
+
+            # 2) Repli parsing HTML si pas d'API ou API infructueuse
+            if shop is None:
+                logger.info("Récupération concurrent (HTML) : %s (%s)", slug, url)
+                res = fetcher.get(url)
+                if res.ok:
+                    any_fetched = True
+                    shop = parse_shop_page(res.text, slug, market, url)
+                else:
+                    reason = ("bloqué par robots.txt" if res.blocked_by_robots
+                              else f"échec réseau ({res.error or res.status})")
+                    shop = ShopData(slug=slug, market=market, url=url,
+                                    fetched=False, source_note=reason)
+                    logger.warning("Concurrent %s non récupéré : %s", slug, reason)
 
         profiles.append(build_profile(shop, my_shop, rev_cfg, ai_cfg))
 
@@ -176,6 +205,17 @@ def run_selftest(cfg, logger) -> int:
         results.append(("pytrends (Trends)", "DÉGRADÉ",
                         "non installé (optionnel) -> tendances 'à valider'"))
 
+    # 4b. Clés API (présence des variables d'environnement)
+    from src.etsy_api import ENV_KEY as ETSY_ENV
+    from src.keywords_api import ENV_KEY as KWE_ENV
+    results.append(("clé API Etsy", "OK" if os.environ.get(ETSY_ENV) else "ABSENTE",
+                    f"${ETSY_ENV} " + ("définie -> API officielle active"
+                    if os.environ.get(ETSY_ENV) else "non définie -> repli HTML")))
+    results.append(("clé Keywords Everywhere",
+                    "OK" if os.environ.get(KWE_ENV) else "ABSENTE",
+                    f"${KWE_ENV} " + ("définie -> volumes réels"
+                    if os.environ.get(KWE_ENV) else "non définie -> Google Trends")))
+
     # 5. Accès réseau Etsy (une seule requête respectueuse)
     fetcher = RespectfulFetcher(cfg["network"])
     test_url = shop_url(cfg["competitors"][0]["slug"] if cfg.get("competitors")
@@ -199,7 +239,7 @@ def run_selftest(cfg, logger) -> int:
     # Affichage
     width = max(len(c) for c, _, _ in results)
     for comp, status, detail in results:
-        icon = {"OK": "✅", "DÉGRADÉ": "🟡", "BLOQUÉ": "🚫",
+        icon = {"OK": "✅", "DÉGRADÉ": "🟡", "BLOQUÉ": "🚫", "ABSENTE": "⚪",
                 "INDISPONIBLE": "🔌", "ANOMALIE": "⚠️", "ÉCHEC": "❌"}.get(status, "•")
         print(f"  {icon} {comp.ljust(width)}  [{status}]  {detail}")
 
@@ -244,6 +284,20 @@ def main(argv=None) -> int:
     allow_network = not args.no_network
     fetcher = RespectfulFetcher(cfg["network"])
 
+    # --- Connecteurs API optionnels (actifs seulement si clé en env) ---------
+    from src.etsy_api import EtsyApiClient
+    from src.keywords_api import KeywordsEverywhereClient
+    api_cfg = cfg.get("api", {})
+    etsy_client = EtsyApiClient() if api_cfg.get("use_etsy_api", True) else None
+    kwe_client = (KeywordsEverywhereClient(
+        country=api_cfg.get("keywords_country", "fr"),
+        currency=api_cfg.get("keywords_currency", "eur"))
+        if api_cfg.get("use_keywords_everywhere", True) else None)
+    if etsy_client and etsy_client.available:
+        logger.info("API Etsy ACTIVE (clé détectée).")
+    if kwe_client and kwe_client.available:
+        logger.info("Keywords Everywhere ACTIF (clé détectée).")
+
     # --- Découverte optionnelle (non bloquante) ------------------------------
     if args.discover and allow_network:
         try:
@@ -264,7 +318,7 @@ def main(argv=None) -> int:
         degraded = False  # on a des données (fictives mais complètes)
     else:
         profiles, degraded = collect_competitors(cfg, fetcher, logger,
-                                                 allow_network)
+                                                 allow_network, etsy_client)
 
     # --- 2. Tendances (optionnel, dégrade gracieusement) ---------------------
     niche_cfg = cfg["niche"]
@@ -277,14 +331,23 @@ def main(argv=None) -> int:
         trend_results = [TrendResult(k, available=False,
                          note="mode hors-ligne") for k in trend_keywords]
 
-    # --- 3. Opportunités SEO -------------------------------------------------
-    opportunities = build_opportunities(niche_cfg, trend_results)
+    # --- 3. Volumes de recherche réels (Keywords Everywhere, optionnel) ------
+    volumes = {}
+    if kwe_client and kwe_client.available and allow_network and not args.demo:
+        try:
+            volumes = kwe_client.get_volumes(trend_keywords)
+            logger.info("Keywords Everywhere : %d volumes récupérés.", len(volumes))
+        except Exception as e:  # ne jamais tuer le run
+            logger.warning("Keywords Everywhere en échec (ignoré) : %s", e)
 
-    # --- 4. Prompts Grok du jour ---------------------------------------------
+    # --- 4. Opportunités SEO -------------------------------------------------
+    opportunities = build_opportunities(niche_cfg, trend_results, volumes)
+
+    # --- 5. Prompts Grok du jour ---------------------------------------------
     prompts = generate_daily_prompts(cfg["grok_prompts"], niche_cfg,
                                       opportunities)
 
-    # --- 4bis. Historisation + diffs (vraie veille jour à jour) --------------
+    # --- 6. Historisation + diffs (vraie veille jour à jour) --------------
     deltas = {}
     if not args.demo:  # on n'historise pas les données fictives
         store = HistoryStore()
@@ -293,7 +356,7 @@ def main(argv=None) -> int:
         store.save_snapshot(today_str(), shops_now)
         store.close()
 
-    # --- 5. Rendu des rapports -----------------------------------------------
+    # --- 7. Rendu des rapports -----------------------------------------------
     competitors_md = render_competitors(profiles, cfg["shop"], degraded, deltas)
     prompts_md = render_grok_prompts(prompts)
     guidelines_md = render_guidelines(profiles, opportunities, cfg["shop"],

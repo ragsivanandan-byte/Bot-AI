@@ -39,6 +39,42 @@ pip install -r requirements.txt
 `pytrends` (Google Trends) est **optionnel** : s'il n'est pas installé, l'outil
 fonctionne quand même, les signaux de tendance sont alors marqués « à valider ».
 
+### Connecteurs API (optionnels, pour des données « ultra connectées »)
+
+L'outil sait utiliser deux sources de données via API. **Sans clé, il fonctionne
+exactement comme avant** (parsing HTML public + Google Trends). Les clés ne se
+mettent **jamais** dans le code ni dans `config.yaml` : elles se lisent dans des
+**variables d'environnement**.
+
+**1. API officielle Etsy (GRATUITE) — recommandée**
+Données concurrents fiables et autorisées (ventes, fiches, avis, prix), sans
+scraping. Mise en place :
+1. Crée un compte sur le portail développeur Etsy et déclare une app
+   (https://www.etsy.com/developers) → tu obtiens une **keystring** (clé d'API).
+   La validation est gratuite mais peut prendre quelques jours.
+2. Exporte la clé avant de lancer l'outil :
+   ```bash
+   export ETSY_API_KEY="ta_keystring_ici"
+   ```
+   Pour la rendre permanente, ajoute cette ligne à `~/.zshrc` (macOS récent).
+
+**2. Keywords Everywhere (PAYANT, ~10-15€/mois en crédits) — volumes réels**
+Vrais volumes de recherche par mot-clé (source Google, proxy de l'intention
+d'achat). Mise en place :
+1. Crée un compte sur keywordseverywhere.com, achète des crédits, récupère ta
+   clé API dans ton tableau de bord.
+2. Exporte la clé :
+   ```bash
+   export KEYWORDS_EVERYWHERE_API_KEY="ta_cle_ici"
+   ```
+
+Quand une clé est présente, l'outil bascule automatiquement dessus ; sinon il
+retombe sur le mode public. Vérifie l'état avec `python main.py --selftest`
+(lignes « clé API Etsy » et « clé Keywords Everywhere »).
+
+> 🔒 Les clés vivent uniquement dans ton environnement shell. Elles ne sont ni
+> écrites dans les rapports, ni commitées, ni loggées.
+
 ---
 
 ## Utilisation

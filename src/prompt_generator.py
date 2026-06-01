@@ -104,9 +104,18 @@ def generate_daily_prompts(grok_cfg: dict, niche_cfg: dict,
                                          rng=rng) or ["warm neutral tones"]
         style = styles[i % len(styles)]
 
-        vol = (f"intérêt relatif Google Trends ≈ {op.relative_interest}/100 "
-               f"({op.direction})" if op.relative_interest is not None
-               else f"{UNAVAILABLE} (volume absolu non public — à valider eRank)")
+        # Priorité au volume RÉEL (Keywords Everywhere) s'il existe, sinon
+        # intérêt relatif Trends, sinon « à valider ».
+        if getattr(op, "search_volume", None) is not None:
+            comp_txt = (f", concurrence {op.competition:.2f}/1"
+                        if op.competition is not None else "")
+            vol = (f"{op.search_volume} recherches/mois (volume RÉEL, source "
+                   f"Keywords Everywhere — proxy Google){comp_txt}")
+        elif op.relative_interest is not None:
+            vol = (f"intérêt relatif Google Trends ≈ {op.relative_interest}/100 "
+                   f"({op.direction})")
+        else:
+            vol = f"{UNAVAILABLE} (volume absolu non public — à valider eRank)"
 
         gp = GrokPrompt(
             index=i + 1,

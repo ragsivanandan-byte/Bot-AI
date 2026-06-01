@@ -163,6 +163,82 @@ def test_storage():
         store.close()
 
 
+def test_api_connectors():
+    print("\n[connecteurs API : dégradation + parsing]")
+    from src.etsy_api import EtsyApiClient
+    from src.keywords_api import KeywordsEverywhereClient
+
+    # Sans clé -> inactifs, jamais d'appel réseau, jamais de crash
+    e = EtsyApiClient(api_key=None)
+    check(not e.available, "EtsyApiClient inactif sans clé")
+    check(e.get_shop("Whatever") is None, "get_shop renvoie None sans clé (pas de réseau)")
+
+    k = KeywordsEverywhereClient(api_key=None)
+    check(not k.available, "KeywordsEverywhere inactif sans clé")
+    check(k.get_volumes(["x"]) == {}, "get_volumes renvoie {} sans clé")
+
+    # Parsing d'une réponse JSON Keywords Everywhere simulée (logique pure)
+    sample = {"data": [
+        {"keyword": "japandi wall art", "vol": 2400,
+         "cpc": {"currency": "€", "value": "0.42"}, "competition": 0.18},
+        {"keyword": "boho print", "vol": 900, "competition": 0.6},
+    ]}
+    parsed = KeywordsEverywhereClient._parse(sample)
+    check(parsed["japandi wall art"].volume == 2400, "volume KWE parsé (2400)")
+    check(abs(parsed["japandi wall art"].cpc - 0.42) < 0.001, "CPC KWE parsé (0.42)")
+    check(parsed["boho print"].cpc is None, "CPC absent -> None (pas inventé)")
+
+
+def test_etsy_api_mapping():
+    print("\n[API Etsy : réponse simulée -> ShopData]")
+    from src.etsy_api import EtsyApiClient
+
+    # Réponses JSON simulées comme celles de l'API v3.
+    shop_resp = {"results": [{
+        "shop_id": 123, "shop_name": "CoolShop", "transaction_sold_count": 4200,
+        "listing_active_count": 88, "review_count": 510, "review_average": 4.9,
+        "currency_code": "EUR", "create_date": 1609459200,  # 2021
+    }]}
+    listings_resp = {"results": [
+        {"title": "Japandi Wall Art Set of 3",
+         "price": {"amount": 1250, "divisor": 100, "currency_code": "EUR"}},
+        {"title": "Terracotta Arch Print",
+         "price": {"amount": 800, "divisor": 100, "currency_code": "EUR"}},
+    ]}
+
+    client = EtsyApiClient(api_key="FAKE_FOR_TEST")
+    # On court-circuite le réseau en remplaçant _get par des réponses canned.
+    client._get = lambda path, params=None: (  # type: ignore
+        shop_resp if path == "/shops" else listings_resp)
+
+    sd = client.get_shop("CoolShop", "fr")
+    check(sd is not None and sd.total_sales == 4200, "ventes mappées depuis l'API (4200)")
+    check(sd.active_listings == 88 and sd.reviews == 510, "fiches/avis mappés")
+    check(sd.currency == "EUR", "devise réelle conservée (EUR)")
+    check(abs((sd.avg_price_eur or 0) - 10.25) < 0.01, "prix moyen calculé (12.5+8)/2")
+    check("2021" in (sd.age_text or ""), "année d'ouverture déduite (2021)")
+    check(len(sd.sample_titles) == 2, "titres récupérés pour analyse")
+
+
+def test_seo_with_volumes():
+    print("\n[SEO avec volumes réels]")
+    from src.keywords_api import KeywordVolume
+    niche = {"emerging_subniches": ["japandi wall art"], "pillars": [],
+             "saturated_topics": []}
+    volumes = {"japandi wall art": KeywordVolume("japandi wall art", volume=2400,
+                                                 competition=0.18)}
+    ops = build_opportunities(niche, [], volumes)
+    op = next(o for o in ops if o.keyword == "japandi wall art")
+    check(op.search_volume == 2400, "volume réel injecté dans l'opportunité")
+    check(op.confirmation == "confirmée", "volume réel > 0 -> demande confirmée")
+    check("concurrence FAIBLE" in op.rationale, "concurrence faible signalée")
+
+    # Sans volumes -> comportement d'origine inchangé
+    ops2 = build_opportunities(niche, [])
+    check(next(o for o in ops2 if o.keyword == "japandi wall art").search_volume
+          is None, "sans clé KWE, pas de volume inventé")
+
+
 def main() -> int:
     print("=== TESTS — outil intelligence marché ===")
     test_config()
@@ -171,6 +247,9 @@ def main() -> int:
     test_prompts()
     test_parser()
     test_storage()
+    test_api_connectors()
+    test_etsy_api_mapping()
+    test_seo_with_volumes()
     print(f"\n{'='*42}")
     if _FAILURES:
         print(f"❌ {len(_FAILURES)} test(s) en échec :")

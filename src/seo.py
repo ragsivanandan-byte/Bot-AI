@@ -30,41 +30,51 @@ class SeoOpportunity:
     relative_interest: float | None = None
     direction: str = UNAVAILABLE
     saturated: bool = False
+    search_volume: int | None = None     # volume RÉEL (Keywords Everywhere)
+    competition: float | None = None     # 0 (faible) à 1 (forte), si dispo
 
 
 def build_opportunities(niche_cfg: dict,
-                        trend_results: list[TrendResult]) -> list[SeoOpportunity]:
+                        trend_results: list[TrendResult],
+                        volumes: dict | None = None) -> list[SeoOpportunity]:
     """
-    Croise piliers + sous-niches montantes + tendances pour produire une liste
-    d'opportunités SEO priorisées et honnêtement étiquetées.
+    Croise piliers + sous-niches montantes + tendances (+ volumes réels si une
+    clé Keywords Everywhere est fournie) pour produire une liste d'opportunités
+    SEO priorisées et honnêtement étiquetées.
+
+    `volumes` : dict {mot-clé -> KeywordVolume} (optionnel). S'il est présent,
+    les volumes RÉELS priment sur l'intérêt relatif pour le classement.
     """
     saturated = {s.lower() for s in niche_cfg.get("saturated_topics", [])}
     trend_by_kw = {t.keyword.lower(): t for t in trend_results}
+    volumes = volumes or {}
 
     opportunities: list[SeoOpportunity] = []
 
     # Sous-niches montantes = priorité haute (moins cannibalisées par hypothèse).
     for kw in niche_cfg.get("emerging_subniches", []):
-        opportunities.append(_make_opp(kw, trend_by_kw, saturated,
+        opportunities.append(_make_opp(kw, trend_by_kw, saturated, volumes,
                                         base_conf="partielle",
                                         why="sous-niche montante déclarée, "
                                             "potentiellement sous-exploitée"))
 
     # Piliers = socle, souvent plus concurrentiels.
     for kw in niche_cfg.get("pillars", []):
-        opportunities.append(_make_opp(kw, trend_by_kw, saturated,
+        opportunities.append(_make_opp(kw, trend_by_kw, saturated, volumes,
                                         base_conf="à valider",
                                         why="pilier de niche, demande établie "
                                             "mais concurrence probablement élevée"))
 
-    # Tri : confirmées > partielles > à valider, puis intérêt relatif décroissant.
+    # Tri : confirmées > partielles > à valider, puis volume réel (sinon intérêt
+    # relatif) décroissant.
     rank = {"confirmée": 0, "partielle": 1, "à valider": 2}
     opportunities.sort(key=lambda o: (rank.get(o.confirmation, 3),
+                                      -(o.search_volume or 0),
                                       -(o.relative_interest or 0)))
     return opportunities
 
 
-def _make_opp(kw: str, trend_by_kw: dict, saturated: set,
+def _make_opp(kw: str, trend_by_kw: dict, saturated: set, volumes: dict,
               base_conf: str, why: str) -> SeoOpportunity:
     sources = ["config.yaml (déclaratif)"]
     rel = None
@@ -84,6 +94,22 @@ def _make_opp(kw: str, trend_by_kw: dict, saturated: set,
             conf = "partielle" if conf == "à valider" else conf
             why += " ; intérêt stable et non négligeable sur Trends"
 
+    # Volume RÉEL (Keywords Everywhere) -> donnée la plus forte, prime sur le reste.
+    vol = None
+    comp = None
+    kv = volumes.get(kw)
+    if kv is not None and getattr(kv, "volume", None) is not None:
+        vol = kv.volume
+        comp = kv.competition
+        sources.append(kv.source)
+        if vol > 0:
+            # Volume réel mesuré -> demande confirmée ; bonus si concurrence faible.
+            conf = "confirmée"
+            low_comp = comp is not None and comp <= 0.35
+            why += (f" ; volume de recherche réel = {vol}/mois"
+                    + (" avec concurrence FAIBLE (opportunité forte)"
+                       if low_comp else ""))
+
     is_sat = any(s in kw.lower() for s in saturated)
     if is_sat:
         conf = "à valider"
@@ -91,7 +117,8 @@ def _make_opp(kw: str, trend_by_kw: dict, saturated: set,
 
     return SeoOpportunity(keyword=kw, confirmation=conf, rationale=why,
                           sources=sources, relative_interest=rel,
-                          direction=direction, saturated=is_sat)
+                          direction=direction, saturated=is_sat,
+                          search_volume=vol, competition=comp)
 
 
 def _match_trend(kw: str, trend_by_kw: dict) -> TrendResult | None:

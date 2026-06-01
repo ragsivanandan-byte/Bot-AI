@@ -165,6 +165,20 @@ grok_prompts:
     - "mountain + sun arch"
     - "raked sand zen circle (enso)"
 
+# --- Connecteurs API (optionnels) --------------------------------------------
+# Les CLÉS ne se mettent JAMAIS ici : elles se lisent dans des variables
+# d'environnement (voir README). Ici on règle juste l'activation et les options.
+api:
+  # API officielle Etsy (GRATUITE). Clé attendue dans la variable ETSY_API_KEY.
+  # Si la clé est absente, l'outil retombe automatiquement sur le parsing HTML.
+  use_etsy_api: true
+  # Keywords Everywhere (PAYANT, ~10-15€/mois en crédits) pour les volumes de
+  # recherche réels. Clé attendue dans KEYWORDS_EVERYWHERE_API_KEY.
+  # Si absente, l'outil retombe sur Google Trends (intérêt relatif).
+  use_keywords_everywhere: true
+  keywords_country: "fr"     # marché ciblé pour les volumes (fr, us, gb, au...)
+  keywords_currency: "eur"
+
 # --- Sortie ------------------------------------------------------------------
 output:
   reports_dir: "reports"

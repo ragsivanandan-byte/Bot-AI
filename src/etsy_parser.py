@@ -41,6 +41,7 @@ class ShopData:
     avg_price_eur: float | None = None
     price_min_eur: float | None = None
     price_max_eur: float | None = None
+    currency: str | None = None           # devise réelle (API). None si inconnue.
     age_text: str | None = None           # ancienneté brute si trouvée
     has_strikethrough_price: bool | None = None  # prix barré (promo) détecté ?
     languages: list[str] = field(default_factory=list)

@@ -134,11 +134,24 @@ dans le rapport.
 4. Consulter manuellement Pinterest Trends + eRank (pas d'API gratuite fiable).
 5. Personnaliser l'email du `user_agent` dans `config.yaml`.
 
+### 🔌 Connecteurs API ajoutés (sur demande de l'opérateur)
+Décision : « ultra connecté » pour 10-20€/mois. J'ai construit deux connecteurs
+**optionnels**, clé lue en variable d'environnement, **dégradation gracieuse
+totale sans clé** (l'outil retombe sur le comportement HTML/Trends d'origine).
+- **`etsy_api.py`** — API officielle Etsy v3 (GRATUITE). Priorité sur le scraping
+  HTML quand `ETSY_API_KEY` est défini. Mappe ventes/fiches/avis/note/prix/devise
+  vers `ShopData`. Path complet vérifié par test (réponse JSON simulée).
+- **`keywords_api.py`** — Keywords Everywhere (payant, ~10-15€/mois). Volumes de
+  recherche réels (proxy Google) injectés dans les opportunités SEO et les
+  prompts quand `KEYWORDS_EVERYWHERE_API_KEY` est défini.
+- Choix : ces deux-là car ce sont les **seules sources de qualité dotées d'une
+  API officielle** dans le budget. eRank/Marmalead/Alura/Everbee n'ont pas d'API
+  publique -> les automatiser violerait leurs CGU, donc exclus (restent manuels).
+- Honnêteté ajoutée dans LIMITS.md : prix Etsy en devise réelle non convertie ;
+  volumes KWE d'origine Google, pas Etsy ; crédits KWE consommés à chaque appel.
+
 ### 🚀 Prochaines améliorations possibles
-> (L'historisation + diff, initialement prévue ici, a été **implémentée** —
-> voir `storage.py` et la section « Évolution » de la veille.)
-1. **Connecteur eRank/Marmalead** (via clés API en variables d'environnement)
-   pour de vrais volumes de recherche au lieu de l'intérêt relatif.
+1. **Conversion de devises** (API de taux) pour normaliser les prix Etsy en EUR.
 2. **Rendu HTML/PDF + envoi par e-mail** du rapport quotidien (lecture mobile).
 3. **Graphe d'évolution** : à partir des snapshots SQLite, tracer la courbe des
    ventes/avis des top concurrents et de ma propre boutique (AOV, nb d'avis).
