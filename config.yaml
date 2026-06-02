@@ -76,7 +76,14 @@ niche:
 competitors:
   - slug: "NeutralWallDesign"   # toi-meme, pour reference dans le classement
     market: "au"
-    note: "ma boutique (reference)"
+    note: "ma boutique (reference). Chiffres a mettre a jour quand ils evoluent."
+    data:
+      sales: 1
+      listings: 16
+      reviews: 1
+      rating: 5.0
+      price: 6.0          # prix moyen affiche (ajuste si besoin)
+      since_year: 2026
   - slug: "MusingsOfMeiMei"
     market: "com"
     note: "Poids lourd nursery/boho neutre (Adelaide AU). Sets de 3, 15 JPG/5 ratios via PDF->Drive, promo permanente -40%, about tres personnel + video."
@@ -103,16 +110,37 @@ competitors:
       titles: ["Japandi Wall Art Set of 3 Neutral Minimalist Printable Digital Download"]
   - slug: "EmaParaschivArt"
     market: "com"
-    note: "Wabi-sabi / earth tone (mocha/taupe/cream). Star Seller. Tier 2."
-    # data: a completer en visitant la page (sales/reviews/rating/price)
+    note: "Wabi-sabi / earth tone (mocha/taupe/cream). Star Seller. Bucarest (Roumanie, UE). Tier 2."
+    data:
+      # Source : recherche web (snippets Google), À VÉRIFIER sur la page Etsy.
+      listings: 292
+      reviews: 530
+      rating: 4.9
+      # sales: NON trouvé via recherche -> complete-le en visitant la page.
+      # price: non trouve -> l'outil utilisera la fourchette de repli (config).
+      titles: ["Wabi Sabi Abstract Art Print Japandi Decor Earthy Neutral"]
   - slug: "Digivites"
     market: "com"
-    note: "Specialiste nursery/kids. Star Seller. Livraison via Dropbox. Concurrent direct Tier Nursery."
-    # data: a completer
+    note: "Specialiste nursery/kids (Suzi, depuis 2013). Star Seller. Livraison Dropbox. ⚠️ Le slug exact est peut-etre 'DigivitesPrints' (a verifier dans l'URL)."
+    data:
+      # Source : recherche web (snippets), À VÉRIFIER. Gros volume nursery.
+      sales: 47900        # ~47.9k (snippet)
+      reviews: 6600       # ~6.6k
+      rating: 4.9
+      since_year: 2013
+      titles: ["Safari Animal Nursery Print Set of 3 Baby Animal Wall Art"]
   - slug: "ZegaStudio"
     market: "com"
-    note: "Boho neutre / sun & celestial decor, instant download. Concurrent coeur boho/celestial."
-    # data: a completer
+    note: "Boho neutre / sun & celestial decor (Jaclyn, Queens NY). Instant download. Codes promo PRINTS20/30/40/50. Concurrent coeur boho/celestial."
+    data:
+      # Source : recherche web (snippets), À VÉRIFIER. (snippet ambigu: 2,98k vs 3,2k ventes)
+      sales: 3200
+      reviews: 210
+      rating: 5.0
+      since_year: 2021    # "5 ans sur Etsy" (approx)
+      strikethrough: true # codes promo permanents
+      currency: "USD"     # boutique a Queens, NY
+      titles: ["Boho Sun Wall Decor Printable Neutral Aesthetic Wall Art"]
 
 # --- Découverte automatique de concurrents -----------------------------------
 # Requetes de recherche Etsy publique utilisees pour decouvrir de nouveaux
