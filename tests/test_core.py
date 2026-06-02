@@ -316,17 +316,36 @@ def cli_logger():
 
 
 def test_cli_smoke():
-    print("\n[smoke CLI : les modes tournent sans erreur]")
-    import main as cli
-    rc1 = cli.main(["--no-network"])
-    check(rc1 == 0, "`main.py --no-network` se termine proprement (code 0)")
-    rc2 = cli.main(["--demo", "--no-network"])
-    check(rc2 == 0, "`main.py --demo --no-network` se termine proprement (code 0)")
+    print("\n[smoke CLI : les modes tournent sans erreur — ISOLÉ]")
+    import os
+    import shutil
     from datetime import date
-    rep = Path("reports") / date.today().isoformat()
-    for f in ("veille_concurrents.md", "prompts_grok_du_jour.md",
-              "guidelines_claude_chat.md"):
-        check((rep / f).exists(), f"rapport généré : {f}")
+    import main as cli
+
+    repo = Path(__file__).resolve().parent.parent
+    cwd0 = os.getcwd()
+    tmp = tempfile.mkdtemp()
+    try:
+        # On copie config.yaml dans un dossier temporaire et on s'y place : ainsi
+        # reports/, cache/ et logs/ sont créés dans le tmp, JAMAIS dans le vrai
+        # dépôt (sinon les tests pollueraient l'historique concurrents réel).
+        shutil.copy(repo / "config.yaml", Path(tmp) / "config.yaml")
+        os.chdir(tmp)
+        rc1 = cli.main(["--no-network"])
+        check(rc1 == 0, "`main.py --no-network` se termine proprement (code 0)")
+        rc2 = cli.main(["--demo", "--no-network"])
+        check(rc2 == 0, "`main.py --demo --no-network` -> code 0")
+        rep = Path(tmp) / "reports" / date.today().isoformat()
+        for f in ("veille_concurrents.md", "prompts_grok_du_jour.md",
+                  "guidelines_claude_chat.md"):
+            check((rep / f).exists(), f"rapport généré : {f}")
+        # guidelines = sur-ensemble fusionné (veille + prompts en annexes)
+        gtext = (rep / "guidelines_claude_chat.md").read_text(encoding="utf-8")
+        check("ANNEXE A" in gtext and "ANNEXE B" in gtext,
+              "guidelines fusionné contient veille + prompts (1 copier-coller)")
+    finally:
+        os.chdir(cwd0)
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def main() -> int:

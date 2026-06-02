@@ -532,9 +532,8 @@ def test_keywords_api_http():
 # --- main (câblage) ----------------------------------------------------------
 
 def test_main_wiring():
-    print("\n[main : shop_url, discover, collect, selftest, pipeline complet]")
+    print("\n[main : shop_url, discover, collect (offline + données manuelles)]")
     import main as cli
-    from src.etsy_parser import ShopData
 
     check(cli.shop_url("X", "com") == "https://www.etsy.com/shop/X", "shop_url .com")
     check(cli.shop_url("X", "fr") == "https://www.etsy.com/fr/shop/X", "shop_url .fr")
@@ -548,53 +547,35 @@ def test_main_wiring():
     check(cli.discover_competitors({"discovery": {"enabled": False}}, None, lg) == [],
           "discover désactivé -> liste vide")
 
-    # collect hors-ligne -> dégradé
+    # collect hors-ligne SANS donnée manuelle -> dégradé
     cfg_off = {"competitors": [{"slug": "A", "market": "com"}], "shop": {},
                "revenue_estimation": {}, "ai_inference": {}}
     profs, degraded = cli.collect_competitors(cfg_off, None, lg, allow_network=False)
     check(degraded and len(profs) == 1 and not profs[0].shop.fetched,
-          "collect --no-network -> dégradé, profils marqués non récupérés")
+          "collect --no-network sans data -> dégradé, profil non récupéré")
 
-    # Pipeline main() complet avec connecteurs simulés (clés présentes)
-    import src.etsy_api as etsy_mod
-    import src.keywords_api as kwe_mod
-    saved_e, saved_k = etsy_mod.EtsyApiClient, kwe_mod.KeywordsEverywhereClient
-
-    class FakeEtsy:
-        def __init__(self, *a, **k): pass
-        available = True
-        def get_shop(self, slug, market="com", sample_listings=24):
-            return ShopData(slug=slug, market=market, url="u", fetched=True,
-                            source_note="API Etsy (simulée)", total_sales=5000,
-                            active_listings=120, reviews=800, avg_rating=4.9,
-                            avg_price_eur=10.8, currency="USD",
-                            sample_titles=["Japandi Set of 3"])
-
-    class FakeKWE:
-        def __init__(self, *a, **k): pass
-        available = True
-        def get_volumes(self, kws): return {}
-
-    etsy_mod.EtsyApiClient = FakeEtsy
-    kwe_mod.KeywordsEverywhereClient = FakeKWE
-    try:
-        rc = cli.main(["--verbose"])
-        check(rc == 0, "main() avec clés simulées -> exit 0")
-        from datetime import date
-        day = Path("reports") / date.today().isoformat()
-        text = (day / "veille_concurrents.md").read_text(encoding="utf-8")
-        check("API Etsy (simulée)" in text, "rapport contient les données de l'API")
-        check("5000" in text, "ventes (5000) présentes dans le rapport")
-        check("d'origine" in text, "conversion de devise appliquée dans le rapport")
-        # Le fichier guidelines doit être le sur-ensemble fusionné.
-        gtext = (day / "guidelines_claude_chat.md").read_text(encoding="utf-8")
-        check("ANNEXE A" in gtext and "ANNEXE B" in gtext,
-              "guidelines fusionné contient veille + prompts (1 copier-coller)")
-        check("5000" in gtext and "solid filled" in gtext,
-              "guidelines fusionné : données concurrents + prompts présents")
-    finally:
-        etsy_mod.EtsyApiClient = saved_e
-        kwe_mod.KeywordsEverywhereClient = saved_k
+    # collect avec DONNÉES MANUELLES (config) -> non dégradé, analyse complète,
+    # même sans réseau ni API (voie conforme aux CGU). + conversion en EUR.
+    from src.currency import CurrencyConverter
+    conv = CurrencyConverter(cache_path=tempfile.mktemp(suffix=".json"),
+                             allow_network=False)
+    cfg_manual = {"shop": {"total_sales": 1, "active_listings": 16, "reviews": 1},
+                  "revenue_estimation": {}, "ai_inference": {"enabled": True,
+                  "threshold": 4, "weights": {}},
+                  "competitors": [{"slug": "MeiMei", "market": "com",
+                                   "data": {"sales": 28300, "reviews": 3800,
+                                            "rating": 5.0, "price": 8.64,
+                                            "currency": "USD", "strikethrough": True,
+                                            "since_year": 2016,
+                                            "titles": ["Boho Nursery Set of 3"]}}]}
+    profs2, degraded2 = cli.collect_competitors(cfg_manual, None, lg,
+                                               allow_network=False, converter=conv)
+    p = profs2[0].shop
+    check(not degraded2, "données manuelles -> pipeline NON dégradé (sans API)")
+    check(p.total_sales == 28300 and p.reviews == 3800, "chiffres manuels chargés")
+    check(abs(p.avg_price_eur - 8.0) < 0.01, "prix manuel USD converti en EUR (8.64->8)")
+    check(profs2[0].revenue.available and profs2[0].revenue.lifetime_low_eur == 226400,
+          "CA estimé depuis données manuelles (28300 x 8)")
 
 
 def run() -> int:

@@ -55,6 +55,50 @@ class ShopData:
 
 # --- Helpers d'extraction ----------------------------------------------------
 
+def shop_from_manual(slug: str, market: str, url: str,
+                     data: dict) -> ShopData:
+    """
+    Construit un ShopData à partir de chiffres PUBLICS saisis manuellement dans
+    config.yaml (bloc `data:` d'un concurrent).
+
+    Voie 100 % conforme aux CGU : ce sont des chiffres visibles publiquement sur
+    la page de la boutique, que tu notes toi-même (aucun scraping, aucune API).
+    Tout champ absent reste None (jamais inventé).
+    """
+    sd = ShopData(slug=slug, market=market, url=url, fetched=True,
+                  source_note="données publiques saisies manuellement (config.yaml)")
+    sd.name = data.get("name") or slug
+    sd.total_sales = _coerce_int(data.get("sales"))
+    sd.active_listings = _coerce_int(data.get("listings"))
+    sd.reviews = _coerce_int(data.get("reviews"))
+    sd.avg_rating = _coerce_float(data.get("rating"))
+    sd.avg_price_eur = _coerce_float(data.get("price"))
+    sd.price_min_eur = _coerce_float(data.get("price_min"))
+    sd.price_max_eur = _coerce_float(data.get("price_max"))
+    sd.currency = data.get("currency")
+    sd.has_strikethrough_price = data.get("strikethrough")
+    if data.get("since_year"):
+        sd.age_text = f"On Etsy since {data.get('since_year')}"
+    titles = data.get("titles")
+    if isinstance(titles, list):
+        sd.sample_titles = [str(t) for t in titles]
+    return sd
+
+
+def _coerce_int(v) -> int | None:
+    try:
+        return int(v) if v is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _coerce_float(v) -> float | None:
+    try:
+        return float(v) if v is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 def _to_int(s: str | None) -> int | None:
     """Extrait un entier depuis une chaîne ('1,234 Sales' -> 1234)."""
     if not s:

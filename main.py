@@ -38,7 +38,7 @@ from pathlib import Path
 
 from src.analysis import build_profile, rank_competitors
 from src.config_loader import ConfigError, load_config
-from src.etsy_parser import ShopData, parse_shop_page
+from src.etsy_parser import ShopData, parse_shop_page, shop_from_manual
 from src.fetcher import RespectfulFetcher
 from src.prompt_generator import generate_daily_prompts
 from src.report_generator import (render_competitors, render_grok_prompts,
@@ -87,7 +87,18 @@ def collect_competitors(cfg, fetcher, logger, allow_network: bool,
         url = shop_url(slug, market)
         shop = None
 
-        if not allow_network:
+        # 0) Données publiques saisies à la main dans config.yaml -> PRIORITÉ.
+        # Voie conforme aux CGU (chiffres publics notés par l'utilisateur). C'est
+        # la source recommandée pour la veille concurrentielle (l'API Etsy
+        # interdit largement la collecte de données sur d'autres boutiques).
+        manual = comp.get("data")
+        if isinstance(manual, dict) and manual:
+            shop = shop_from_manual(slug, market, url, manual)
+            any_fetched = True
+
+        if shop is not None:
+            pass  # données manuelles déjà obtenues
+        elif not allow_network:
             shop = ShopData(slug=slug, market=market, url=url, fetched=False,
                             source_note="mode hors-ligne (--no-network)")
         else:
@@ -123,8 +134,10 @@ def collect_competitors(cfg, fetcher, logger, allow_network: bool,
         profiles.append(build_profile(shop, my_shop, rev_cfg, ai_cfg))
 
     profiles = rank_competitors(profiles)
-    # Dégradé si on n'a obtenu AUCUNE page (réseau bloqué) ou mode hors-ligne.
-    degraded = (allow_network and not any_fetched) or (not allow_network)
+    # Dégradé UNIQUEMENT si AUCUNE donnée n'a été obtenue (ni manuelle, ni API,
+    # ni HTML). Les données manuelles de config.yaml comptent comme des données,
+    # même hors-ligne -> un run avec data: n'est PAS dégradé.
+    degraded = not any_fetched
     return profiles, degraded
 
 

@@ -52,28 +52,67 @@ niche:
     - "minimalist mountain range"
 
 # --- Concurrents à suivre ----------------------------------------------------
-# Concurrentes RÉELLES identifiées par Ragavan (juin 2026), validées à la main
-# sur Etsy. Le slug = dernier segment de l'URL /shop/<slug>. Le 'market' ne sert
-# qu'à l'affichage de l'URL ; l'API Etsy retrouve la boutique par son nom.
+# Concurrentes RÉELLES identifiées par Ragavan, validées à la main sur Etsy.
+#
+# >>> SAISIE MANUELLE DES CHIFFRES PUBLICS (recommandée) <<<
+# L'API Etsy interdit largement la collecte de données sur d'AUTRES boutiques.
+# La voie 100% conforme = noter toi-même les chiffres PUBLICS visibles sur la
+# page de chaque boutique, dans un bloc `data:`. L'outil les utilise alors pour
+# toute l'analyse (CA estimé, inférence IA, comparaison, évolution).
+# Mets à jour ces chiffres quand tu passes voir les boutiques (1x/semaine suffit).
+#
+# Champs disponibles dans `data:` (tous optionnels, laisse vide si inconnu) :
+#   sales: <int>          # nombre de ventes affiché
+#   listings: <int>       # nb de fiches actives
+#   reviews: <int>        # nb d'avis
+#   rating: <float>       # note moyenne (ex: 4.9)
+#   price: <float>        # prix moyen/representatif affiché
+#   price_min: <float>    # prix le plus bas
+#   price_max: <float>    # prix le plus haut (ex: prix barre d'origine)
+#   currency: "USD"       # devise affichée (USD/EUR/GBP/AUD...) -> conversion en EUR
+#   strikethrough: true   # promo / prix barre present ?
+#   since_year: 2016      # annee d'ouverture
+#   titles: ["..."]       # 1-2 titres de fiches (sert a l'analyse de patterns)
 competitors:
   - slug: "NeutralWallDesign"   # toi-meme, pour reference dans le classement
     market: "au"
     note: "ma boutique (reference)"
   - slug: "MusingsOfMeiMei"
     market: "com"
-    note: "Poids lourd nursery/boho neutre (Adelaide AU). ~28k ventes, 9 ans, sets de 3, 15 JPG/5 ratios via PDF->Drive, promo permanente -40%, about tres personnel + video."
+    note: "Poids lourd nursery/boho neutre (Adelaide AU). Sets de 3, 15 JPG/5 ratios via PDF->Drive, promo permanente -40%, about tres personnel + video."
+    data:
+      sales: 28300
+      reviews: 3800
+      rating: 5.0
+      price: 8.16          # prix promo actuel
+      price_max: 13.59     # prix barre d'origine
+      currency: "USD"      # A VERIFIER (boutique AU : peut etre AUD)
+      strikethrough: true
+      since_year: 2016
+      titles: ["Boho Neutral Nursery Wall Art Set of 3 Printable Earthy Terracotta"]
   - slug: "MyAestheticAlley"
     market: "com"
-    note: "MIROIR le plus proche (Allemagne UE, 2 ans, ~1.2k ventes). Japandi neutre, sets de 3, IA-assistee assumee, taille perso en add-on payant. A etudier en priorite."
+    note: "MIROIR le plus proche (Allemagne UE, 2 ans). Japandi neutre, sets de 3, IA-assistee assumee, taille perso en add-on payant. A etudier en priorite."
+    data:
+      sales: 1200
+      reviews: 81
+      rating: 4.9
+      price: 14.00
+      currency: "USD"      # A VERIFIER
+      since_year: 2024
+      titles: ["Japandi Wall Art Set of 3 Neutral Minimalist Printable Digital Download"]
   - slug: "EmaParaschivArt"
     market: "com"
     note: "Wabi-sabi / earth tone (mocha/taupe/cream). Star Seller. Tier 2."
+    # data: a completer en visitant la page (sales/reviews/rating/price)
   - slug: "Digivites"
     market: "com"
     note: "Specialiste nursery/kids. Star Seller. Livraison via Dropbox. Concurrent direct Tier Nursery."
+    # data: a completer
   - slug: "ZegaStudio"
     market: "com"
     note: "Boho neutre / sun & celestial decor, instant download. Concurrent coeur boho/celestial."
+    # data: a completer
 
 # --- Découverte automatique de concurrents -----------------------------------
 # Requetes de recherche Etsy publique utilisees pour decouvrir de nouveaux
