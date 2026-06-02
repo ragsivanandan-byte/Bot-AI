@@ -119,16 +119,16 @@ competitors:
       # sales: NON trouvé via recherche -> complete-le en visitant la page.
       # price: non trouve -> l'outil utilisera la fourchette de repli (config).
       titles: ["Wabi Sabi Abstract Art Print Japandi Decor Earthy Neutral"]
-  - slug: "Digivites"
+  - slug: "DigivitesPrints"
     market: "com"
-    note: "Specialiste nursery/kids (Suzi, depuis 2013). Star Seller. Livraison Dropbox. ⚠️ Le slug exact est peut-etre 'DigivitesPrints' (a verifier dans l'URL)."
+    note: "Specialiste nursery/kids (Suzi). Star Seller. Slug CONFIRME = DigivitesPrints (et non Digivites). Livraison Dropbox."
     data:
       # Source : recherche web (snippets), À VÉRIFIER. Gros volume nursery.
       sales: 47900        # ~47.9k (snippet)
       reviews: 6600       # ~6.6k
       rating: 4.9
-      since_year: 2013
-      titles: ["Safari Animal Nursery Print Set of 3 Baby Animal Wall Art"]
+      since_year: 2013    # approx, a confirmer
+      titles: ["Safari Animal Nursery Print Set of 6 Baby Animal Wall Art"]
   - slug: "ZegaStudio"
     market: "com"
     note: "Boho neutre / sun & celestial decor (Jaclyn, Queens NY). Instant download. Codes promo PRINTS20/30/40/50. Concurrent coeur boho/celestial."
