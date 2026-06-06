@@ -38,7 +38,7 @@ from src.prompt_generator import generate_daily_brief  # noqa: E402
 class Job:
     label: str
     cmd: list[str]
-    out: Path
+    outs: list[Path]   # fichier(s) attendu(s) (plusieurs en mode batch)
 
 
 def _out_dir(grok_cfg: dict) -> Path:
@@ -50,17 +50,32 @@ def _save_clause(path: Path, kind: str = "PNG") -> str:
 
 
 def build_design_jobs(brief, grok_cfg: dict) -> list[Job]:
-    """N variations par design brut → fichiers _NN_vK.png."""
+    """
+    N variations par design brut → fichiers _NN_vK.png.
+
+    Mode `batch_variations` (défaut) : UN SEUL appel `grok` par design demande les
+    N variations d'un coup (comme Grok Imagine) → beaucoup plus rapide que N
+    appels (chaque démarrage d'agent est coûteux). Sinon : 1 appel/variation.
+    """
     out = _out_dir(grok_cfg)
-    n = int(grok_cfg.get("variations_per_design", 4))
+    n = int(grok_cfg.get("variations_per_design", 8))
+    grok = grok_cfg.get("grok_command", "grok")
+    batch = bool(grok_cfg.get("batch_variations", True))
     jobs: list[Job] = []
     for i, design in enumerate(brief.raw_prompts, 1):
-        for v in range(1, n + 1):
-            path = out / f"{brief.slug}_{i:02d}_v{v}.png"
-            jobs.append(Job(label=f"Design {i} — variation {v}",
-                            cmd=[grok_cfg.get("grok_command", "grok"), "-p",
-                                 design.prompt_text + _save_clause(path)],
-                            out=path))
+        paths = [out / f"{brief.slug}_{i:02d}_v{v}.png" for v in range(1, n + 1)]
+        if batch:
+            files = ", ".join(str(p) for p in paths)
+            prompt = (design.prompt_text +
+                      f" Generate {n} DISTINCT variations of this image and save "
+                      f"them as exactly these {n} PNG files: {files}.")
+            jobs.append(Job(label=f"Design {i} — {n} variations (1 appel)",
+                            cmd=[grok, "-p", prompt], outs=paths))
+        else:
+            for v, path in enumerate(paths, 1):
+                jobs.append(Job(label=f"Design {i} — variation {v}",
+                                cmd=[grok, "-p", design.prompt_text +
+                                     _save_clause(path)], outs=[path]))
     return jobs
 
 
@@ -79,7 +94,7 @@ def build_mockup_jobs(brief, grok_cfg: dict, design_files: list[str]) -> list[Jo
                   f" Use the existing image file at {ref_file} as the poster — "
                   f"paste it UNCHANGED (pixel-for-pixel, opaque)." +
                   _save_clause(path))
-        jobs.append(Job(label=mk.label, cmd=[grok, "-p", prompt], out=path))
+        jobs.append(Job(label=mk.label, cmd=[grok, "-p", prompt], outs=[path]))
     return jobs
 
 
@@ -90,31 +105,49 @@ def build_video_job(brief, grok_cfg: dict, cover_file: str) -> Job:
     path = out / f"{brief.slug}_Video.mp4"
     prompt = (brief.video_prompt +
               f" Source still image file: {cover}." + _save_clause(path, "MP4"))
-    return Job(label="Vidéo 6 s", cmd=[grok, "-p", prompt], out=path)
+    return Job(label="Vidéo 6 s", cmd=[grok, "-p", prompt], outs=[path])
 
 
 def _default_runner(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
-def run_jobs(jobs: list[Job], timeout: int, runner=_default_runner) -> dict:
-    """Exécute les jobs séquentiellement. Renvoie un récap {ok, failed}."""
+def _run_one(job: Job, timeout: int, runner) -> tuple[Job, str, str]:
+    """Exécute un job, renvoie (job, statut, détail). Ne lève jamais."""
+    for o in job.outs:
+        o.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        runner(job.cmd, timeout)
+    except Exception as e:  # timeout, binaire absent, etc.
+        return job, "fail", f"{type(e).__name__}: {e}"
+    made = [o for o in job.outs if o.exists() and o.stat().st_size > 0]
+    if len(made) == len(job.outs):
+        return job, "ok", f"{len(made)}/{len(job.outs)} fichier(s)"
+    if made:
+        return job, "partial", f"{len(made)}/{len(job.outs)} fichier(s)"
+    return job, "fail", "aucun fichier produit"
+
+
+def run_jobs(jobs: list[Job], timeout: int, runner=_default_runner,
+             workers: int = 1) -> dict:
+    """
+    Exécute les jobs (séquentiel si workers=1, sinon en parallèle). Renvoie un
+    récap {ok, failed}. Le parallélisme accélère le mur-à-mur mais consomme plus
+    de quota/ressources simultanément.
+    """
+    print(f"→ {len(jobs)} job(s), {workers} en parallèle …", flush=True)
+    if workers > 1:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            results = list(ex.map(lambda j: _run_one(j, timeout, runner), jobs))
+    else:
+        results = [_run_one(j, timeout, runner) for j in jobs]
+
     ok, failed = [], []
-    for j in jobs:
-        j.out.parent.mkdir(parents=True, exist_ok=True)
-        print(f"→ {j.label} …", flush=True)
-        try:
-            runner(j.cmd, timeout)
-        except Exception as e:  # timeout, binaire absent, etc. : on continue
-            print(f"  ⚠️ échec génération ({type(e).__name__}: {e})")
-            failed.append(j.label)
-            continue
-        if j.out.exists() and j.out.stat().st_size > 0:
-            print(f"  ✅ {j.out}")
-            ok.append(j.label)
-        else:
-            print("  ⚠️ aucun fichier produit (à refaire / QC)")
-            failed.append(j.label)
+    for job, status, detail in results:
+        icon = {"ok": "✅", "partial": "🟡", "fail": "⚠️"}.get(status, "•")
+        print(f"  {icon} {job.label} — {detail}")
+        (ok if status == "ok" else failed).append(job.label)
     return {"ok": ok, "failed": failed}
 
 
@@ -147,9 +180,10 @@ def main(argv=None) -> int:
     else:
         jobs = build_design_jobs(brief, grok_cfg)
         print(f"== Designs bruts ({brief.theme}) — "
-              f"{grok_cfg.get('variations_per_design', 4)} variations/design ==")
+              f"{grok_cfg.get('variations_per_design', 8)} variations/design ==")
 
-    recap = run_jobs(jobs, timeout)
+    workers = int(grok_cfg.get("parallel_workers", 1))
+    recap = run_jobs(jobs, timeout, workers=workers)
     print(f"\nTerminé : {len(recap['ok'])} OK, {len(recap['failed'])} à refaire.")
     if recap["failed"]:
         print("À refaire :", ", ".join(recap["failed"]))

@@ -442,57 +442,68 @@ def test_grok_runner():
     sys.modules["grok_generate"] = gg  # requis pour résoudre les annotations dataclass
     spec.loader.exec_module(gg)
 
+    import re as _re
+
+    def ok_runner(cmd, timeout):
+        # crée TOUS les fichiers cités dans la commande (batch ou unitaire)
+        for p in _re.findall(r"(/[^\s,]+\.(?:png|mp4|jpg))", cmd[2]):
+            Path(p).write_bytes(b"x")
+        class R: returncode = 0
+        return R()
+
+    def noop_runner(cmd, timeout):
+        class R: returncode = 0
+        return R()
+
     tmp = tempfile.mkdtemp()
     grok_cfg = {"output_dir": tmp, "variations_per_design": 2, "palette": ["a"],
                 "mockup_rooms": ["r1", "r2", "r3", "r4"], "grok_command": "grok"}
     brief = generate_daily_brief(grok_cfg, {"saturated_topics": []}, [],
                                  date(2026, 6, 6))
 
-    # Phase designs : 3 designs × 2 variations = 6 jobs
+    # Mode BATCH (défaut) : 1 appel par design, 2 fichiers attendus chacun
     djobs = gg.build_design_jobs(brief, grok_cfg)
-    check(len(djobs) == 6, "6 jobs designs (3 designs × 2 variations)")
-    j0 = djobs[0]
-    check(j0.cmd[0] == "grok" and j0.cmd[1] == "-p", "commande `grok -p` construite")
-    check("Save the result as a PNG file at" in j0.cmd[2], "clause de sauvegarde PNG")
-    check(str(j0.out).endswith("_01_v1.png"), "nommage variation correct")
+    check(len(djobs) == 3, "batch : 3 jobs (1 appel par design)")
+    check(len(djobs[0].outs) == 2, "batch : 2 variations attendues par appel")
+    check(djobs[0].cmd[0] == "grok" and djobs[0].cmd[1] == "-p", "commande `grok -p`")
+    check("save them as exactly these 2 PNG files" in djobs[0].cmd[2],
+          "batch : demande les 2 variations en un seul appel")
 
-    # Phase mockups : 4 mockups + 1 vidéo, depuis 3 designs gagnants
+    # Mode NON-batch : 1 appel par variation = 6 jobs
+    nb = gg.build_design_jobs(brief, dict(grok_cfg, batch_variations=False))
+    check(len(nb) == 6, "non-batch : 6 jobs (1 par variation)")
+    check("Save the result as a PNG file at" in nb[0].cmd[2], "non-batch : clause PNG")
+
+    # Mockups + vidéo depuis 3 gagnants
     wins = [f"{tmp}/win1.png", f"{tmp}/win2.png", f"{tmp}/win3.png"]
     mjobs = gg.build_mockup_jobs(brief, grok_cfg, wins)
     check(len(mjobs) == 4, "4 jobs mockups")
-    cover = mjobs[0]
-    check("win1.png" in cover.cmd[2] and "UNCHANGED" in cover.cmd[2],
-          "cover : référence le design gagnant + règle 'UNCHANGED'")
+    check("win1.png" in mjobs[0].cmd[2] and "UNCHANGED" in mjobs[0].cmd[2],
+          "cover : référence le gagnant + règle 'UNCHANGED'")
     vid = gg.build_video_job(brief, grok_cfg, wins[0])
-    check(str(vid.out).endswith(".mp4") and "MP4" in vid.cmd[2], "job vidéo MP4")
+    check(str(vid.outs[0]).endswith(".mp4") and "MP4" in vid.cmd[2], "job vidéo MP4")
 
-    # Orchestration : runner simulé qui CRÉE le fichier -> tout OK
-    def ok_runner(cmd, timeout):
-        # le dernier argument contient "... at <path>." -> on crée ce fichier
-        import re as _re
-        m = _re.search(r" at (\S+?)\.(png|mp4|jpg)", cmd[2].replace("\n", " "))
-        if m:
-            Path(m.group(1) + "." + m.group(2)).write_bytes(b"x")
-        class R: returncode = 0
-        return R()
+    # Orchestration batch : runner qui crée les fichiers -> 3 OK (6 fichiers)
     recap = gg.run_jobs(djobs, 5, runner=ok_runner)
-    check(len(recap["ok"]) == 6 and not recap["failed"],
-          "runner simulé crée les fichiers -> 6 OK")
+    check(len(recap["ok"]) == 3 and not recap["failed"],
+          "batch : runner crée les fichiers -> 3 jobs OK")
 
-    # Runner qui échoue (aucun fichier) -> tout 'failed', pas de crash.
-    # Dossier de sortie NEUF pour que les fichiers n'existent pas déjà.
+    # Parallèle : 2 workers, runner OK -> toujours 3 OK (dossier neuf)
+    tmpp = tempfile.mkdtemp()
+    briefp = generate_daily_brief(dict(grok_cfg, output_dir=tmpp),
+                                  {"saturated_topics": []}, [], date(2026, 6, 6))
+    recapp = gg.run_jobs(gg.build_design_jobs(briefp, dict(grok_cfg,
+                         output_dir=tmpp)), 5, runner=ok_runner, workers=2)
+    check(len(recapp["ok"]) == 3, "parallèle (2 workers) : 3 jobs OK")
+
+    # Runner qui ne produit rien -> 'failed', pas de crash (dossier neuf)
     tmp2 = tempfile.mkdtemp()
-    grok_cfg2 = dict(grok_cfg, output_dir=tmp2)
-    brief2 = generate_daily_brief(grok_cfg2, {"saturated_topics": []}, [],
-                                  date(2026, 6, 6))
-
-    def noop_runner(cmd, timeout):
-        class R: returncode = 0
-        return R()
-    recap2 = gg.run_jobs(gg.build_design_jobs(brief2, grok_cfg2), 5,
-                         runner=noop_runner)
-    check(len(recap2["failed"]) == 6 and not recap2["ok"],
-          "aucun fichier produit -> 6 à refaire, sans crash")
+    brief2 = generate_daily_brief(dict(grok_cfg, output_dir=tmp2),
+                                  {"saturated_topics": []}, [], date(2026, 6, 6))
+    recap2 = gg.run_jobs(gg.build_design_jobs(brief2, dict(grok_cfg,
+                         output_dir=tmp2)), 5, runner=noop_runner)
+    check(len(recap2["failed"]) == 3 and not recap2["ok"],
+          "aucun fichier produit -> jobs à refaire, sans crash")
 
 
 # --- storage (compléments) ---------------------------------------------------

@@ -117,6 +117,11 @@ Réglages dans `config.yaml > grok_prompts` : `auto_generate`, `variations_per_d
 `grok_command`, `per_call_timeout_s`. Si `grok` n'est pas installé, l'étape est
 ignorée proprement.
 
+**Vitesse** : `batch_variations: true` (défaut) demande les N variations d'un
+design en **un seul appel** `grok` (au lieu de N) → beaucoup plus rapide.
+`parallel_workers: 3` lance plusieurs designs **en parallèle** (plus rapide,
+consomme plus de quota simultanément).
+
 ### Veille jour à jour (historisation)
 
 À chaque run, l'état public des concurrents est enregistré dans une base SQLite
