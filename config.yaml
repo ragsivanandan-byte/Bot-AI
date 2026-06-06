@@ -13,16 +13,16 @@
 # automatiquement sur ta propre boutique pour éviter toute donnée périmée).
 shop:
   name: "NeutralWallDesign"
-  url: "https://www.etsy.com/au/shop/NeutralWallDesign"
-  market: "au"                 # code marché Etsy utilisé dans l'URL (au, fr, com...)
-  active_listings: 16
-  total_sales: 1               # ventes publiques affichées
+  url: "https://www.etsy.com/shop/NeutralWallDesign"   # JAMAIS de prefixe pays (/au/, /fr/)
+  market: "com"                # "com" => URL sans prefixe pays (canonique)
+  active_listings: 20          # ~20 fiches actives (corrige par Claude Chat 06/06)
+  total_sales: 2               # ventes publiques affichées
   reviews: 1
   avg_rating: 5.0
-  avg_price_eur: 6.0           # prix moyen affiché de tes fiches (à ajuster)
+  avg_price_eur: 6.90          # single 6,90 € (set de 3 : 13,90 € ; set de 6 : 26,90 €)
   age_months: 2
-  formats: ["single"]          # ce que tu vends aujourd'hui : single / set / bundle
-  ratios_delivered: 5          # nb de ratios livrés par fiche (ex: 2:3, 3:4, 4:5, A, ISO)
+  formats: ["single", "set"]   # singles + sets de 3 + set de 6
+  ratios_delivered: 5          # sets = 5 ratios ; singles = 2 ratios (2:3 + 3:4)
 
 # --- Niche et mots-clés ------------------------------------------------------
 # Le coeur du ciblage. Ajoute/retire librement.
@@ -37,15 +37,20 @@ niche:
     - "organic minimalist wall art"
     - "celestial wall art neutral"
     - "warm minimalist print set"
-  # Sous-niches montantes à surveiller (hypothèses à valider via Trends/recherche)
+  # Sous-niches SOUS-EXPLOITÉES à prioriser (carte anti-répétition Claude Chat 06/06)
   emerging_subniches:
+    - "panoramic above sofa wall art"      # ratios 2:1 / 3:1 / 5:2
+    - "frame tv art neutral"               # 16:9
+    - "neutral adult bedroom wall art"
+    - "desk entryway minimalist art"
     - "scandi japandi gallery wall"
-    - "earthy abstract arch print"
-    - "muted boho line art"
-    - "neutral textured beige art"
-    - "sun and moon terracotta set"
-  # Sujets considérés comme saturés/cannibalisés -> à EVITER dans les prompts
+  # Sujets SATURÉS (déjà très couverts par la boutique/concurrents) -> à EVITER
+  # dans les nouveaux prompts (anti-répétition).
   saturated_topics:
+    - "terracotta arch"
+    - "boho moon"
+    - "boho sun"
+    - "nursery"
     - "highland cow"
     - "boho rainbow generic"
     - "single line face one line drawing"
@@ -75,18 +80,18 @@ niche:
 #   titles: ["..."]       # 1-2 titres de fiches (sert a l'analyse de patterns)
 competitors:
   - slug: "NeutralWallDesign"   # toi-meme, pour reference dans le classement
-    market: "au"
+    market: "com"               # pas de prefixe pays
     note: "ma boutique (reference). Chiffres a mettre a jour quand ils evoluent."
     data:
-      sales: 1
-      listings: 16
+      sales: 2
+      listings: 20
       reviews: 1
       rating: 5.0
-      price: 6.0          # prix moyen affiche (ajuste si besoin)
+      price: 6.90         # single ; sets 13,90 / 26,90 €
       since_year: 2026
   - slug: "MusingsOfMeiMei"
     market: "com"
-    note: "Poids lourd nursery/boho neutre (Adelaide AU). Sets de 3, 15 JPG/5 ratios via PDF->Drive, promo permanente -40%, about tres personnel + video."
+    note: "Poids lourd nursery/boho neutre (Adelaide AU). DESSIN A LA MAIN (hand-lettering/hand-drawing declare dans son About) -> A EXCLURE du benchmark 'boutiques IA'. Sets de 3, promo permanente -40%."
     data:
       sales: 28300
       reviews: 3800
@@ -96,6 +101,7 @@ competitors:
       currency: "USD"      # A VERIFIER (boutique AU : peut etre AUD)
       strikethrough: true
       since_year: 2016
+      handmade: true        # dessin main declare -> jamais marquer "IA"
       titles: ["Boho Neutral Nursery Wall Art Set of 3 Printable Earthy Terracotta"]
   - slug: "MyAestheticAlley"
     market: "com"
@@ -198,43 +204,66 @@ network:
   cache_ttl_hours: 12             # reutilise le cache local sous ce delai
   cache_dir: "cache"
 
-# --- Génération des prompts Grok ---------------------------------------------
+# --- Production visuelle quotidienne (Grok Imagine / Grok Build) --------------
+# Flux du jour : 3 prompts d'IMAGES BRUTES (un set de 3 designs) -> 4 prompts de
+# MOCKUPS (dont 1 COVER) -> 1 prompt VIDÉO 6 s. Formules ÉPROUVÉES (Claude Chat).
+# Génération + QC + publication restent MANUELS (voir README / brief).
 grok_prompts:
-  count_per_day: 5
-  # Palette warm/neutre (noms + codes hex indicatifs)
+  count_per_day: 5             # (héritage : nb de prompts si recettes absentes)
+  # Sortie imposée : tout (images/mockups/vidéo) va dans le dossier Téléchargements.
+  output_dir: "~/Downloads"
+  set_size: 3                  # un set = 3 designs cohérents
+  # Palette warm/neutre (noms + codes hex). Imposer les HEX dans les prompts.
   palette:
-    - "terracotta #C66B3D"
-    - "warm clay #B5651D"
+    - "terracotta #B5754F"
     - "muted sand #D8C3A5"
     - "soft cream #F3EBDD"
     - "olive sage #8A8B6C"
-    - "burnt sienna #A0522D"
     - "warm taupe #B9A88F"
-    - "dusty rose clay #C9A29A"
-    - "deep umber #6F4E37"
     - "oat beige #E7DCC8"
   styles:
-    - "gouache flat graphic"
+    - "warm minimalist organic"
     - "wabi-sabi organic"
-    - "organic modern minimal"
-    - "japandi flat illustration"
-  # Pool de sujets/formes a decliner. Le selecteur du jour pioche dedans en
-  # croisant avec emerging_subniches et en evitant saturated_topics.
-  shape_pool:
-    - "abstract arch"
-    - "organic blob / pebble"
-    - "rolling hill landscape"
-    - "sun disc"
-    - "crescent moon"
-    - "vase silhouette"
-    - "leaf / botanical frond"
-    - "torii-inspired gate"
-    - "stacked stones (wabi-sabi balance)"
-    - "wavy horizon bands"
-    - "ginkgo leaf"
-    - "abstract female torso silhouette"
-    - "mountain + sun arch"
-    - "raked sand zen circle (enso)"
+    - "japandi flat"
+  # Scènes de pièce pour les mockups d'ambiance (cadre chêne clair + passe-partout).
+  mockup_rooms:
+    - "above a neutral linen bed"
+    - "on a console table with a ceramic vase and dried grass"
+    - "leaning on a wooden shelf next to a monstera"
+    - "in a calm home-office above a light wood desk"
+    - "above a beige linen sofa, generous wall space"
+  # RECETTES de sets (sous-exploitées, anti-répétition). L'outil pioche une
+  # recette/jour (rotation par date). designs = 3 sujets en FORMES PLEINES.
+  set_recipes:
+    - name: "Warm organic shapes (adult bedroom)"
+      keyword: "neutral organic shapes wall art set"
+      format: "2:3 vertical"
+      designs:
+        - "ONE large bold solid arch + ONE solid circle, two flat color blocks only"
+        - "solid filled rolling dune ridge silhouette, layered flat horizontal bands"
+        - "solid filled organic pebble cluster, three flat color blocks"
+    - name: "Botanical trio (sage + warm)"
+      keyword: "neutral botanical line wall art set"
+      format: "2:3 vertical"
+      # Discipline anti-confusion : EUCALYPTUS != OLIVE BRANCH != FERN.
+      designs:
+        - "solid filled eucalyptus sprig silhouette (oval leaves + small berries)"
+        - "solid filled olive branch silhouette (thin arc, spaced narrow leaves)"
+        - "solid filled fern frond silhouette (serrated frond + curled crozier)"
+    - name: "Above-sofa panorama (wide)"
+      keyword: "panoramic above sofa wall art"
+      format: "3:1 horizontal panorama"
+      designs:
+        - "solid filled wide horizon bands, calm layered flat color blocks, panoramic"
+        - "solid filled abstract dune ridge, soft wide silhouette, panoramic"
+        - "ONE large solid arch low on the horizon + flat sky block, panoramic"
+    - name: "Frame TV art (neutral)"
+      keyword: "frame tv art neutral organic"
+      format: "16:9 horizontal"
+      designs:
+        - "solid filled minimalist organic landscape, flat color blocks, 16:9"
+        - "solid filled abstract arch and pebble composition, flat blocks, 16:9"
+        - "solid filled wavy horizon and sun block, muted flat tones, 16:9"
 
 # --- Connecteurs API (optionnels) --------------------------------------------
 # Les CLÉS ne se mettent JAMAIS ici : elles se lisent dans des variables

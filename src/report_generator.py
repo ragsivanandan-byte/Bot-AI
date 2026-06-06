@@ -15,7 +15,7 @@ import logging
 from pathlib import Path
 
 from .analysis import CompetitorProfile
-from .prompt_generator import GrokPrompt
+# NB : render_grok_prompts reçoit un DailyVisualBrief (défini dans prompt_generator).
 from .seo import SeoOpportunity
 from .utils import (UNAVAILABLE, fmt_eur, fmt_price, now_iso, report_dir,
                     today_str)
@@ -171,35 +171,63 @@ def _yesno(v) -> str:
     return UNAVAILABLE
 
 
-# --- OUTPUT 2 : prompts Grok -------------------------------------------------
+# --- OUTPUT 2 : brief visuel Grok du jour ------------------------------------
 
-def render_grok_prompts(prompts: list[GrokPrompt]) -> str:
-    lines: list[str] = []
-    lines.append(f"# 5 prompts Grok du jour — {today_str()}")
-    lines.append(f"_Généré le {now_iso()}_\n")
-    lines.append("> Chaque prompt cible une demande issue de l'analyse "
-                 "concurrentielle + tendances. Structure imposée pour formes "
-                 "pleines (solid filled, no outline). Copie-colle le bloc "
-                 "**Prompt** dans Grok.\n")
-    lines.append("> ⚠️ « Volume estimé » = intérêt **relatif** Google Trends "
-                 "(0-100) ou « à valider » : ce n'est PAS un volume de recherche "
-                 "absolu (non public). Valide via eRank/Marmalead avant d'investir.\n")
+def render_grok_prompts(brief) -> str:
+    """Rend le brief visuel du jour : 3 images brutes -> 4 mockups (dont 1 cover)
+    -> 1 vidéo 6 s, avec consignes de sortie et de nommage."""
+    b = brief
+    out: list[str] = []
+    out.append(f"# Brief visuel Grok du jour — {today_str()}")
+    out.append(f"_Généré le {now_iso()}_\n")
+    out.append(f"> **Thème du jour** : {b.theme}  ·  **Format** : {b.fmt}")
+    out.append(f"> **Pilier SEO** : `{b.seo_pillar}`  ·  **Volume** : {b.seo_volume}")
+    out.append(f"> **Pourquoi** : {b.why}")
+    out.append(f"> **Sources** : {', '.join(b.sources)}")
+    out.append(f"> **Anti-répétition** : {b.avoid_note}\n")
+    out.append("> ⚙️ **Mode d'emploi** : génère dans **Grok Imagine / Grok Build "
+               "`/imagine`**. **Enregistre toutes les sorties dans "
+               f"`{b.output_dir}`** avec les noms indiqués. **QC humain** sur "
+               "chaque rendu (GARDER / REFAIRE / JETER). **Mockups JAMAIS "
+               "retouchés.** Génération + publication Etsy **manuelles**.\n")
+    out.append("> ⚠️ Volume = intérêt **relatif** (Trends) ou volume réel "
+               "(Keywords Everywhere) ou « à valider » — jamais un chiffre Etsy "
+               "absolu (non public).\n")
 
-    for p in prompts:
-        lines.append(f"## Prompt {p.index} — forme : {p.shape}")
-        lines.append(f"- **Pilier SEO visé** : `{p.seo_pillar}`")
-        lines.append(f"- **Demande** : {p.demand_confirmation}")
-        lines.append(f"- **Volume estimé** : {p.estimated_volume}")
-        lines.append(f"- **Pourquoi confirmée** : {p.why_confirmed}")
-        lines.append(f"- **Sources** : {', '.join(p.sources)}")
-        lines.append(f"- **Palette** : {', '.join(p.palette)}")
-        lines.append(f"- **Style** : {p.style}")
-        lines.append("\n**Prompt (à copier-coller dans Grok) :**")
-        lines.append("```text")
-        lines.append(p.prompt_text)
-        lines.append("```\n")
+    out.append("## 1) Images BRUTES (set de 3 designs)\n")
+    for p in b.raw_prompts:
+        out.append(f"### {p.label}  →  `{p.filename}`")
+        out.append("```text")
+        out.append(p.prompt_text)
+        out.append("```\n")
 
-    return "\n".join(lines) + "\n"
+    out.append("## 2) MOCKUPS d'ambiance (compositing — image collée, jamais "
+               "retouchée)\n")
+    for m in b.mockup_prompts:
+        tag = " ⭐ COVER (slot 1 de la fiche)" if m.is_cover else ""
+        out.append(f"### {m.label}{tag}  →  `{m.filename}`")
+        out.append("```text")
+        out.append(m.prompt_text)
+        out.append("```\n")
+
+    out.append("## 3) VIDÉO 6 s (image-to-video, image figée)\n")
+    out.append(f"→  `{b.slug}_Video.mp4`")
+    out.append("```text")
+    out.append(b.video_prompt)
+    out.append("```\n")
+
+    out.append("## Rappels production")
+    out.append("- **Designs** livrés : set = 5 ratios (2:3, 3:4, 4:5, 5:7, 11:14) "
+               "→ 1 ZIP < 20 Mo (sinon PDF + lien Drive) ; single = 2 ratios "
+               "(2:3 + 3:4). Export 90 %, **300 DPI vérifié**.")
+    out.append("- **Ordre photos fiche** : COVER → [vidéo placée tôt par Etsy] → "
+               "autres mockups → design(s) seul(s) → « What You Get » → « Print "
+               "Sizes Guide ».")
+    out.append("- **Pièges** : terracotta qui vire orange (refaire) ; figuratifs "
+               "qui morphent en vidéo (formule « frozen every frame ») ; gallery "
+               "wall 3 œuvres = artefacts (retries).")
+    out.append("")
+    return "\n".join(out) + "\n"
 
 
 # --- OUTPUT 3 : guidelines pour Claude Chat ----------------------------------

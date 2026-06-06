@@ -140,6 +140,12 @@ def ai_inference(shop: ShopData, ai_cfg: dict) -> AiInference:
     if not ai_cfg.get("enabled", True):
         return AiInference(False, 0, 0, ["heuristique désactivée"])
 
+    # Dessin/fait-main DÉCLARÉ (ex. About) -> on n'attribue jamais le label IA.
+    if getattr(shop, "declared_handmade", False):
+        return AiInference(False, 0, int(ai_cfg.get("threshold", 4)),
+                           ["dessin/fait-main déclaré (About) -> exclu du label IA"],
+                           note="Déclaré fait-main : non concerné par l'inférence IA.")
+
     weights = ai_cfg.get("weights", {})
     threshold = int(ai_cfg.get("threshold", 4))
     score = 0

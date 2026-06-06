@@ -40,7 +40,7 @@ from src.analysis import build_profile, rank_competitors
 from src.config_loader import ConfigError, load_config
 from src.etsy_parser import ShopData, parse_shop_page, shop_from_manual
 from src.fetcher import RespectfulFetcher
-from src.prompt_generator import generate_daily_prompts
+from src.prompt_generator import generate_daily_brief
 from src.report_generator import (render_competitors, render_grok_prompts,
                                    render_guidelines, write_reports)
 from src.seo import build_opportunities
@@ -377,9 +377,8 @@ def main(argv=None) -> int:
     # --- 4. Opportunités SEO -------------------------------------------------
     opportunities = build_opportunities(niche_cfg, trend_results, volumes)
 
-    # --- 5. Prompts Grok du jour ---------------------------------------------
-    prompts = generate_daily_prompts(cfg["grok_prompts"], niche_cfg,
-                                      opportunities)
+    # --- 5. Brief visuel du jour (3 images -> 4 mockups+cover -> 1 vidéo) -----
+    brief = generate_daily_brief(cfg["grok_prompts"], niche_cfg, opportunities)
 
     # --- 6. Historisation + diffs (vraie veille jour à jour) --------------
     deltas = {}
@@ -392,7 +391,7 @@ def main(argv=None) -> int:
 
     # --- 7. Rendu des rapports -----------------------------------------------
     competitors_md = render_competitors(profiles, cfg["shop"], degraded, deltas)
-    prompts_md = render_grok_prompts(prompts)
+    prompts_md = render_grok_prompts(brief)
     guidelines_md = render_guidelines(profiles, opportunities, cfg["shop"],
                                       cfg.get("goals", {}), degraded)
 

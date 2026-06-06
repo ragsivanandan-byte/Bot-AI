@@ -295,25 +295,28 @@ def test_seo_extras():
 # --- prompt_generator --------------------------------------------------------
 
 def test_prompts_extras():
-    print("\n[prompt_generator : repli, rotation par date]")
+    print("\n[brief visuel : repli config vide, rotation des recettes par date]")
     from datetime import date
-    from src.prompt_generator import generate_daily_prompts
+    from src.prompt_generator import generate_daily_brief
     from src.seo import SeoOpportunity
 
     ops = [SeoOpportunity("neutral wall art", "à valider", "x", ["cfg"])]
-    # Pools vides -> repli sans crash
-    grok = {"count_per_day": 5, "palette": [], "styles": [], "shape_pool": []}
-    pr = generate_daily_prompts(grok, {"saturated_topics": []}, ops)
-    check(len(pr) == 5 and all(p.prompt_text for p in pr),
-          "pools vides -> 5 prompts quand même (repli)")
+    # Config vide -> recette de repli, jamais de crash
+    b = generate_daily_brief({}, {"saturated_topics": []}, ops)
+    check(len(b.raw_prompts) == 3 and len(b.mockup_prompts) == 4,
+          "config vide -> recette de repli (3 images + 4 mockups)")
 
-    # Rotation : deux dates différentes -> prompts différents
-    grok2 = {"count_per_day": 3, "palette": ["a", "b", "c", "d"],
-             "styles": ["s1"], "shape_pool": ["arch", "moon", "vase", "leaf"]}
-    d1 = generate_daily_prompts(grok2, {"saturated_topics": []}, ops, date(2026, 6, 1))
-    d2 = generate_daily_prompts(grok2, {"saturated_topics": []}, ops, date(2026, 6, 2))
-    check(d1[0].shape != d2[0].shape or d1[0].prompt_text != d2[0].prompt_text,
-          "rotation quotidienne -> sélection différente d'un jour à l'autre")
+    # Rotation : 2 recettes -> dates consécutives donnent des thèmes différents
+    grok = {"palette": ["a", "b"], "mockup_rooms": ["r1", "r2"], "set_recipes": [
+        {"name": "Theme A", "keyword": "a", "format": "2:3 vertical",
+         "designs": ["d1", "d2", "d3"]},
+        {"name": "Theme B", "keyword": "b", "format": "16:9 horizontal",
+         "designs": ["e1", "e2", "e3"]}]}
+    d1 = generate_daily_brief(grok, {"saturated_topics": []}, ops, date(2026, 6, 1))
+    d2 = generate_daily_brief(grok, {"saturated_topics": []}, ops, date(2026, 6, 2))
+    check(d1.theme != d2.theme, "rotation quotidienne des recettes (thème différent)")
+    check("no rainbow" in d1.raw_prompts[0].prompt_text.lower(),
+          "negative anti-arc-en-ciel présent dans l'image brute")
 
 
 # --- report_generator --------------------------------------------------------
@@ -322,7 +325,7 @@ def test_reports():
     print("\n[report_generator : sections des 3 rapports]")
     from src.analysis import build_profile
     from src.etsy_parser import ShopData
-    from src.prompt_generator import generate_daily_prompts
+    from src.prompt_generator import generate_daily_brief
     from src.report_generator import (_render_deltas_section,
                                       render_competitors, render_grok_prompts,
                                       render_guidelines)
@@ -351,12 +354,13 @@ def test_reports():
 
     ops = build_opportunities({"emerging_subniches": ["x"], "pillars": [],
                                "saturated_topics": []}, [])
-    prompts = generate_daily_prompts({"count_per_day": 5, "shape_pool": ["arch"],
-                                      "palette": ["a"], "styles": ["s"]},
-                                     {"saturated_topics": []}, ops)
-    pm = render_grok_prompts(prompts)
-    check(pm.count("Prompt ") >= 5 and "solid filled" in pm,
-          "prompts : 5 blocs au format imposé")
+    brief = generate_daily_brief({"palette": ["a"], "mockup_rooms": ["r"]},
+                                 {"saturated_topics": ["nursery"]}, ops)
+    pm = render_grok_prompts(brief)
+    check("Images BRUTES" in pm and "MOCKUPS" in pm and "VIDÉO" in pm,
+          "brief : 3 sections (images / mockups / vidéo)")
+    check("COVER" in pm and "~/Downloads" in pm,
+          "brief : cover identifiée + sortie ~/Downloads")
 
     gm = render_guidelines([prof], ops, {"avg_price_eur": 6.0},
                            {"target_net_eur_per_month": 5000}, degraded=False)
@@ -371,8 +375,8 @@ def test_reports():
           "fusion : section de jugement d'images présente")
     check("ANNEXE A" in merged and "Top concurrents" in merged,
           "fusion : veille intégrée (Annexe A)")
-    check("ANNEXE B" in merged and "solid filled" in merged,
-          "fusion : prompts Grok intégrés (Annexe B)")
+    check("ANNEXE B" in merged and "MOCKUPS" in merged,
+          "fusion : brief visuel intégré (Annexe B)")
     check("Roadmap vers 5000" in merged, "fusion : stratégie d'origine conservée")
     # Les fichiers séparés restent intacts (pas d'annexe dedans)
     check("ANNEXE A" not in comp and "ANNEXE A" not in pm,

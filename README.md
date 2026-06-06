@@ -8,9 +8,11 @@ printable, niche « Warm Organic Minimalism ») :
    fiches, avis, prix, **CA estimé (calcul transparent)**, inférence
    « probablement IA », et pour chaque concurrent « 3 choses qu'ils font mieux
    + 1 faille exploitable ».
-2. **`prompts_grok_du_jour.md`** — 5 prompts Grok prêts à copier-coller, ciblant
-   des demandes confirmées, au format « formes pleines / solid filled / no
-   outline » imposé.
+2. **`prompts_grok_du_jour.md`** — **brief visuel du jour** : 3 prompts d'images
+   brutes (set de 3, formes pleines + negative anti-arc-en-ciel) → 4 prompts de
+   mockups (compositing « PASTE UNCHANGED / OPAQUE », dont **1 cover**) → 1 prompt
+   vidéo 6 s (« frozen every frame »). Sortie imposée `~/Downloads` + nommage
+   `NWD_*`. Génération (Grok Imagine / Grok Build), QC et publication **manuels**.
 3. **`guidelines_claude_chat.md`** — brief stratégique (SEO, Pinterest, pricing,
    pub, roadmap 5000 €/mois) destiné à un assistant en chat. **C'est un
    sur-ensemble** : il intègre aussi, en annexes, le contenu complet de la veille

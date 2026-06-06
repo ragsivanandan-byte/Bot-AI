@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.analysis import ai_inference, estimate_revenue
 from src.config_loader import load_config
 from src.etsy_parser import ShopData, parse_shop_page
-from src.prompt_generator import generate_daily_prompts
+from src.prompt_generator import generate_daily_brief
 from src.seo import build_opportunities
 from src.storage import HistoryStore
 
@@ -91,22 +91,30 @@ def test_ai_inference():
 # --- Prompts Grok ------------------------------------------------------------
 
 def test_prompts():
-    print("\n[prompts Grok]")
+    print("\n[brief visuel Grok : 3 images -> 4 mockups+cover -> 1 vidéo]")
+    from datetime import date
     cfg = load_config("config.yaml")
     ops = build_opportunities(cfg["niche"], [])
-    prompts = generate_daily_prompts(cfg["grok_prompts"], cfg["niche"], ops)
-    check(len(prompts) == 5, "exactement 5 prompts générés")
-    p = prompts[0]
-    txt = p.prompt_text.lower()
-    check("solid filled" in txt, "structure 'solid filled' présente")
-    check("no outline" in txt and "no line drawing" in txt,
-          "negative prompt 'no outline / no line drawing' présent")
-    check("silhouette silhouette" not in txt, "pas de doublon 'silhouette silhouette'")
-    # Reproductibilité par date
-    from datetime import date
-    a = generate_daily_prompts(cfg["grok_prompts"], cfg["niche"], ops, date(2026, 6, 1))
-    b = generate_daily_prompts(cfg["grok_prompts"], cfg["niche"], ops, date(2026, 6, 1))
-    check(a[0].prompt_text == b[0].prompt_text, "prompts déterministes pour une date")
+    b = generate_daily_brief(cfg["grok_prompts"], cfg["niche"], ops, date(2026, 6, 6))
+    check(len(b.raw_prompts) == 3, "3 prompts d'images brutes")
+    check(len(b.mockup_prompts) == 4, "4 prompts de mockups")
+    check(sum(1 for m in b.mockup_prompts if m.is_cover) == 1, "exactement 1 cover")
+    check(bool(b.video_prompt), "1 prompt vidéo présent")
+
+    raw = b.raw_prompts[0].prompt_text.lower()
+    check("no outline" in raw and "no rainbow" in raw,
+          "image brute : negative 'no outline / no rainbow' présent")
+    cover = next(m for m in b.mockup_prompts if m.is_cover).prompt_text.lower()
+    check("paste the provided poster" in cover and "opaque" in cover,
+          "mockup cover : règle compositing 'PASTE UNCHANGED / OPAQUE'")
+    check("frozen and identical in every frame" in b.video_prompt.lower(),
+          "vidéo : règle anti-morphing 'frozen every frame'")
+    check(b.output_dir == "~/Downloads", "sortie imposée vers ~/Downloads")
+
+    # Déterminisme par date
+    b2 = generate_daily_brief(cfg["grok_prompts"], cfg["niche"], ops, date(2026, 6, 6))
+    check(b.raw_prompts[0].prompt_text == b2.raw_prompts[0].prompt_text,
+          "brief déterministe pour une date donnée")
 
 
 # --- Parsing défensif --------------------------------------------------------

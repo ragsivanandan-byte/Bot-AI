@@ -26,27 +26,40 @@ Opérateur : Ragavan (France). Objectif : 5000 €/mois net (12-36 mois).
 `guidelines_claude_chat.md` = sur-ensemble (stratégie + Annexe A veille + Annexe B
 prompts) destiné à Claude chat.
 
-## 🆕 Direction en cours : production visuelle via Grok Build / Grok Imagine
-Objectif : générer automatiquement images, **mockups** et **vidéos** pour chaque
-future fiche Etsy, piloté depuis le terminal du Mac.
-- **Sortie imposée vers `~/Downloads` (Téléchargements)** pour images/mockups/vidéos.
-- **Flux quotidien cible 7h (heure FR), automatisé :**
-  `3 prompts images BRUTES` → alimentent `4 prompts mockups` (dont **1 cover**
-  fiche du jour) → **+ 1 vidéo de 6 s**. ⚠️ **Mockups JAMAIS retouchés.**
-- Prompts calés sur l'**analyse de la boutique existante** (anti-répétition) et
-  différenciés des concurrents.
-- **Veille hebdo** des boutiques **IA positionnées comme nous**, avec Claude chat
-  + Grok via Grok Build.
+## 🆕 Production visuelle Grok (réponse Claude Chat intégrée 06/06)
+- **Grok Build = agent CLI de code xAI** (comme Claude Code) avec `/imagine`
+  natif ; **API Grok Imagine** = endpoints HTTP payants (clé `xai-...`).
+  Génération headless qui écrit un fichier = **NON confirmée** → ne PAS coder un
+  cron qui appelle Grok. Génération + QC + publication restent **MANUELS**.
+- **Corrections boutique** : URL sans `/au/` ; ~20 fiches, 2 ventes, 1 avis ;
+  prix single 6,90 € / set 3 13,90 € / set 6 26,90 €.
+- **MusingsOfMeiMei = dessin MAIN (pas IA)** → `handmade: true`, exclue du label
+  IA. Miroir IA réel = **MyAestheticAlley**.
+- **Flux quotidien 7h** (déjà branché sur l'automatisation) : l'outil écrit dans
+  `prompts_grok_du_jour.md` → **3 prompts images BRUTES** (set de 3, formes
+  pleines + negative anti-arc-en-ciel) → **4 mockups** (compositing « PASTE
+  UNCHANGED/OPAQUE », dont **1 COVER**) → **1 vidéo 6 s** (« frozen every frame »).
+  Sortie imposée `~/Downloads`, conventions de nommage `NWD_*`. ⚠️ Mockups JAMAIS
+  retouchés.
+- Recettes de sets dans `config.yaml > grok_prompts.set_recipes` (sous-niches
+  sous-exploitées : panorama above-sofa, frame TV, bedroom neutre…), rotation/jour,
+  évite `niche.saturated_topics` (terracotta arch, boho moon/sun, nursery…).
 
-### À FAIRE (en attente des réponses de Claude chat sur Grok Build — voir
-### BRIEF_POUR_CLAUDE_CHAT.md §9 : commande terminal exacte, format de prompts,
-### redirection sortie Downloads, erreurs à éviter, liste des 16 fiches existantes)
-1. Remplacer les 5 prompts génériques par le format 3 images→4 mockups(+cover)+vidéo 6 s.
-2. Imposer la sortie Grok Build vers `~/Downloads`.
-3. Module anti-répétition basé sur les fiches existantes.
-4. Brancher sur l'automatisation 7h.
-5. Rapport de veille hebdo « boutiques IA ».
-> Ne pas inventer le fonctionnement de Grok Build : attendre les réponses.
+### ✅ Fait
+1. Nouveau format 3 images→4 mockups(+cover)+vidéo 6 s (`prompt_generator.py`).
+2. Sortie `~/Downloads` + nommage imposés dans le brief.
+3. Anti-répétition (recettes sous-exploitées + évitement des sujets saturés).
+4. Branché sur l'automatisation 7h (main.py inchangé côté planif).
+
+### ⏳ À faire
+- Ingestion fine de la **liste réelle des ~20 fiches** (carte NWD_T*) pour
+  durcir l'anti-répétition (Claude Chat doit transmettre la liste à jour).
+- **Rapport de veille hebdo « boutiques IA »** (miroir MyAestheticAlley ; exclure
+  MeiMei du label IA).
+- Détails Grok Build (`[À TESTER]`) : valider si `/imagine` headless écrit un
+  fichier ; sinon, option API Imagine (payante) en dossier de staging.
+> Voir BRIEF_POUR_CLAUDE_CHAT.md + la réponse de Claude Chat (06/06) pour specs,
+> formules de prompts éprouvées et pièges.
 
 ## Rôles
 - Claude Code : outillage terminal (prompts, génération via Grok Build, sortie
