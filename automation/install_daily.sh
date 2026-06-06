@@ -14,9 +14,12 @@ set -e
 LABEL="com.neutralwalldesign.marketintel"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 REPO="$HOME/Bot-AI"
-# Heure de lancement (heure LOCALE du Mac). Défaut 5h. Réglable : `install_daily.sh 7`.
+# Heure de lancement (heure LOCALE du Mac). Défaut 5h00.
+# Réglable : `install_daily.sh 7`     -> 7h00
+#            `install_daily.sh 5 30`  -> 5h30
 HOUR="${1:-5}"
-MINUTE=0
+MINUTE="${2:-0}"
+TIMESTR=$(printf '%dh%02d' "$HOUR" "$MINUTE")
 
 if [ ! -d "$REPO" ]; then
   echo "❌ $REPO introuvable. Clone d'abord le projet dans ton dossier perso."
@@ -58,10 +61,11 @@ launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
 
 echo "✅ Automatisation installée."
-echo "   -> Rapports + génération des designs TOUS LES JOURS à ${HOUR}h0${MINUTE} (heure locale du Mac)."
+echo "   -> Rapports + génération des designs TOUS LES JOURS à ${TIMESTR} (heure locale du Mac)."
 echo "   -> Vérifie que ton Mac est réglé sur l'heure française (Europe/Paris)."
-echo "   -> Si le Mac est en VEILLE à ${HOUR}h, le run démarre au RÉVEIL (les 24"
-echo "      images ne seront pas instantanées). Pour un réveil auto, voir le README."
+echo "   -> ⚠️ Le Mac doit être ALLUMÉ + SESSION OUVERTE (verrouillée OK) + NON"
+echo "      ENDORMI à ${TIMESTR}. launchd ne réveille/n'allume PAS le Mac."
+echo "      (Pour rester éveillé : voir le README, section veille.)"
 echo "   -> Logs : $REPO/logs/launchd.out.log + logs/grok.out.log"
 echo ""
 echo "Pour tester tout de suite :"

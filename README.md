@@ -186,28 +186,44 @@ images). À lancer **une seule fois** — l'heure est réglable en argument :
 
 ```bash
 cd ~/Bot-AI
-bash automation/install_daily.sh       # 5h du matin (défaut) ; `... 7` pour 7h
+bash automation/install_daily.sh       # 5h00 (défaut) ; `... 7` -> 7h00 ; `... 5 30` -> 5h30
 ```
 
-> 🔌 **Mac en veille** : si le Mac dort à l'heure prévue, `launchd` lance le job
-> **au réveil** — les 24 images ne seront donc pas prêtes instantanément. Pour
-> qu'elles soient générées AVANT que tu ouvres la session, programme un réveil
-> auto (Mac branché) :
+### Conditions de déclenchement (à lire — important)
+`launchd` lance le job à l'heure prévue **uniquement si** :
+- le Mac est **allumé** (PAS éteint) ;
+- ta **session est ouverte** (écran **verrouillé = OK**, mais pas déconnecté) ;
+- le Mac est **éveillé** (PAS en veille) à cet instant.
+
+| État du Mac à l'heure prévue | Résultat |
+|------------------------------|----------|
+| Allumé + session ouverte + éveillé (même verrouillé) | ✅ se déclenche à l'heure |
+| Allumé + en **veille** | ⏳ se déclenche **au réveil** (pas à l'heure) |
+| **Éteint** | ❌ rien ; se déclenchera au prochain démarrage + login |
+
+> ⚠️ **`launchd` ne réveille ni n'allume le Mac.** Sur les Mac **Apple Silicon**
+> (M1/M2/M3/M4), le réveil/allumage programmé (`pmset schedule/repeat wake`) n'est
+> **plus supporté** par Apple. Pour que ça se déclenche pile à l'heure, la méthode
+> fiable = **laisser le Mac allumé, branché, et l'empêcher de dormir** :
 > ```bash
-> sudo pmset repeat wake MTWRFSU 04:55:00   # réveille le Mac à 4h55, génère à 5h
+> sudo pmset -c disablesleep 1     # plus de veille quand branché (annuler : ... 0)
 > ```
-> (nécessite que le Mac soit branché ; `sudo pmset repeat cancel` pour annuler.)
+> Le Mac peut rester **verrouillé** (écran éteint), ça fonctionne quand même.
+> Vérifie ta puce : `uname -m` (`arm64` = Apple Silicon, `x86_64` = Intel).
 
-- L'outil se lancera seul tous les matins, générera les rapports du jour et
-  ouvrira le dossier (si une session graphique est active).
-- Si le Mac est en veille à 7h, le run se fait au réveil.
-- ⚠️ L'heure est l'heure **locale du Mac** : pour « 7h heure française », assure-toi
-  que ton Mac est sur le fuseau **Europe/Paris** (Réglages > Général > Date et heure).
-- Logs : `logs/launchd.out.log`.
+- ⚠️ Heure = **locale du Mac** : pour « heure française », mets le fuseau
+  **Europe/Paris** (Réglages > Général > Date et heure).
+- Logs : `logs/launchd.out.log` + `logs/grok.out.log`.
 
-Tester immédiatement sans attendre 7h :
+### Vérifier que c'est bien armé
 ```bash
-bash automation/run_daily.sh
+launchctl list | grep neutralwall                 # doit afficher une ligne
+launchctl print gui/$(id -u)/com.neutralwalldesign.marketintel | grep -A3 -i calendar
+```
+
+### Tester sans attendre
+```bash
+bash automation/run_daily.sh          # lance tout de suite le run complet
 ```
 
 Désactiver l'automatisation :
