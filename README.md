@@ -98,6 +98,25 @@ python main.py --verbose       # logs détaillés (utile pour diagnostiquer)
 > quelques secondes si Etsy et Google Trends sont joignables depuis ton réseau,
 > et si tout est prêt pour un run complet.
 
+### Génération visuelle via Grok Build (headless)
+
+L'outil pilote Grok Build pour générer les visuels, en **2 phases** (QC humain
+entre les deux ; rien n'est publié automatiquement) :
+
+```bash
+# Phase 1 (auto à 7h) : variations des 3 designs bruts -> ~/Downloads
+python automation/grok_generate.py --designs
+
+# (tu choisis les gagnants avec Claude chat à partir des captures)
+
+# Phase 2 : 4 mockups (1 cover) + vidéo 6 s, depuis les designs gagnants
+python automation/grok_generate.py --mockups ~/Downloads/<g1>.png ~/Downloads/<g2>.png ~/Downloads/<g3>.png
+```
+
+Réglages dans `config.yaml > grok_prompts` : `auto_generate`, `variations_per_design`,
+`grok_command`, `per_call_timeout_s`. Si `grok` n'est pas installé, l'étape est
+ignorée proprement.
+
 ### Veille jour à jour (historisation)
 
 À chaque run, l'état public des concurrents est enregistré dans une base SQLite

@@ -403,6 +403,72 @@ def test_automation_scripts():
     check("run_daily.sh" in txt, "install : pointe vers run_daily.sh")
 
 
+def test_grok_runner():
+    print("\n[grok_generate : jobs + orchestration (runner simulé, sans grok)]")
+    import importlib.util
+    from datetime import date
+    from src.prompt_generator import generate_daily_brief
+
+    base = Path(__file__).resolve().parent.parent / "automation"
+    spec = importlib.util.spec_from_file_location("grok_generate",
+                                                  base / "grok_generate.py")
+    gg = importlib.util.module_from_spec(spec)
+    sys.modules["grok_generate"] = gg  # requis pour résoudre les annotations dataclass
+    spec.loader.exec_module(gg)
+
+    tmp = tempfile.mkdtemp()
+    grok_cfg = {"output_dir": tmp, "variations_per_design": 2, "palette": ["a"],
+                "mockup_rooms": ["r1", "r2", "r3", "r4"], "grok_command": "grok"}
+    brief = generate_daily_brief(grok_cfg, {"saturated_topics": []}, [],
+                                 date(2026, 6, 6))
+
+    # Phase designs : 3 designs × 2 variations = 6 jobs
+    djobs = gg.build_design_jobs(brief, grok_cfg)
+    check(len(djobs) == 6, "6 jobs designs (3 designs × 2 variations)")
+    j0 = djobs[0]
+    check(j0.cmd[0] == "grok" and j0.cmd[1] == "-p", "commande `grok -p` construite")
+    check("Save the result as a PNG file at" in j0.cmd[2], "clause de sauvegarde PNG")
+    check(str(j0.out).endswith("_01_v1.png"), "nommage variation correct")
+
+    # Phase mockups : 4 mockups + 1 vidéo, depuis 3 designs gagnants
+    wins = [f"{tmp}/win1.png", f"{tmp}/win2.png", f"{tmp}/win3.png"]
+    mjobs = gg.build_mockup_jobs(brief, grok_cfg, wins)
+    check(len(mjobs) == 4, "4 jobs mockups")
+    cover = mjobs[0]
+    check("win1.png" in cover.cmd[2] and "UNCHANGED" in cover.cmd[2],
+          "cover : référence le design gagnant + règle 'UNCHANGED'")
+    vid = gg.build_video_job(brief, grok_cfg, wins[0])
+    check(str(vid.out).endswith(".mp4") and "MP4" in vid.cmd[2], "job vidéo MP4")
+
+    # Orchestration : runner simulé qui CRÉE le fichier -> tout OK
+    def ok_runner(cmd, timeout):
+        # le dernier argument contient "... at <path>." -> on crée ce fichier
+        import re as _re
+        m = _re.search(r" at (\S+?)\.(png|mp4|jpg)", cmd[2].replace("\n", " "))
+        if m:
+            Path(m.group(1) + "." + m.group(2)).write_bytes(b"x")
+        class R: returncode = 0
+        return R()
+    recap = gg.run_jobs(djobs, 5, runner=ok_runner)
+    check(len(recap["ok"]) == 6 and not recap["failed"],
+          "runner simulé crée les fichiers -> 6 OK")
+
+    # Runner qui échoue (aucun fichier) -> tout 'failed', pas de crash.
+    # Dossier de sortie NEUF pour que les fichiers n'existent pas déjà.
+    tmp2 = tempfile.mkdtemp()
+    grok_cfg2 = dict(grok_cfg, output_dir=tmp2)
+    brief2 = generate_daily_brief(grok_cfg2, {"saturated_topics": []}, [],
+                                  date(2026, 6, 6))
+
+    def noop_runner(cmd, timeout):
+        class R: returncode = 0
+        return R()
+    recap2 = gg.run_jobs(gg.build_design_jobs(brief2, grok_cfg2), 5,
+                         runner=noop_runner)
+    check(len(recap2["failed"]) == 6 and not recap2["ok"],
+          "aucun fichier produit -> 6 à refaire, sans crash")
+
+
 # --- storage (compléments) ---------------------------------------------------
 
 def test_storage_extras():
@@ -601,6 +667,7 @@ def run() -> int:
     test_prompts_extras()
     test_reports()
     test_automation_scripts()
+    test_grok_runner()
     test_storage_extras()
     test_currency_extras()
     test_etsy_api_http()

@@ -49,17 +49,24 @@ les prompts du jour, puis veille (Annexe A) et stratégie (Annexe B) en référe
 
 ### ✅ Fait
 1. Nouveau format 3 images→4 mockups(+cover)+vidéo 6 s (`prompt_generator.py`).
-2. Sortie `~/Downloads` + nommage imposés dans le brief.
+2. Sortie `~/Downloads` (rapports : `~/Downloads/reports/<date>/`) + nommage imposés.
 3. Anti-répétition (recettes sous-exploitées + évitement des sujets saturés).
-4. Branché sur l'automatisation 7h (main.py inchangé côté planif).
+4. Branché sur l'automatisation 7h.
+5. **Grok Build headless VALIDÉ** (`grok -p "...Save the result as a PNG at <path>"`
+   écrit bien le fichier). Runner `automation/grok_generate.py` :
+   - `--designs` (lancé à 7h) : génère `variations_per_design` variations des 3
+     designs bruts → `~/Downloads` ;
+   - `--mockups D1 D2 D3` (APRÈS QC) : 4 mockups (1 cover) + vidéo depuis les
+     gagnants. **QC humain obligatoire entre les 2 phases ; rien n'est publié.**
+6. `guidelines_claude_chat.md` = bloc unique QC + fiche Etsy (cf. plus haut).
 
 ### ⏳ À faire
 - Ingestion fine de la **liste réelle des ~20 fiches** (carte NWD_T*) pour
   durcir l'anti-répétition (Claude Chat doit transmettre la liste à jour).
 - **Rapport de veille hebdo « boutiques IA »** (miroir MyAestheticAlley ; exclure
   MeiMei du label IA).
-- Détails Grok Build (`[À TESTER]`) : valider si `/imagine` headless écrit un
-  fichier ; sinon, option API Imagine (payante) en dossier de staging.
+- Tester sur Mac le runner mockups/vidéo headless (designs OK confirmé) ; affiner
+  les prompts compositing si Grok régénère au lieu de coller.
 > Voir BRIEF_POUR_CLAUDE_CHAT.md + la réponse de Claude Chat (06/06) pour specs,
 > formules de prompts éprouvées et pièges.
 
