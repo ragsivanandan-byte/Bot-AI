@@ -19,8 +19,18 @@ INFERENCE = "INFÉRENCE, non confirmée"
 
 
 def today_str() -> str:
-    """Date du jour au format AAAA-MM-JJ (pour nommer les dossiers de rapport)."""
+    """
+    Date du jour au format ISO AAAA-MM-JJ.
+    ⚠️ Format INTERNE (clés d'historique SQLite, noms de logs, calculs de dates) :
+    l'ordre lexicographique ISO est indispensable aux comparaisons de la veille.
+    Ne PAS changer ce format. Pour l'AFFICHAGE, voir today_display().
+    """
     return date.today().isoformat()
+
+
+def today_display() -> str:
+    """Date du jour au format AFFICHAGE jj-mm-aaaa (nom de dossier, titres)."""
+    return date.today().strftime("%d-%m-%Y")
 
 
 def now_iso() -> str:
@@ -37,8 +47,8 @@ def ensure_dir(path: str | Path) -> Path:
 
 
 def report_dir(base_reports_dir: str) -> Path:
-    """Dossier de rapport du jour : <base>/AAAA-MM-JJ/."""
-    return ensure_dir(Path(base_reports_dir) / today_str())
+    """Dossier de rapport du jour : <base>/jj-mm-aaaa/ (format d'affichage)."""
+    return ensure_dir(Path(base_reports_dir) / today_display())
 
 
 def setup_logging(logs_dir: str, verbose: bool = False) -> logging.Logger:

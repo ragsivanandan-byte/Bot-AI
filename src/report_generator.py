@@ -18,7 +18,7 @@ from .analysis import CompetitorProfile
 # NB : render_grok_prompts reçoit un DailyVisualBrief (défini dans prompt_generator).
 from .seo import SeoOpportunity
 from .utils import (UNAVAILABLE, fmt_eur, fmt_price, now_iso, report_dir,
-                    today_str)
+                    today_display)
 
 logger = logging.getLogger("market_intel")
 
@@ -36,7 +36,7 @@ _DISCLAIMER = (
 def render_competitors(profiles: list[CompetitorProfile], my_shop: dict,
                        degraded: bool, deltas: dict | None = None) -> str:
     lines: list[str] = []
-    lines.append(f"# Veille concurrentielle — {today_str()}")
+    lines.append(f"# Veille concurrentielle — {today_display()}")
     lines.append(f"_Généré le {now_iso()}_\n")
     lines.append(_DISCLAIMER)
 
@@ -178,7 +178,7 @@ def render_grok_prompts(brief) -> str:
     -> 1 vidéo 6 s, avec consignes de sortie et de nommage."""
     b = brief
     out: list[str] = []
-    out.append(f"# Brief visuel Grok du jour — {today_str()}")
+    out.append(f"# Brief visuel Grok du jour — {today_display()}")
     out.append(f"_Généré le {now_iso()}_\n")
     out.append(f"> **Thème du jour** : {b.theme}  ·  **Format** : {b.fmt}")
     out.append(f"> **Pilier SEO** : `{b.seo_pillar}`  ·  **Volume** : {b.seo_volume}")
@@ -242,7 +242,7 @@ def render_guidelines(profiles: list[CompetitorProfile],
                       opportunities: list[SeoOpportunity],
                       my_shop: dict, goals: dict, degraded: bool) -> str:
     lines: list[str] = []
-    lines.append(f"# Guidelines stratégiques pour Claude Chat (projet Etsy) — {today_str()}")
+    lines.append(f"# Guidelines stratégiques pour Claude Chat (projet Etsy) — {today_display()}")
     lines.append(f"_Généré le {now_iso()}_\n")
     lines.append("> Brief destiné à un assistant en chat pour affiner SEO, trafic "
                  "et ventes de **NeutralWallDesign**. Données honnêtes : "

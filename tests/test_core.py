@@ -356,7 +356,7 @@ def test_cli_smoke():
         check(rc1 == 0, "`main.py --no-network` se termine proprement (code 0)")
         rc2 = cli.main(["--demo", "--no-network"])
         check(rc2 == 0, "`main.py --demo --no-network` -> code 0")
-        rep = Path(tmp) / "reports" / date.today().isoformat()
+        rep = Path(tmp) / "reports" / date.today().strftime("%d-%m-%Y")
         for f in ("veille_concurrents.md", "prompts_grok_du_jour.md",
                   "guidelines_claude_chat.md"):
             check((rep / f).exists(), f"rapport généré : {f}")

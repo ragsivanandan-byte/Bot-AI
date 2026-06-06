@@ -143,9 +143,10 @@ analyse, tendances, SEO, prompts, rapports, historique, conversion de devises,
 les connecteurs API (succès + erreurs simulés) et le pipeline complet — sans
 aucun accès réseau réel.
 
-Les rapports sont écrits dans **`~/Downloads/reports/AAAA-MM-JJ/`** (un dossier
+Les rapports sont écrits dans **`~/Downloads/reports/JJ-MM-AAAA/`** (un dossier
 par jour, dans ton dossier Téléchargements ; chemin réglable via
-`output.reports_dir` dans `config.yaml`). Les logs vont dans `logs/run_AAAA-MM-JJ.log`.
+`output.reports_dir` dans `config.yaml`). Les logs vont dans `logs/run_AAAA-MM-JJ.log`
+(format ISO en interne).
 
 ### Première utilisation — checklist
 
@@ -245,7 +246,7 @@ Bot-AI/
 │   ├── report_generator.py  # rendu des 3 rapports markdown
 │   ├── demo_fixtures.py     # données FICTIVES pour --demo
 │   └── utils.py             # logging, dates, marqueurs de fiabilité
-│   (sorties -> ~/Downloads/reports/AAAA-MM-JJ/ par défaut)
+│   (sorties -> ~/Downloads/reports/JJ-MM-AAAA/ par défaut)
 ├── cache/                   # cache HTTP (gitignored)
 └── logs/                    # logs de run (gitignored)
 ```

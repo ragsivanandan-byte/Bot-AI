@@ -32,4 +32,4 @@ python automation/grok_generate.py --designs >> logs/grok.out.log 2>&1 || true
 # active. Les rapports sont écrits dans ~/Downloads/reports/AAAA-MM-JJ/ (cf.
 # output.reports_dir de config.yaml). En cas d'échec, on n'échoue pas : les
 # rapports sont déjà générés, c'est l'essentiel.
-open "$HOME/Downloads/reports/$(date +%Y-%m-%d)/" 2>/dev/null || true
+open "$HOME/Downloads/reports/$(date +%d-%m-%Y)/" 2>/dev/null || true
