@@ -335,41 +335,53 @@ def render_guidelines(profiles: list[CompetitorProfile],
 def build_merged_guidelines(guidelines_md: str, competitors_md: str,
                             prompts_md: str) -> str:
     """
-    Fusionne les 3 rapports en UN seul document pour Claude chat : stratégie +
-    veille concurrentielle (Annexe A) + prompts Grok du jour (Annexe B). Les
-    fichiers séparés restent générés par ailleurs ; ceci est un SUR-ENSEMBLE
-    pensé pour un copier-coller unique, et pour que Claude chat puisse juger les
-    images Grok que tu lui enverras.
+    Construit le BLOC UNIQUE à coller dans Claude chat. Il mène par la mission du
+    jour (QC des rendus Grok + fiche Etsy complète), suivi des prompts du jour,
+    puis — en annexes de référence — la stratégie et la veille complète. Un seul
+    copier-coller suffit ; tu attaches en plus tes captures d'images Grok.
     """
-    judging = (
-        "## 8. Mission : juger les images Grok que je t'enverrai\n\n"
-        "Ce document est **autosuffisant** : il contient ma stratégie (ci-dessus), "
-        "la **veille concurrentielle complète** (Annexe A) et les **5 prompts Grok "
-        "du jour** (Annexe B). Tu as donc TOUT le contexte en un seul copier-coller.\n\n"
-        "Quand je t'enverrai des **captures d'écran d'images générées par Grok** "
-        "(à partir des prompts de l'Annexe B), évalue rapidement lesquelles "
-        "**GARDER** selon ces critères :\n"
-        "- **Cohérence niche** : warm organic minimalism, palette neutre/terracotta, "
-        "formes pleines sans contour.\n"
-        "- **Différenciation** : se démarque-t-elle de ce que font déjà les "
-        "concurrentes (Annexe A) ?\n"
-        "- **Potentiel SEO/commercial** : colle au pilier SEO visé par le prompt "
-        "(Annexe B) et à une demande confirmée.\n"
-        "- **Qualité technique** : pas de contour/ligne, fond propre, composition "
-        "centrée, marges généreuses, rendu imprimable haute résolution.\n"
-        "- **Déclinable** : se prête-t-elle à un **set de 3** et à plusieurs ratios "
-        "(comme les concurrentes) ?\n\n"
-        "Pour **chaque image** : verdict **GARDER / RETRAVAILLER / JETER** + 1 phrase "
-        "de justification. Si GARDER → propose un **titre Etsy SEO** + **3 tags "
-        "long-tail**.\n"
+    mission = (
+        "# 🎯 BLOC À COLLER DANS CLAUDE CHAT — mission du jour\n\n"
+        "_Colle ce bloc en entier dans Claude chat, **puis attache les captures "
+        "d'écran de tes rendus Grok** (les variations générées pour chaque design "
+        "+ les mockups). Tu as tout le contexte ci-dessous : pas besoin d'un autre "
+        "fichier._\n\n"
+        "## Ce que je te demande, Claude chat\n"
+        "À partir des **captures que je joins** (≈ 8 variations par design brut + "
+        "les mockups réalisés par Grok Imagine) et des **prompts du jour** "
+        "(section suivante), fais :\n\n"
+        "1. **Sélection** — pour **chaque design brut**, dis **laquelle des ~8 "
+        "variations GARDER** (1 gagnante) + 1 phrase de justification ; marque les "
+        "autres REFAIRE/JETER.\n"
+        "2. **Mockups** — indique quels **mockups one-shot Grok Imagine sont "
+        "réussis** (cover comprise) et lesquels refaire (cadre coloré, "
+        "translucidité, artefacts…).\n"
+        "3. **Fiche Etsy complète prête à publier** :\n"
+        "   - **Titre** (≤ 140 caractères, SEO, sans bourrage)\n"
+        "   - **Description** (accroche + ce qui est inclus : nb de fichiers, "
+        "ratios, 300 DPI, livraison ; usage perso)\n"
+        "   - **13 tags** (≤ 20 caractères chacun, sur **une seule ligne**, "
+        "séparés par « , »)\n"
+        "   - **Couleur(s)** principale(s)\n"
+        "   - **Prix** : single **6,90 €** · set de 3 **13,90 €** · set de 6 "
+        "**26,90 €** (choisis le format adapté et justifie)\n\n"
+        "**Critères de sélection** : warm organic minimalism, palette neutre/"
+        "terracotta, formes pleines sans contour ; **différenciation** vs "
+        "concurrentes (Annexe A) et vs mes fiches existantes (anti-répétition) ; "
+        "qualité imprimable ; déclinable en set + multi-ratios. **Mockups jamais "
+        "retouchés.** Aucune donnée inventée (CA = estimation ; pas de label IA "
+        "sans preuve).\n"
     )
     sep = "\n\n---\n\n"
     return (
-        guidelines_md.rstrip() + "\n\n" + judging
-        + sep + "# 📎 ANNEXE A — Veille concurrentielle (détail complet)\n\n"
+        mission
+        + sep + "# 📎 Prompts Grok du jour (ce qui a été demandé à Grok)\n\n"
+        + prompts_md.rstrip()
+        + sep + "# 📎 ANNEXE A — Veille concurrentielle (contexte)\n\n"
         + competitors_md.rstrip()
-        + sep + "# 📎 ANNEXE B — Prompts Grok du jour (images à générer & juger)\n\n"
-        + prompts_md.rstrip() + "\n"
+        + sep + "# 📎 ANNEXE B — Stratégie de référence (SEO, Pinterest, pricing, "
+        "roadmap)\n\n"
+        + guidelines_md.rstrip() + "\n"
     )
 
 

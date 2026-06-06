@@ -368,16 +368,21 @@ def test_reports():
                     "Opportunités SEO"):
         check(section in gm, f"guidelines : section '{section}' présente")
 
-    # Fusion : guidelines_claude_chat = stratégie + veille + prompts en un seul doc
+    # Bloc unique pour Claude chat : mission QC+fiche en tête, prompts, puis
+    # veille (Annexe A) et stratégie (Annexe B) en référence.
     from src.report_generator import build_merged_guidelines
     merged = build_merged_guidelines(gm, comp, pm)
-    check("Mission : juger les images Grok" in merged,
-          "fusion : section de jugement d'images présente")
+    check("BLOC À COLLER DANS CLAUDE CHAT" in merged,
+          "fusion : mène par la mission du jour (bloc à coller)")
+    check("Fiche Etsy complète" in merged and "13 tags" in merged
+          and "6,90" in merged,
+          "fusion : livrables fiche Etsy (titre/tags/prix) demandés")
+    check("Prompts Grok du jour" in merged and "MOCKUPS" in merged,
+          "fusion : prompts du jour intégrés")
     check("ANNEXE A" in merged and "Top concurrents" in merged,
-          "fusion : veille intégrée (Annexe A)")
-    check("ANNEXE B" in merged and "MOCKUPS" in merged,
-          "fusion : brief visuel intégré (Annexe B)")
-    check("Roadmap vers 5000" in merged, "fusion : stratégie d'origine conservée")
+          "fusion : veille en annexe A")
+    check("ANNEXE B" in merged and "Roadmap vers 5000" in merged,
+          "fusion : stratégie de référence en annexe B")
     # Les fichiers séparés restent intacts (pas d'annexe dedans)
     check("ANNEXE A" not in comp and "ANNEXE A" not in pm,
           "fusion : veille et prompts restent autonomes (pas d'annexe injectée)")

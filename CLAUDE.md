@@ -23,8 +23,10 @@ Opérateur : Ragavan (France). Objectif : 5000 €/mois net (12-36 mois).
 ## Ce qui tourne dans le terminal
 `python main.py` (3 rapports/jour), `--selftest`, `--demo`, `tests/run_all.py`
 (142 tests verts), `automation/install_daily.sh` (launchd 7h), `run_daily.sh`.
-`guidelines_claude_chat.md` = sur-ensemble (stratégie + Annexe A veille + Annexe B
-prompts) destiné à Claude chat.
+`guidelines_claude_chat.md` = **bloc unique à coller dans Claude chat** : mène par
+la mission du jour (QC des rendus Grok : garder 1 des ~8 variations/design +
+mockups OK + **fiche Etsy complète** titre/description/13 tags/couleur/prix), puis
+les prompts du jour, puis veille (Annexe A) et stratégie (Annexe B) en référence.
 
 ## 🆕 Production visuelle Grok (réponse Claude Chat intégrée 06/06)
 - **Grok Build = agent CLI de code xAI** (comme Claude Code) avec `/imagine`
