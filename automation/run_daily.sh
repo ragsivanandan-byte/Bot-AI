@@ -7,6 +7,11 @@
 # =============================================================================
 set -u
 
+# launchd démarre avec un PATH minimal : on ajoute les emplacements de `grok`
+# (Grok Build = ~/.grok/bin) et de Homebrew, sinon la génération d'images serait
+# silencieusement ignorée (grok introuvable) en mode automatique.
+export PATH="$HOME/.grok/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 # Se placer dans le dossier du projet (indépendamment d'où launchd démarre).
 cd "$HOME/Bot-AI" || { echo "Dossier ~/Bot-AI introuvable"; exit 1; }
 

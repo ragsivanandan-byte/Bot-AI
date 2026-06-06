@@ -174,13 +174,23 @@ Tout est paramétrable **sans toucher au code** :
 
 ## Planifier un lancement quotidien (macOS, automatique)
 
-Un script tout prêt installe le lancement automatique **chaque jour à 7h00**
-(heure locale du Mac) via `launchd`. À lancer **une seule fois** :
+Un script tout prêt installe le lancement automatique **chaque jour** (heure
+locale du Mac) via `launchd`. Il génère les rapports **et** les designs (24
+images). À lancer **une seule fois** — l'heure est réglable en argument :
 
 ```bash
 cd ~/Bot-AI
-bash automation/install_daily.sh
+bash automation/install_daily.sh 5     # 5h du matin (défaut : 7)
 ```
+
+> 🔌 **Mac en veille** : si le Mac dort à l'heure prévue, `launchd` lance le job
+> **au réveil** — les 24 images ne seront donc pas prêtes instantanément. Pour
+> qu'elles soient générées AVANT que tu ouvres la session, programme un réveil
+> auto (Mac branché) :
+> ```bash
+> sudo pmset repeat wake MTWRFSU 04:55:00   # réveille le Mac à 4h55, génère à 5h
+> ```
+> (nécessite que le Mac soit branché ; `sudo pmset repeat cancel` pour annuler.)
 
 - L'outil se lancera seul tous les matins, générera les rapports du jour et
   ouvrira le dossier (si une session graphique est active).

@@ -14,7 +14,8 @@ set -e
 LABEL="com.neutralwalldesign.marketintel"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 REPO="$HOME/Bot-AI"
-HOUR=7
+# Heure de lancement (heure LOCALE du Mac). Réglable : `install_daily.sh 5` -> 5h.
+HOUR="${1:-7}"
 MINUTE=0
 
 if [ ! -d "$REPO" ]; then
@@ -57,12 +58,13 @@ launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
 
 echo "✅ Automatisation installée."
-echo "   -> L'outil se lancera TOUS LES JOURS à ${HOUR}h0${MINUTE} (heure locale du Mac)."
+echo "   -> Rapports + génération des designs TOUS LES JOURS à ${HOUR}h0${MINUTE} (heure locale du Mac)."
 echo "   -> Vérifie que ton Mac est réglé sur l'heure française (Europe/Paris)."
-echo "   -> Si le Mac est en veille à 7h, le run se fait au réveil."
-echo "   -> Logs : $REPO/logs/launchd.out.log"
+echo "   -> Si le Mac est en VEILLE à ${HOUR}h, le run démarre au RÉVEIL (les 24"
+echo "      images ne seront pas instantanées). Pour un réveil auto, voir le README."
+echo "   -> Logs : $REPO/logs/launchd.out.log + logs/grok.out.log"
 echo ""
-echo "Pour tester tout de suite sans attendre 7h :"
+echo "Pour tester tout de suite :"
 echo "   bash automation/run_daily.sh"
 echo "Pour désactiver plus tard :"
 echo "   bash automation/uninstall_daily.sh"
