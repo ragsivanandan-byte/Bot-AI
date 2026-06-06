@@ -423,7 +423,7 @@ def test_automation_scripts():
         check(rc == 0, f"syntaxe bash valide : {name}")
     # Le script d'install doit programmer 7h00 et viser le bon dossier.
     txt = (base / "install_daily.sh").read_text(encoding="utf-8")
-    check('HOUR="${1:-7}"' in txt, "install : heure réglable (défaut 7h)")
+    check('HOUR="${1:-5}"' in txt, "install : heure réglable (défaut 5h)")
     check("run_daily.sh" in txt, "install : pointe vers run_daily.sh")
     rd = (base / "run_daily.sh").read_text(encoding="utf-8")
     check(".grok/bin" in rd, "run_daily : ajoute ~/.grok/bin au PATH (grok en launchd)")

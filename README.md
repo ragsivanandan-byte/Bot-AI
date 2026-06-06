@@ -180,7 +180,7 @@ images). À lancer **une seule fois** — l'heure est réglable en argument :
 
 ```bash
 cd ~/Bot-AI
-bash automation/install_daily.sh 5     # 5h du matin (défaut : 7)
+bash automation/install_daily.sh       # 5h du matin (défaut) ; `... 7` pour 7h
 ```
 
 > 🔌 **Mac en veille** : si le Mac dort à l'heure prévue, `launchd` lance le job

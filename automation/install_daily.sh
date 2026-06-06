@@ -14,8 +14,8 @@ set -e
 LABEL="com.neutralwalldesign.marketintel"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 REPO="$HOME/Bot-AI"
-# Heure de lancement (heure LOCALE du Mac). Réglable : `install_daily.sh 5` -> 5h.
-HOUR="${1:-7}"
+# Heure de lancement (heure LOCALE du Mac). Défaut 5h. Réglable : `install_daily.sh 7`.
+HOUR="${1:-5}"
 MINUTE=0
 
 if [ ! -d "$REPO" ]; then
