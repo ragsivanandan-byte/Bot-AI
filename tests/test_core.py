@@ -330,14 +330,22 @@ def test_cli_smoke():
     from datetime import date
     import main as cli
 
+    import yaml
     repo = Path(__file__).resolve().parent.parent
     cwd0 = os.getcwd()
     tmp = tempfile.mkdtemp()
     try:
-        # On copie config.yaml dans un dossier temporaire et on s'y place : ainsi
-        # reports/, cache/ et logs/ sont créés dans le tmp, JAMAIS dans le vrai
-        # dépôt (sinon les tests pollueraient l'historique concurrents réel).
-        shutil.copy(repo / "config.yaml", Path(tmp) / "config.yaml")
+        # On copie config.yaml dans un tmp et on FORCE les dossiers de sortie en
+        # local (reports/cache/logs relatifs au tmp). Indispensable car la vraie
+        # config écrit dans ~/Downloads/reports : sans override, le test
+        # polluerait le vrai dossier Téléchargements de la machine.
+        with open(repo / "config.yaml", encoding="utf-8") as f:
+            c = yaml.safe_load(f)
+        c.setdefault("output", {})["reports_dir"] = "reports"
+        c["output"]["logs_dir"] = "logs"
+        c.setdefault("network", {})["cache_dir"] = "cache"
+        with open(Path(tmp) / "config.yaml", "w", encoding="utf-8") as f:
+            yaml.safe_dump(c, f, allow_unicode=True)
         os.chdir(tmp)
         rc1 = cli.main(["--no-network"])
         check(rc1 == 0, "`main.py --no-network` se termine proprement (code 0)")

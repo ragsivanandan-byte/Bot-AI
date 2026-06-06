@@ -290,7 +290,9 @@ currency_conversion:
 
 # --- Sortie ------------------------------------------------------------------
 output:
-  reports_dir: "reports"
+  # Les 3 rapports vont dans ~/Downloads/reports/AAAA-MM-JJ/ (Téléchargements).
+  # Le `~` est développé automatiquement. Mets un chemin absolu si tu préfères.
+  reports_dir: "~/Downloads/reports"
   logs_dir: "logs"
 
 # --- Roadmap revenu ----------------------------------------------------------

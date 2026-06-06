@@ -29,8 +29,9 @@ def now_iso() -> str:
 
 
 def ensure_dir(path: str | Path) -> Path:
-    """Crée le dossier (et ses parents) si besoin, renvoie un Path."""
-    p = Path(path)
+    """Crée le dossier (et ses parents) si besoin, renvoie un Path.
+    Développe `~` (ex. '~/Downloads/reports' -> /Users/<toi>/Downloads/reports)."""
+    p = Path(path).expanduser()
     p.mkdir(parents=True, exist_ok=True)
     return p
 

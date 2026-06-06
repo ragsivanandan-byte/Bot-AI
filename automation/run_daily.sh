@@ -18,6 +18,7 @@ source .venv/bin/activate
 python main.py >> logs/launchd.out.log 2>&1
 
 # Étape best-effort : ouvrir le dossier du jour si une session graphique est
-# active. En cas d'échec (Mac verrouillé, pas de bureau), on n'échoue pas : les
+# active. Les rapports sont écrits dans ~/Downloads/reports/AAAA-MM-JJ/ (cf.
+# output.reports_dir de config.yaml). En cas d'échec, on n'échoue pas : les
 # rapports sont déjà générés, c'est l'essentiel.
-open "reports/$(date +%Y-%m-%d)/" 2>/dev/null || true
+open "$HOME/Downloads/reports/$(date +%Y-%m-%d)/" 2>/dev/null || true
