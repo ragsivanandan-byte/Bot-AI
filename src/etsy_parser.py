@@ -47,6 +47,7 @@ class ShopData:
     age_text: str | None = None           # ancienneté brute si trouvée
     has_strikethrough_price: bool | None = None  # prix barré (promo) détecté ?
     declared_handmade: bool = False       # dessin/fait-main déclaré -> jamais "IA"
+    ai_mirror: bool = False               # boutique IA-miroir (veille hebdo IA)
     languages: list[str] = field(default_factory=list)
     sample_titles: list[str] = field(default_factory=list)
 
@@ -79,6 +80,7 @@ def shop_from_manual(slug: str, market: str, url: str,
     sd.currency = data.get("currency")
     sd.has_strikethrough_price = data.get("strikethrough")
     sd.declared_handmade = bool(data.get("handmade", False))
+    sd.ai_mirror = bool(data.get("ai_mirror", False))
     if data.get("since_year"):
         sd.age_text = f"On Etsy since {data.get('since_year')}"
     titles = data.get("titles")

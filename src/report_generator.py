@@ -199,7 +199,13 @@ def render_grok_prompts(brief) -> str:
         out.append(f"### {p.label}  →  `{p.filename}`")
         out.append("```text")
         out.append(p.prompt_text)
-        out.append("```\n")
+        out.append("```")
+        if p.variation_files:
+            files = ", ".join(f"`{f}`" for f in p.variation_files)
+            out.append(f"_Variations générées dans `~/Downloads` (à joindre à "
+                       f"Claude chat pour qu'il choisisse la meilleure) : {files}_\n")
+        else:
+            out.append("")
 
     out.append("## 2) MOCKUPS d'ambiance (compositing — image collée, jamais "
                "retouchée)\n")
@@ -332,8 +338,52 @@ def render_guidelines(profiles: list[CompetitorProfile],
     return "\n".join(lines) + "\n"
 
 
+def render_weekly_ai_watch(profiles: list[CompetitorProfile],
+                           weekly_deltas: dict | None = None) -> str:
+    """
+    Veille hebdo focalisée sur les boutiques **IA positionnées comme nous**
+    (miroir = MyAestheticAlley). On EXCLUT le fait-main déclaré (ex. MeiMei).
+    Montre l'évolution sur ~7 jours (si l'historique le permet) pour que Claude
+    chat affine ses décisions au fil du temps.
+    """
+    weekly_deltas = weekly_deltas or {}
+    mirrors = [p for p in profiles
+               if (p.shop.ai_mirror or p.ai.probably_ai)
+               and not p.shop.declared_handmade]
+
+    out = ["## Veille hebdo — boutiques IA positionnées comme nous\n"]
+    out.append("_Miroir prioritaire : **MyAestheticAlley**. Le fait-main déclaré "
+               "(ex. MusingsOfMeiMei) est EXCLU de ce panel IA._\n")
+    if not mirrors:
+        out.append("_Aucune boutique IA-miroir renseignée (ajoute `ai_mirror: true` "
+                   "dans `config.yaml` sur les concurrentes IA pertinentes)._\n")
+        return "\n".join(out) + "\n"
+
+    out.append("| Boutique | Ventes | Δ7j ventes | Δ7j avis | Prix | Profil |")
+    out.append("|----------|--------|-----------|----------|------|--------|")
+    for p in mirrors:
+        s = p.shop
+        d = weekly_deltas.get(s.slug)
+        dv = _signed(d.sales_delta) if d else "—"
+        dr = _signed(d.reviews_delta) if d else "—"
+        sales = s.total_sales if s.total_sales is not None else UNAVAILABLE
+        price = fmt_price(s.avg_price_eur) if s.avg_price_eur else UNAVAILABLE
+        prof = "INFÉRENCE IA" if p.ai.probably_ai else "IA-miroir (déclaré config)"
+        out.append(f"| {s.slug} | {sales} | {dv} | {dr} | {price} | {prof} |")
+    out.append("")
+    out.append("**À faire apprendre à Claude chat (décisions à affiner) :**")
+    out.append("- Quels formats/sets/prix de ces miroirs progressent le plus vite "
+               "(Δ7j) → s'en inspirer, puis **faire mieux** (qualité, curation).")
+    out.append("- Repérer leurs angles SEO/visuels récurrents → produire des "
+               "alternatives **différenciées** (pas de copie).")
+    out.append("- ⚠️ Données publiques cumulées : ventes ≠ CA mensuel ; « IA » = "
+               "inférence, jamais une certitude.")
+    out.append("")
+    return "\n".join(out) + "\n"
+
+
 def build_merged_guidelines(guidelines_md: str, competitors_md: str,
-                            prompts_md: str) -> str:
+                            prompts_md: str, weekly_md: str = "") -> str:
     """
     Construit le BLOC UNIQUE à coller dans Claude chat. Il mène par la mission du
     jour (QC des rendus Grok + fiche Etsy complète), suivi des prompts du jour,
@@ -373,16 +423,19 @@ def build_merged_guidelines(guidelines_md: str, competitors_md: str,
         "sans preuve).\n"
     )
     sep = "\n\n---\n\n"
-    return (
+    doc = (
         mission
         + sep + "# 📎 Prompts Grok du jour (ce qui a été demandé à Grok)\n\n"
         + prompts_md.rstrip()
         + sep + "# 📎 ANNEXE A — Veille concurrentielle (contexte)\n\n"
         + competitors_md.rstrip()
-        + sep + "# 📎 ANNEXE B — Stratégie de référence (SEO, Pinterest, pricing, "
-        "roadmap)\n\n"
-        + guidelines_md.rstrip() + "\n"
     )
+    if weekly_md.strip():
+        doc += (sep + "# 📎 ANNEXE C — Veille hebdo boutiques IA "
+                "(pour affiner tes décisions)\n\n" + weekly_md.rstrip())
+    doc += (sep + "# 📎 ANNEXE B — Stratégie de référence (SEO, Pinterest, "
+            "pricing, roadmap)\n\n" + guidelines_md.rstrip() + "\n")
+    return doc
 
 
 def _build_insights(profiles, opportunities, degraded) -> list[str]:

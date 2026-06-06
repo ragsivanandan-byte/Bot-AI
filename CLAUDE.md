@@ -60,11 +60,17 @@ les prompts du jour, puis veille (Annexe A) et stratégie (Annexe B) en référe
      gagnants. **QC humain obligatoire entre les 2 phases ; rien n'est publié.**
 6. `guidelines_claude_chat.md` = bloc unique QC + fiche Etsy (cf. plus haut).
 
+7. **Veille hebdo boutiques IA** intégrée au bloc Claude chat (Annexe C) :
+   miroir = MyAestheticAlley (`ai_mirror: true`), MeiMei exclue (fait-main),
+   évolution sur 7 j via `compute_deltas(..., cutoff=J-7)`. But : Claude chat
+   affine ses décisions au fil du temps.
+8. Génération matinale = **8 variations/design** (`variations_per_design: 8`),
+   listées (noms `_vK.png`) dans le bloc pour que Claude chat choisisse la
+   meilleure à partir des images jointes.
+
 ### ⏳ À faire
 - Ingestion fine de la **liste réelle des ~20 fiches** (carte NWD_T*) pour
   durcir l'anti-répétition (Claude Chat doit transmettre la liste à jour).
-- **Rapport de veille hebdo « boutiques IA »** (miroir MyAestheticAlley ; exclure
-  MeiMei du label IA).
 - Tester sur Mac le runner mockups/vidéo headless (designs OK confirmé) ; affiner
   les prompts compositing si Grok régénère au lieu de coller.
 > Voir BRIEF_POUR_CLAUDE_CHAT.md + la réponse de Claude Chat (06/06) pour specs,

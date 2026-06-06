@@ -92,22 +92,30 @@ class HistoryStore:
         except sqlite3.Error as e:
             logger.warning("Échec d'historisation (ignoré) : %s", e)
 
-    def compute_deltas(self, current: list[ShopData],
-                       current_date: str) -> dict[str, CompetitorDelta]:
+    def compute_deltas(self, current: list[ShopData], current_date: str,
+                       cutoff: str | None = None) -> dict[str, CompetitorDelta]:
         """
-        Pour chaque boutique courante, calcule l'écart avec son snapshot
-        PRÉCÉDENT le plus récent (date < current_date). Renvoie un dict slug->delta.
+        Pour chaque boutique courante, calcule l'écart avec un snapshot antérieur.
+        - cutoff=None : snapshot PRÉCÉDENT le plus récent (run_date < current_date)
+          -> évolution jour-à-jour.
+        - cutoff="AAAA-MM-JJ" : snapshot le plus récent avec run_date <= cutoff
+          -> sert à l'évolution hebdo (cutoff = aujourd'hui - 7 j).
+        Renvoie un dict slug->CompetitorDelta.
         """
         if not self._conn:
             return {}
         deltas: dict[str, CompetitorDelta] = {}
+        if cutoff:
+            where, bound = "run_date <= ?", cutoff
+        else:
+            where, bound = "run_date < ?", current_date
         try:
             for shop in current:
                 row = self._conn.execute(
                     "SELECT run_date, total_sales, active_listings, reviews, "
-                    "avg_price_eur FROM snapshots WHERE slug = ? AND run_date < ? "
+                    f"avg_price_eur FROM snapshots WHERE slug = ? AND {where} "
                     "ORDER BY run_date DESC LIMIT 1",
-                    (shop.slug, current_date)).fetchone()
+                    (shop.slug, bound)).fetchone()
                 if not row:
                     continue
                 prev_date, p_sales, p_list, p_rev, p_price = row

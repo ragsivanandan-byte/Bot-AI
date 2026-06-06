@@ -113,6 +113,7 @@ competitors:
       price: 14.00
       currency: "USD"      # A VERIFIER
       since_year: 2024
+      ai_mirror: true       # boutique IA-miroir -> suivie dans la veille hebdo IA
       titles: ["Japandi Wall Art Set of 3 Neutral Minimalist Printable Digital Download"]
   - slug: "EmaParaschivArt"
     market: "com"
@@ -215,7 +216,7 @@ grok_prompts:
   set_size: 3                  # un set = 3 designs cohérents
   # --- Génération automatique via Grok Build (headless) --------------------
   auto_generate: true          # 7h : génère les designs bruts via `grok -p`
-  variations_per_design: 4     # nb de variations générées par design (choix au QC)
+  variations_per_design: 8     # nb de variations générées par design (choix au QC)
   grok_command: "grok"         # binaire Grok Build (dans le PATH après install)
   per_call_timeout_s: 300      # délai max par génération (s)
   # Palette warm/neutre (noms + codes hex). Imposer les HEX dans les prompts.

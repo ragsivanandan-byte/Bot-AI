@@ -110,6 +110,11 @@ def test_prompts():
     check("frozen and identical in every frame" in b.video_prompt.lower(),
           "vidéo : règle anti-morphing 'frozen every frame'")
     check(b.output_dir == "~/Downloads", "sortie imposée vers ~/Downloads")
+    nvar = cfg["grok_prompts"].get("variations_per_design", 8)
+    check(len(b.raw_prompts[0].variation_files) == nvar,
+          f"{nvar} variations attendues listées par design")
+    check(b.raw_prompts[0].variation_files[0].endswith("_01_v1.png"),
+          "nommage des variations correct")
 
     # Déterminisme par date
     b2 = generate_daily_brief(cfg["grok_prompts"], cfg["niche"], ops, date(2026, 6, 6))

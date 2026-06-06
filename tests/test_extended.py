@@ -387,6 +387,30 @@ def test_reports():
     check("ANNEXE A" not in comp and "ANNEXE A" not in pm,
           "fusion : veille et prompts restent autonomes (pas d'annexe injectée)")
 
+    # Veille hebdo IA (Annexe C) : ne liste que les miroirs IA, exclut handmade
+    from src.report_generator import render_weekly_ai_watch
+    from src.storage import CompetitorDelta
+    mirror = ShopData("MyAestheticAlley", "com", "u", fetched=True,
+                      total_sales=1200, reviews=81, avg_price_eur=14.0,
+                      ai_mirror=True)
+    handmade = ShopData("MusingsOfMeiMei", "com", "u", fetched=True,
+                        total_sales=28300, declared_handmade=True)
+    profs = [build_profile(mirror, {}, {}, {"enabled": True, "threshold": 4,
+                                            "weights": {}}),
+             build_profile(handmade, {}, {}, {"enabled": True, "threshold": 4,
+                                              "weights": {}})]
+    wk = {"MyAestheticAlley": CompetitorDelta("MyAestheticAlley", "2026-05-30",
+                                              sales_delta=40, reviews_delta=5)}
+    watch = render_weekly_ai_watch(profs, wk)
+    check("Veille hebdo" in watch and "MyAestheticAlley" in watch,
+          "veille hebdo : miroir IA listé")
+    check("| MusingsOfMeiMei |" not in watch,
+          "veille hebdo : fait-main (MeiMei) absent du tableau IA")
+    check("+40" in watch, "veille hebdo : Δ7j ventes affiché")
+    merged2 = build_merged_guidelines(gm, comp, pm, watch)
+    check("ANNEXE C" in merged2 and "Veille hebdo" in merged2,
+          "fusion : veille hebdo intégrée en Annexe C quand fournie")
+
 
 def test_automation_scripts():
     print("\n[automation : scripts launchd valides]")
@@ -484,6 +508,11 @@ def test_storage_extras():
                                       "2026-06-01")
         check(deltas["A"].prev_date == "2026-05-30" and deltas["A"].sales_delta == 60,
               "diff calculé vs le snapshot le PLUS RÉCENT antérieur")
+        # Évolution HEBDO : cutoff à 7 j -> compare au snapshot du 2026-05-20
+        wk = store.compute_deltas([ShopData("A", "com", "u", total_sales=260)],
+                                  "2026-06-01", cutoff="2026-05-25")
+        check(wk["A"].prev_date == "2026-05-20" and wk["A"].sales_delta == 160,
+              "diff hebdo via cutoff (vs snapshot <= cutoff)")
         store.close()
 
     # Base impossible (chemin = dossier) -> dégradation, pas de crash

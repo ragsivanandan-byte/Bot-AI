@@ -33,7 +33,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from src.analysis import build_profile, rank_competitors
@@ -380,12 +380,16 @@ def main(argv=None) -> int:
     # --- 5. Brief visuel du jour (3 images -> 4 mockups+cover -> 1 vidéo) -----
     brief = generate_daily_brief(cfg["grok_prompts"], niche_cfg, opportunities)
 
-    # --- 6. Historisation + diffs (vraie veille jour à jour) --------------
+    # --- 6. Historisation + diffs (veille jour-à-jour ET hebdo) --------------
     deltas = {}
+    weekly_deltas = {}
     if not args.demo:  # on n'historise pas les données fictives
         store = HistoryStore()
         shops_now = [p.shop for p in profiles]
         deltas = store.compute_deltas(shops_now, today_str())
+        week_cutoff = (date.today() - timedelta(days=7)).isoformat()
+        weekly_deltas = store.compute_deltas(shops_now, today_str(),
+                                             cutoff=week_cutoff)
         store.save_snapshot(today_str(), shops_now)
         store.close()
 
@@ -403,12 +407,14 @@ def main(argv=None) -> int:
         competitors_md = banner + competitors_md
         guidelines_md = banner + guidelines_md
 
-    # guidelines_claude_chat.md = SUR-ENSEMBLE (stratégie + veille + prompts) pour
-    # que Claude chat ait tout le contexte en un seul copier-coller. Les fichiers
-    # veille_concurrents.md et prompts_grok_du_jour.md restent générés séparément.
-    from src.report_generator import build_merged_guidelines
+    # guidelines_claude_chat.md = SUR-ENSEMBLE (mission QC + prompts + veille +
+    # veille hebdo IA + stratégie) pour que Claude chat ait tout en un seul
+    # copier-coller et affine ses décisions au fil du temps.
+    from src.report_generator import (build_merged_guidelines,
+                                      render_weekly_ai_watch)
+    weekly_md = render_weekly_ai_watch(profiles, weekly_deltas)
     guidelines_merged = build_merged_guidelines(guidelines_md, competitors_md,
-                                                prompts_md)
+                                                prompts_md, weekly_md)
 
     paths = write_reports(cfg["output"]["reports_dir"], competitors_md,
                           prompts_md, guidelines_merged)

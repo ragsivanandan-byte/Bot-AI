@@ -80,6 +80,7 @@ class ImagePrompt:
     label: str
     filename: str
     prompt_text: str
+    variation_files: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -164,14 +165,17 @@ def generate_daily_brief(grok_cfg: dict, niche_cfg: dict,
     avoid_note = ("Éviter (saturé / déjà couvert) : " + ", ".join(saturated)
                   if saturated else "—")
 
-    # --- 3 images brutes -----------------------------------------------------
+    # --- 3 images brutes (avec N variations attendues par design) ------------
+    n_var = int(grok_cfg.get("variations_per_design", 8))
     raw_prompts = []
     for i, subject in enumerate(designs, 1):
+        variations = [f"{slug}_{i:02d}_v{k}.png" for k in range(1, n_var + 1)]
         raw_prompts.append(ImagePrompt(
             label=f"Design {i}",
             filename=f"{slug}_{i:02d}_<ratio>.jpg",
             prompt_text=_RAW_TEMPLATE.format(subject=subject,
-                                             palette=palette_str, fmt=fmt)))
+                                             palette=palette_str, fmt=fmt),
+            variation_files=variations))
 
     # --- 4 mockups (1 cover + 3 ambiance), 1 design par mockup ---------------
     rooms = _rotating(rooms_all, ordinal, 4)
