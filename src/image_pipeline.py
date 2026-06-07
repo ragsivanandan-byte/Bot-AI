@@ -41,9 +41,17 @@ _DEFAULT_JPEG = {"quality": 90, "subsampling": 0, "optimize": True,
                  "dpi": [300, 300], "sharpen": False}
 
 
+# Marge de sécurité : on cape le master juste au-dessus du minimum requis
+# (l'upscaler ne fait que des ×4, donc 784 -> 12544 dépasse largement la cible).
+_MASTER_CAP_FACTOR = 1.08
+
+
 def _pil():
     try:
         from PIL import Image
+        # Nos images sont générées par nous (pas de contenu hostile) : on lève la
+        # limite anti-"decompression bomb" pour pouvoir traiter de grands masters.
+        Image.MAX_IMAGE_PIXELS = None
         return Image
     except Exception as e:
         logger.warning("Pillow manquant (%s) : pip install -r requirements.txt", e)
@@ -136,7 +144,17 @@ def upscale_x4(in_path: str, out_path: str, command: str = "",
                 last, cur = step, step
                 if not min_master_width or Image.open(step).width >= min_master_width:
                     break
-            _sh.copyfile(last, out)
+            # L'upscaler ne fait que des ×4 -> souvent un gros dépassement
+            # (ex. 784->12544). On redescend le master juste au-dessus de la cible
+            # (downscale = conforme, nets, et exports rapides/légers).
+            cap = round(min_master_width * _MASTER_CAP_FACTOR) if min_master_width else 0
+            img = Image.open(last)
+            if cap and img.width > cap:
+                img = _flatten(img)
+                new_h = round(img.height * cap / img.width)
+                img.resize((cap, new_h), Image.LANCZOS).save(out)
+            else:
+                _sh.copyfile(last, out)
         used = "external"
     elif fallback_lanczos:
         logger.warning("⚠️ Upscaler absent -> repli Lanczos ×4 (accepté car "
