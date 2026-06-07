@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import argparse
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -38,12 +40,27 @@ def _images_in(d: Path) -> list[Path]:
                   if p.suffix.lower() in (".png", ".jpg", ".jpeg")) if d.is_dir() else []
 
 
+def video_cmd(grok: str, prompt: str, cover_path: str, out_mp4: str) -> list[str]:
+    """Commande Grok image-to-video à partir de la COVER composite (still réel)."""
+    return [grok, "-p", f"{prompt} Source still image file: {cover_path}. "
+            f"Save the result as an MP4 file at {out_mp4}."]
+
+
+def ffmpeg_strip_cmd(in_mp4: str, out_mp4: str) -> list[str]:
+    """Ré-encode sans audio (Etsy lit muet) en H.264 yuv420p."""
+    return ["ffmpeg", "-y", "-i", in_mp4, "-an", "-c:v", "libx264",
+            "-pix_fmt", "yuv420p", out_mp4]
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Mockups exacts par compositing Python.")
     ap.add_argument("designs", nargs="+", help="Fichiers designs gagnants (1 à 3).")
     ap.add_argument("--config", default="config.yaml")
     ap.add_argument("--templates", default=None,
                     help="Dossier des gabarits (défaut : config ou ./mockup_templates).")
+    ap.add_argument("--video", action="store_true",
+                    help="Génère aussi la vidéo 6 s (image-to-video) depuis la "
+                         "COVER composite, puis enlève l'audio (Grok + ffmpeg).")
     args = ap.parse_args(argv)
 
     cfg = load_config(args.config)
@@ -87,6 +104,36 @@ def main(argv=None) -> int:
             fail += 1
     print(f"\nTerminé : {ok} OK, {fail} en échec. Sortie : {out_dir}")
     print("⚠️ QC humain conseillé. L'œuvre est collée EXACTEMENT (pixel-for-pixel).")
+
+    # --- Vidéo 6 s (optionnelle) : image-to-video depuis la COVER composite ---
+    if args.video:
+        cover = out_dir / f"{slug}_Cover.png"
+        grok = grok_cfg.get("grok_command", "grok")
+        if not cover.exists():
+            print("⚠️ Vidéo ignorée : cover composite introuvable.")
+        elif shutil.which(grok) is None:
+            print("⚠️ Vidéo ignorée : `grok` introuvable.")
+        else:
+            raw = out_dir / f"{slug}_Video_raw.mp4"
+            final = out_dir / f"{slug}_Video.mp4"
+            timeout = int(grok_cfg.get("per_call_timeout_s", 600))
+            print("→ Vidéo (image-to-video depuis la cover composite) …", flush=True)
+            try:
+                subprocess.run(video_cmd(grok, brief.video_prompt, str(cover),
+                                         str(raw)), timeout=timeout)
+            except Exception as e:
+                print(f"  ⚠️ génération vidéo échouée ({type(e).__name__})")
+                raw = None
+            if raw and raw.exists() and shutil.which("ffmpeg"):
+                try:
+                    subprocess.run(ffmpeg_strip_cmd(str(raw), str(final)),
+                                   capture_output=True, timeout=timeout)
+                    raw.unlink(missing_ok=True)
+                    print(f"  ✅ {final.name} (audio retiré)")
+                except Exception:
+                    print(f"  🟡 {raw.name} (ffmpeg indisponible : audio non retiré)")
+            elif raw and raw.exists():
+                print(f"  🟡 {raw.name} (ffmpeg absent : audio non retiré)")
     return 0
 
 

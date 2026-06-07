@@ -136,7 +136,12 @@ cover montre EXACTEMENT le fichier vendu), utilise le compositeur Python :
    python automation/make_mockups.py ~/Downloads/<g1>.png ~/Downloads/<g2>.png ~/Downloads/<g3>.png
    ```
    → mockups exacts dans `~/Downloads` (le code détecte le vert et y plaque ton
-   design, perspective comprise). Gratuit, instantané, déterministe.
+   design, perspective comprise ; **seuls les pixels verts sont remplacés**, le
+   reste du gabarit reste identique). Gratuit, instantané, déterministe.
+   Gabarits par ratio : `mockup_templates/2x3/`, `/3x1/`, `/16x9/` (le bon dossier
+   est choisi selon le format du jour ; sinon dossier à plat).
+   Ajoute `--video` pour générer aussi la vidéo 6 s **depuis la cover composite**
+   (zoom lent, sans balayage de lumière) et retirer l'audio via ffmpeg.
 
 ### Veille jour à jour (historisation)
 

@@ -91,14 +91,15 @@ _DETAIL_TEMPLATE = (
 )
 
 _VIDEO_TEMPLATE = (
-    "image-to-video from the PROVIDED still ({ref} = the finished COVER mockup). "
-    "Treat the framed print as a STATIC printed photograph: it stays frozen, "
-    "identical, sharp and unchanged in EVERY frame — no shape, color or content "
-    "change whatsoever. Camera: one very slow, smooth zoom-in (push-in) only — "
-    "no pan, no rotation, no parallax, no drift. The ONLY motion allowed is a "
-    "faint natural shift of ambient daylight and soft shadow on the wall. {fmt}, "
-    "6 seconds, calm premium feel. NEGATIVE: morphing, warping, redrawing, "
-    "flicker, shape-shifting, text appearing, distortion, fast motion, camera shake."
+    "image-to-video from the PROVIDED still ({ref} = the finished COVER mockup in "
+    "its room). Treat EVERYTHING as a STATIC photograph: the framed artwork, the "
+    "frame, the room and the furniture stay frozen, sharp and identical in EVERY "
+    "frame — no shape, color or content change. Camera: ONE very slow, smooth "
+    "zoom-in (push-in) only — no pan, no rotation, no parallax, no drift, and "
+    "absolutely NO moving light sweep or glare crossing the image. {fmt}, 6 "
+    "seconds, calm premium feel, no audio. NEGATIVE: light streak, moving glare, "
+    "lens flare, morphing, warping, redrawing, flicker, shape-shifting, text "
+    "appearing, distortion, fast motion, camera shake."
 )
 
 _GALLERY_TEMPLATE = (
@@ -272,7 +273,14 @@ def generate_daily_brief(grok_cfg: dict, niche_cfg: dict,
         gallery_prompt = _GALLERY_TEMPLATE.format(refs=refs, room=rooms[0])
 
     # --- Vidéo 6 s ----------------------------------------------------------
-    video_fmt = fmt if ("vertical" in fmt or "1:1" in fmt) else "2:3 vertical"
+    # Frame TV -> 16:9 ; portrait/carré -> tel quel ; sinon (panorama 3:1) -> 2:3
+    # pour Pinterest. JAMAIS du 2:1 (cf. feedback Claude Chat).
+    if "16:9" in fmt:
+        video_fmt = "16:9 horizontal"
+    elif "vertical" in fmt or "1:1" in fmt:
+        video_fmt = fmt
+    else:
+        video_fmt = "2:3 vertical"
     video_prompt = _VIDEO_TEMPLATE.format(ref="Cover", fmt=video_fmt)
 
     logger.info("Brief visuel : « %s » (%s, %d design(s)), pilier « %s ».",

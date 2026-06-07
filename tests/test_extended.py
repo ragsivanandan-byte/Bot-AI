@@ -440,33 +440,62 @@ def test_mockup_compositor():
     from src.mockup_compositor import (composite_into_template,
                                        find_placeholder_quad)
 
+    import numpy as np
     tmp = tempfile.mkdtemp()
     tpl = Path(tmp) / "tpl.png"
     design = Path(tmp) / "design.png"
     out = Path(tmp) / "out.png"
 
-    # Gabarit : fond blanc + rectangle vert chroma (60,40)->(180,140)
-    t = Image.new("RGB", (240, 180), (255, 255, 255))
+    # Gabarit : décor non uni (pour tester l'intégrité hors-zone) + rectangle
+    # vert "sale" RGB(9,187,13) comme le vrai green-screen mesuré par Claude Chat.
+    t = Image.new("RGB", (240, 180), (200, 180, 160))
+    t.putpixel((3, 3), (123, 45, 67))     # pixel témoin hors-zone (couleur unique)
     for x in range(60, 180):
         for y in range(40, 140):
-            t.putpixel((x, y), (0, 255, 0))
+            t.putpixel((x, y), (9, 187, 13))
     t.save(tpl)
-    # Design : rouge uni
-    Image.new("RGB", (120, 100), (220, 30, 30)).save(design)
+    Image.new("RGB", (120, 100), (220, 30, 30)).save(design)   # design rouge
 
     quad = find_placeholder_quad(str(tpl))
-    check(quad is not None and len(quad) == 4, "zone chroma détectée (4 coins)")
+    check(quad is not None and len(quad) == 4,
+          "zone chroma détectée (vert 'sale' RGB 9,187,13)")
 
+    before = np.asarray(Image.open(tpl).convert("RGB"))
     ok = composite_into_template(str(design), str(tpl), str(out))
     check(ok and out.exists(), "compositing réussi, fichier écrit")
+    after = np.asarray(Image.open(out).convert("RGB"))
 
-    res = Image.open(out).convert("RGB")
-    cx, cy = 120, 90                      # centre de l'ancienne zone verte
-    r, g, b = res.getpixel((cx, cy))
+    r, g, b = [int(v) for v in after[90, 120]]      # centre ancienne zone verte
     check(r > 150 and g < 100 and b < 100, "design (rouge) collé dans la zone")
-    check(res.getpixel((5, 5)) == (255, 255, 255), "hors-zone : gabarit intact (blanc)")
-    # plus aucun vert chroma résiduel au centre
-    check(not (g > 180 and r < 100), "le vert chroma a été recouvert")
+    check(not (g > 150 and r < 100), "le vert chroma a été recouvert")
+
+    # GARANTIE clé : hors de la zone verte, le gabarit est IDENTIQUE au pixel.
+    mask = (before[:, :, 1] > 110) & (before[:, :, 1] - before[:, :, 0] > 35) \
+        & (before[:, :, 1] - before[:, :, 2] > 35)
+    non_green_identical = np.array_equal(after[~mask], before[~mask])
+    check(non_green_identical, "hors-zone-verte : gabarit STRICTEMENT identique")
+    check(tuple(int(v) for v in after[3, 3]) == (123, 45, 67),
+          "pixel témoin hors-zone inchangé")
+
+
+def test_make_mockups_helpers():
+    print("\n[make_mockups : construction des commandes vidéo/ffmpeg]")
+    import importlib.util
+    base = Path(__file__).resolve().parent.parent / "automation"
+    spec = importlib.util.spec_from_file_location("make_mockups",
+                                                  base / "make_mockups.py")
+    mm = importlib.util.module_from_spec(spec)
+    sys.modules["make_mockups"] = mm
+    spec.loader.exec_module(mm)
+
+    check(mm._ratio_tag("16:9 horizontal") == "16x9", "ratio tag 16:9 -> 16x9")
+    check(mm._ratio_tag("2:3 vertical") == "2x3", "ratio tag 2:3 -> 2x3")
+
+    vc = mm.video_cmd("grok", "anim prompt", "/d/Cover.png", "/d/V.mp4")
+    check(vc[0] == "grok" and "Cover.png" in vc[2] and "MP4 file" in vc[2],
+          "video_cmd : source = cover composite + sortie MP4")
+    fc = mm.ffmpeg_strip_cmd("/d/raw.mp4", "/d/V.mp4")
+    check("-an" in fc and "ffmpeg" in fc[0], "ffmpeg : audio retiré (-an)")
 
 
 def test_grok_runner():
@@ -751,6 +780,7 @@ def run() -> int:
     test_automation_scripts()
     test_grok_runner()
     test_mockup_compositor()
+    test_make_mockups_helpers()
     test_storage_extras()
     test_currency_extras()
     test_etsy_api_http()

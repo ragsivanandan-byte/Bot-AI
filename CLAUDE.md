@@ -76,17 +76,22 @@ les prompts du jour, puis veille (Annexe A) et stratégie (Annexe B) en référe
    prompt **gallery-wall bonus** pour les sets.
 
 ### ✅ Mockups EXACTS (compositing Python) — résout le piège de régénération
-Test réel : `grok -p` **régénère** une œuvre proche au lieu de coller (confirmé
-sur la cover panorama : bandes différentes). → Solution retenue : **compositing
-Pillow** (`src/mockup_compositor.py` + `automation/make_mockups.py`). On colle le
-fichier EXACT dans des gabarits `mockup_templates/*.png` (rectangle vert #00FF00
-détecté + perspective). Pixel-for-pixel, gratuit, déterministe. Pillow+numpy
-ajoutés à requirements. Gabarits gitignored (assets locaux).
+Test réel (feedback Claude Chat 06/06) : `grok -p` **régénère/déforme** (skew,
+halo, doublon) au lieu de coller. → **compositing Pillow** (`src/mockup_compositor.py`
++ `automation/make_mockups.py`) : détection du vert par test RELATIF (robuste au
+vert « sale » mesuré RGB(9,187,13)), perspective, et **np.where → seuls les pixels
+verts sont remplacés** ⇒ le reste du gabarit reste IDENTIQUE au pixel (testé).
+Ratio-aware (`mockup_templates/2x3|3x1|16x9/`). Gabarits gitignored.
+Vidéo : `make_mockups.py --video` = image-to-video depuis la COVER composite,
+prompt sans balayage de lumière, **audio retiré** via ffmpeg `-an`, 16:9 (Frame
+TV) / 2:3 (Pinterest), jamais 2:1.
 
 ### ⏳ À faire / À TESTER
 - Créer les **gabarits** réels (prompt Grok « cadre vide + rectangle vert » dans
-  `mockup_templates/README_TEMPLATES.md`).
-- (Optionnel) vidéo : image-to-video Grok à partir de la cover composite.
+  `mockup_templates/README_TEMPLATES.md`) ; pour la niche **Frame TV**, faire des
+  gabarits **TV-authentiques** (bezel fin, art bord-à-bord, sur console) plutôt
+  que cadre+passe-partout — à trancher avec Ragavan.
+- Designs livrés ≥ 4608 px (bruts Grok sous la spec → Upscayl ×4).
 - **Gallery-wall (3 œuvres)** = cas dur en headless → interactif/API ; fallback
   cover single déjà en place.
 - Résolution Grok vs spec NWD (4608 px) → sinon Upscayl ×4.
