@@ -1,47 +1,72 @@
 #!/usr/bin/env bash
-# Phase 2 du jour (APRÈS le QC) : mockups exacts + vidéo depuis les gagnants,
-# puis upscale Upscayl + export multi-ratios JPEG (prêts Etsy).
-# Usage : ./run_phase2.sh [--single] D1.png [D2.png D3.png]
-#   --single  -> profil single (2 ratios). Sans option = set (5 ratios).
+# Phase 2 du jour (APRÈS le QC) — ZÉRO saisie de noms :
+#   1. Dépose tes images gagnantes (3 ou plus) dans  ~/Downloads/Pre_phase_2/
+#   2. Lance simplement :   ./run_phase2.sh        (ajoute --single pour 2 ratios)
+#
+# Le script : mockups exacts + vidéo 6 s depuis ces images, puis les DÉPLACE dans
+# ~/Downloads/To Upscale/<jour>/, puis upscale Upscayl + export ratios -> .../Final/.
+# (Tu peux aussi passer des fichiers en arguments pour court-circuiter le dossier.)
 set -u
 PY="${PYTHON:-python3}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SRC="${PRE_PHASE2_DIR:-$HOME/Downloads/Pre_phase_2}"
 
 TYPE="set"
 if [ "${1:-}" = "--single" ]; then TYPE="single"; shift; fi
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 3 ]; then
-  echo "Usage : $0 [--single] D1.png [D2.png D3.png]   (1 à 3 fichiers gagnants)"
-  exit 2
+# --- Récupère la liste des designs : arguments explicites, sinon le dossier de dépôt
+ABS=()
+FROM_DROP=0
+if [ "$#" -ge 1 ]; then
+  for f in "$@"; do
+    case "$f" in /*) p="$f" ;; *) p="$PWD/$f" ;; esac
+    [ -f "$p" ] || { echo "❌ Fichier introuvable : $f"; exit 2; }
+    ABS+=("$p")
+  done
+else
+  FROM_DROP=1
+  mkdir -p "$SRC"
+  shopt -s nullglob nocaseglob
+  for p in "$SRC"/*.png "$SRC"/*.jpg "$SRC"/*.jpeg; do ABS+=("$p"); done
+  shopt -u nullglob nocaseglob
+  if [ "${#ABS[@]}" -eq 0 ]; then
+    echo "❌ Aucune image dans : $SRC"
+    echo "   Dépose-y tes gagnants (.png/.jpg) puis relance ./run_phase2.sh"
+    exit 2
+  fi
 fi
 
-# Résout les chemins en ABSOLU (avant de changer de dossier) + vérifie l'existence.
-ABS=()
-for f in "$@"; do
-  case "$f" in /*) p="$f" ;; *) p="$PWD/$f" ;; esac
-  [ -f "$p" ] || { echo "❌ Fichier introuvable : $f"; exit 2; }
-  ABS+=("$p")
-done
+echo "== ${#ABS[@]} design(s) gagnant(s) =="
+for p in "${ABS[@]}"; do echo "   • $(basename "$p")"; done
 
 cd "$SCRIPT_DIR"
 
-echo "== [1/2] Mockups exacts (+ vidéo 6 s) depuis les gagnants =="
-"$PY" automation/make_mockups.py "${ABS[@]}" --video \
-  || echo "⚠️ Mockups en échec (gabarits mockup_templates/ présents ? 'grok' dispo ?) — on continue vers l'export."
-
+# --- [1/2] Mockups exacts (+ vidéo) ------------------------------------------
 echo ""
-echo "== [2/2] Upscale Upscayl + export ($TYPE) =="
+echo "== [1/2] Mockups exacts (+ vidéo 6 s) =="
+"$PY" automation/make_mockups.py "${ABS[@]}" --video \
+  || echo "⚠️ Mockups en échec (gabarits mockup_templates/ ? 'grok' dispo ?) — on continue vers l'export."
+
+# --- Placement des gagnants dans To Upscale/<jour>/ --------------------------
 DAY="$(date +%d-%m-%Y)"
 DEST="$HOME/Downloads/To Upscale/$DAY"
 mkdir -p "$DEST"
 for p in "${ABS[@]}"; do
-  cp -f "$p" "$DEST/"
-  echo "  -> copié dans To Upscale/$DAY/ : $(basename "$p")"
+  if [ "$FROM_DROP" -eq 1 ]; then
+    mv -f "$p" "$DEST/"; echo "  -> déplacé dans To Upscale/$DAY/ : $(basename "$p")"
+  else
+    cp -f "$p" "$DEST/"; echo "  -> copié dans To Upscale/$DAY/ : $(basename "$p")"
+  fi
 done
+
+# --- [2/2] Upscale + export ---------------------------------------------------
+echo ""
+echo "== [2/2] Upscale Upscayl + export ($TYPE) =="
 "$PY" automation/upscale_and_export.py --type "$TYPE" \
-  || { echo "❌ upscale/export a échoué."; exit 1; }
+  || { echo "❌ upscale/export a échoué. (Tes images sont dans To Upscale/$DAY/ — relançable.)"; exit 1; }
 
 echo ""
 echo "✅ Phase 2 terminée."
 echo "   Mockups + vidéo : ~/Downloads"
 echo "   JPG $TYPE ratios : ~/Downloads/Upscaled_add_export_5_ratios/$DAY/Final/"
+[ "$FROM_DROP" -eq 1 ] && echo "   (Pre_phase_2 est de nouveau vide pour demain.)"
