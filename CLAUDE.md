@@ -87,11 +87,12 @@ prompt sans balayage de lumière, **audio retiré** via ffmpeg `-an`, 16:9 (Fram
 TV) / 2:3 (Pinterest), jamais 2:1.
 
 ### ⏳ À faire / À TESTER
-- Créer les **gabarits** réels (prompt Grok « cadre vide + rectangle vert » dans
-  `mockup_templates/README_TEMPLATES.md`) ; pour la niche **Frame TV**, faire des
-  gabarits **TV-authentiques** (bezel fin, art bord-à-bord, sur console) plutôt
-  que cadre+passe-partout — à trancher avec Ragavan.
-- Designs livrés ≥ 4608 px (bruts Grok sous la spec → Upscayl ×4).
+- Créer les **gabarits** réels (commandes `grok -p` prêtes dans
+  `mockup_templates/README_TEMPLATES.md`, rangées par ratio 2x3/3x1/16x9). Inclut
+  les gabarits **Frame TV authentiques** (bezel fin Samsung, art **bord-à-bord**,
+  sur console, écran 100% vert) — recos Claude Chat intégrées.
+- Designs livrés ≥ 4608 px (bruts Grok sous la spec → Upscayl ×4) ; mockups en 4K.
+- (Optionnel) automatiser l'Upscayl ×4 du gagnant avant découpe 5 ratios/300 DPI.
 - **Gallery-wall (3 œuvres)** = cas dur en headless → interactif/API ; fallback
   cover single déjà en place.
 - Résolution Grok vs spec NWD (4608 px) → sinon Upscayl ×4.

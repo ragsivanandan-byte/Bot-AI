@@ -24,3 +24,6 @@ reports/
 mockup_templates/*.png
 mockup_templates/*.jpg
 mockup_templates/*.jpeg
+mockup_templates/**/*.png
+mockup_templates/**/*.jpg
+mockup_templates/**/*.jpeg
