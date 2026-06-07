@@ -16,6 +16,7 @@ Usage :
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -24,6 +25,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.config_loader import load_config            # noqa: E402
 from src.mockup_compositor import composite_into_template  # noqa: E402
 from src.prompt_generator import generate_daily_brief  # noqa: E402
+
+
+def _ratio_tag(fmt: str) -> str:
+    """'2:3 vertical' -> '2x3' (pour choisir des gabarits au bon ratio)."""
+    m = re.search(r"(\d+)\s*:\s*(\d+)", fmt)
+    return f"{m.group(1)}x{m.group(2)}" if m else ""
+
+
+def _images_in(d: Path) -> list[Path]:
+    return sorted(p for p in d.iterdir()
+                  if p.suffix.lower() in (".png", ".jpg", ".jpeg")) if d.is_dir() else []
 
 
 def main(argv=None) -> int:
@@ -37,24 +49,30 @@ def main(argv=None) -> int:
     cfg = load_config(args.config)
     grok_cfg = cfg["grok_prompts"]
     out_dir = Path(grok_cfg.get("output_dir", "~/Downloads")).expanduser()
-    tpl_dir = Path(args.templates or grok_cfg.get("mockup_templates_dir",
-                                                  "mockup_templates")).expanduser()
+    base_dir = Path(args.templates or grok_cfg.get("mockup_templates_dir",
+                                                   "mockup_templates")).expanduser()
     brief = generate_daily_brief(grok_cfg, cfg["niche"], [])
     slug = brief.slug
 
-    if not tpl_dir.is_dir():
-        print(f"⚠️ Dossier de gabarits introuvable : {tpl_dir}")
+    if not base_dir.is_dir():
+        print(f"⚠️ Dossier de gabarits introuvable : {base_dir}")
         print("   Crée-le et ajoutes-y des images de pièces avec un rectangle "
               "vert (#00FF00) à l'emplacement du cadre. Voir README.")
         return 0
-    templates = sorted(p for p in tpl_dir.iterdir()
-                       if p.suffix.lower() in (".png", ".jpg", ".jpeg"))
+
+    # Choix des gabarits : sous-dossier au bon ratio (ex. mockup_templates/2x3/)
+    # s'il existe, sinon le dossier à plat.
+    tag = _ratio_tag(brief.fmt)
+    sub = base_dir / tag
+    templates = _images_in(sub) if (tag and _images_in(sub)) else _images_in(base_dir)
     if not templates:
-        print(f"⚠️ Aucun gabarit dans {tpl_dir}.")
+        print(f"⚠️ Aucun gabarit dans {base_dir}"
+              + (f" (ni dans {sub})" if tag else "") + ".")
         return 0
 
     designs = [str(Path(d).expanduser()) for d in args.designs]
-    print(f"== Mockups exacts (compositing) — {len(templates)} gabarit(s) ==")
+    print(f"== Mockups exacts (compositing) — thème « {brief.theme} » ({brief.fmt}), "
+          f"{len(templates)} gabarit(s) ==")
     ok = fail = 0
     for i, tpl in enumerate(templates):
         design = designs[i % len(designs)]          # 1er gabarit -> 1er design
