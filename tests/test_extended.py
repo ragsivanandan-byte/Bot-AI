@@ -543,14 +543,12 @@ def test_grok_runner():
     check(len(nb) == 6, "non-batch : 6 jobs (1 par variation)")
     check("Save the result as a PNG file at" in nb[0].cmd[2], "non-batch : clause PNG")
 
-    # Mockups + vidéo depuis 3 gagnants
-    wins = [f"{tmp}/win1.png", f"{tmp}/win2.png", f"{tmp}/win3.png"]
-    mjobs = gg.build_mockup_jobs(brief, grok_cfg, wins)
-    check(len(mjobs) == 4, "4 jobs mockups")
-    check("win1.png" in mjobs[0].cmd[2] and "UNCHANGED" in mjobs[0].cmd[2],
-          "cover : référence le gagnant + règle 'UNCHANGED'")
-    vid = gg.build_video_job(brief, grok_cfg, wins[0])
-    check(str(vid.outs[0]).endswith(".mp4") and "MP4" in vid.cmd[2], "job vidéo MP4")
+    # Ancienne voie mockups DÉSACTIVÉE -> redirige vers make_mockups.py
+    rc = gg.main(["--mockups", "a.png", "b.png", "c.png", "--config",
+                  "config.yaml"])
+    check(rc == 0, "`--mockups` renvoie 0 (désactivé, pas de génération Grok)")
+    check(not hasattr(gg, "build_mockup_jobs"),
+          "build_mockup_jobs supprimé (plus de mockups via Grok)")
 
     # Orchestration batch : runner qui crée les fichiers -> 3 OK (6 fichiers)
     recap = gg.run_jobs(djobs, 5, runner=ok_runner)

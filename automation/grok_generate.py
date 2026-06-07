@@ -79,36 +79,6 @@ def build_design_jobs(brief, grok_cfg: dict) -> list[Job]:
     return jobs
 
 
-def build_mockup_jobs(brief, grok_cfg: dict, design_files: list[str]) -> list[Job]:
-    """4 mockups (1 cover + 3 ambiance) à partir des designs GAGNANTS fournis."""
-    out = _out_dir(grok_cfg)
-    grok = grok_cfg.get("grok_command", "grok")
-    jobs: list[Job] = []
-    for mk in brief.mockup_prompts:
-        # Chaque mockup sait quel design il colle (design_index) -> bon gagnant.
-        ref_idx = max(0, min(getattr(mk, "design_index", 0), len(design_files) - 1))
-        ref_file = str(Path(design_files[ref_idx]).expanduser())
-        path = out / mk.filename
-        # ⚠️ [À TESTER] le compositing headless suppose que `grok` lit/colle le
-        # fichier image fourni ; sinon il régénère (voir avis Claude Chat §0).
-        prompt = (mk.prompt_text +
-                  f" Use the existing image file at {ref_file} as the poster to "
-                  f"paste UNCHANGED (do not redraw; if unsure, reproduce it "
-                  f"exactly)." + _save_clause(path))
-        jobs.append(Job(label=mk.label, cmd=[grok, "-p", prompt], outs=[path]))
-    return jobs
-
-
-def build_video_job(brief, grok_cfg: dict, cover_file: str) -> Job:
-    out = _out_dir(grok_cfg)
-    grok = grok_cfg.get("grok_command", "grok")
-    cover = str(Path(cover_file).expanduser())
-    path = out / f"{brief.slug}_Video.mp4"
-    prompt = (brief.video_prompt +
-              f" Source still image file: {cover}." + _save_clause(path, "MP4"))
-    return Job(label="Vidéo 6 s", cmd=[grok, "-p", prompt], outs=[path])
-
-
 def _default_runner(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
@@ -153,18 +123,31 @@ def run_jobs(jobs: list[Job], timeout: int, runner=_default_runner,
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Génération visuelle Grok Build.")
+    ap = argparse.ArgumentParser(description="Génération des DESIGNS bruts via "
+                                 "Grok Build (les mockups -> make_mockups.py).")
     ap.add_argument("--config", default="config.yaml")
     ap.add_argument("--designs", action="store_true",
-                    help="Génère les variations des 3 designs bruts (défaut).")
-    ap.add_argument("--mockups", nargs=3, metavar=("D1", "D2", "D3"),
-                    help="Génère 4 mockups + vidéo depuis les 3 designs gagnants.")
+                    help="Génère les variations des designs bruts (défaut).")
+    ap.add_argument("--mockups", nargs="*", metavar="DESIGN",
+                    help="(DÉSACTIVÉ) Les mockups se font par compositing exact : "
+                         "utilise automation/make_mockups.py.")
     args = ap.parse_args(argv)
+
+    # Ancienne voie mockups (régénération Grok) volontairement désactivée :
+    # elle déformait l'œuvre (skew/halo/doublon). On redirige vers le compositeur.
+    if args.mockups is not None:
+        print("⛔ La génération des mockups par Grok est DÉSACTIVÉE (elle "
+              "régénérait/déformait l'œuvre).")
+        print("➡️  Utilise le compositing EXACT (pixel-for-pixel) :")
+        files = " ".join(args.mockups) if args.mockups else \
+            "~/Downloads/<g1>.png ~/Downloads/<g2>.png ~/Downloads/<g3>.png"
+        print(f"    python automation/make_mockups.py {files} --video")
+        return 0
 
     cfg = load_config(args.config)
     grok_cfg = cfg["grok_prompts"]
 
-    if not grok_cfg.get("auto_generate", True) and not args.mockups:
+    if not grok_cfg.get("auto_generate", True):
         print("auto_generate=false dans la config → rien à faire.")
         return 0
     if shutil.which(grok_cfg.get("grok_command", "grok")) is None:
@@ -174,21 +157,16 @@ def main(argv=None) -> int:
     brief = generate_daily_brief(grok_cfg, cfg["niche"], [])
     timeout = int(grok_cfg.get("per_call_timeout_s", 300))
 
-    if args.mockups:
-        jobs = build_mockup_jobs(brief, grok_cfg, args.mockups)
-        jobs.append(build_video_job(brief, grok_cfg, args.mockups[0]))
-        print(f"== Mockups + vidéo ({brief.theme}) ==")
-    else:
-        jobs = build_design_jobs(brief, grok_cfg)
-        print(f"== Designs bruts ({brief.theme}) — "
-              f"{grok_cfg.get('variations_per_design', 8)} variations/design ==")
+    jobs = build_design_jobs(brief, grok_cfg)
+    print(f"== Designs bruts ({brief.theme}) — "
+          f"{grok_cfg.get('variations_per_design', 8)} variations/design ==")
 
     workers = int(grok_cfg.get("parallel_workers", 1))
     recap = run_jobs(jobs, timeout, workers=workers)
     print(f"\nTerminé : {len(recap['ok'])} OK, {len(recap['failed'])} à refaire.")
     if recap["failed"]:
         print("À refaire :", ", ".join(recap["failed"]))
-    print("⚠️ QC humain obligatoire avant publication. Rien n'a été publié.")
+    print("⚠️ QC humain obligatoire. Mockups -> make_mockups.py. Rien publié.")
     return 0
 
 
