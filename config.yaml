@@ -301,21 +301,42 @@ grok_prompts:
         - "solid filled composition of two or three overlapping organic shapes, warm neutral, landscape, flat gallery-quality color"
       mockup_rooms: ["mounted on a Frame TV on a neutral wall above a console"]
 
-# --- Pipeline upscale + export 5 ratios (commande indépendante) ---------------
-# `automation/upscale_and_export.py` : prend les images de
-# Downloads/<to_upscale_dir>/<jj-mm-aaaa>/, les upscale ×4, puis exporte chacune
-# en 5 ratios JPG (qualité 90) dans Downloads/<output_dir>/<jj-mm-aaaa>/.
+# --- Pipeline upscale + export ratios (commande indépendante) ----------------
+# `automation/upscale_and_export.py --type set|single` : prend les bruts de
+# Downloads/<to_upscale_dir>/<jj-mm-aaaa>/ (NOMMÉS NWD_T#_..., voir spec),
+# les upscale ×4, puis exporte en JPEG (q90/4:4:4/300DPI/sRGB) selon le profil.
 image_pipeline:
   downloads_dir: "~/Downloads"
   to_upscale_dir: "To Upscale"
-  output_dir: "Upscaled_add_export_5_ratios"
-  # Commande d'upscale externe (Upscayl/Real-ESRGAN). Placeholders {input}/{output}.
-  # Si vide ou binaire absent -> repli Lanczos ×4 (net pour des aplats de couleur).
-  # Ex Real-ESRGAN : "realesrgan-ncnn-vulkan -i {input} -o {output} -s 4 -n realesrgan-x4plus"
-  upscale_command: ""
-  target_height: 6912          # hauteur fixe des exports (largeur = ratio)
-  jpg_quality: 90              # JAMAIS 100 (fichiers trop lourds pour Etsy)
-  ratios: ["2:3", "3:4", "4:5", "5:7", "11:14"]
+  output_root: "~/Downloads/Upscaled_add_export_5_ratios"
+  date_subdir: true            # ranger par sous-dossier <jj-mm-aaaa>/
+  masters_subdir: "Upscaled"   # masters _upscaled.png ici (jamais dans le livrable)
+  crops_by_ratio_subdirs: true # crops -> Final/<ratio>/
+  default_type: "set"          # set (5 ratios) ou single (2 ratios)
+  profiles:
+    set:                       # ancrage HAUTEUR
+      anchor: height
+      anchor_px: 6912
+      ratios: ["2x3", "3x4", "4x5", "5x7", "11x14"]
+      min_master_width: 5530   # sinon ABORT (regenerer un brut plus grand)
+    single:                    # ancrage LARGEUR (meme largeur que le 2:3)
+      anchor: width
+      anchor_px: 4608
+      ratios: ["2x3", "3x4"]
+      min_master_width: 4608
+  jpeg:
+    quality: 90                # JAMAIS 100
+    subsampling: 0             # 4:4:4 (pas de lisere couleur sur les bords)
+    optimize: true
+    dpi: [300, 300]
+    sharpen: false             # pas de nettete par defaut (halo sur aplats)
+  upscale:
+    # Commande externe (placeholders {input}/{output}). Ex Real-ESRGAN :
+    # "realesrgan-ncnn-vulkan -i {input} -o {output} -s 4 -n realesrgan-x4plus"
+    command: ""
+    model: "upscayl-standard-4x"
+    factor: 4
+    fallback_lanczos: false    # absent -> ABORT (pas de Lanczos muet). true = autorise Lanczos.
 
 # --- Connecteurs API (optionnels) --------------------------------------------
 # Les CLÉS ne se mettent JAMAIS ici : elles se lisent dans des variables

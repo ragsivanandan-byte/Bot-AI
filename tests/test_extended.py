@@ -431,34 +431,72 @@ def test_automation_scripts():
 
 
 def test_image_pipeline():
-    print("\n[image_pipeline : upscale ×4 + export 5 ratios JPG q90]")
+    print("\n[image_pipeline : profils set/single, naming, JPEG, ABORT (spec Claude Chat)]")
     try:
         from PIL import Image
     except Exception:
         check(True, "Pillow absent -> test ignoré (OK)")
         return
-    from src.image_pipeline import export_ratios, parse_ratios, upscale_x4
+    from src.image_pipeline import (RATIOS, export_ratio, jpeg_info, profile_for,
+                                    upscale_x4, validate_input_stem)
 
-    check(parse_ratios(["2:3", "11:14"]) == [(2, 3), (11, 14)], "parse_ratios")
+    # 1) Dimensions de PRODUCTION (calcul pur, sans rendu lourd)
+    set_p = profile_for("set", {})
+    sng_p = profile_for("single", {})
+    set_dims = {rk: (round(6912 * w / h), 6912) for rk, (w, h) in RATIOS.items()}
+    check(set_dims["2x3"] == (4608, 6912) and set_dims["4x5"] == (5530, 6912)
+          and set_dims["11x14"] == (5431, 6912), "SET : ancrage hauteur 6912 (dims exactes)")
+    sng_2x3 = (4608, round(4608 * 3 / 2))
+    sng_3x4 = (4608, round(4608 * 4 / 3))
+    check(sng_2x3 == (4608, 6912) and sng_3x4 == (4608, 6144),
+          "SINGLE : ancrage largeur 4608 -> 2x3=4608x6912, 3x4=4608x6144")
+    check(set_p["ratios"] == ["2x3", "3x4", "4x5", "5x7", "11x14"]
+          and sng_p["ratios"] == ["2x3", "3x4"], "ratios par profil")
 
+    # 2) Validation du nommage NWD
+    validate_input_stem("NWD_T1_WarmShapes_Dune", "set")
+    validate_input_stem("NWD_T2_OliveBranch", "single")
+    for bad, kind in [("grok_design_1", "set"), ("NWD_T1_OliveBranch", "set"),
+                      ("NWD_T1_A_B", "single")]:
+        try:
+            validate_input_stem(bad, kind); ok = False
+        except ValueError:
+            ok = True
+        check(ok, f"nom invalide rejeté : {bad} ({kind})")
+
+    # 3) Upscale : absent + fallback false -> ABORT ; fallback true -> Lanczos ×4
     tmp = tempfile.mkdtemp()
-    src = Path(tmp) / "raw.png"
-    Image.new("RGB", (40, 60), (180, 120, 90)).save(src)
-
+    src = Path(tmp) / "in.png"
+    Image.new("RGB", (40, 60), (181, 117, 79)).save(src)
     up = Path(tmp) / "up.png"
-    check(upscale_x4(str(src), str(up)) and up.exists(), "upscale produit un fichier")
-    check(Image.open(up).size == (160, 240), "Lanczos ×4 : 40x60 -> 160x240")
+    try:
+        upscale_x4(str(src), str(up), command="", fallback_lanczos=False); ok = False
+    except RuntimeError:
+        ok = True
+    check(ok, "upscaler absent + fallback_lanczos=false -> ABORT")
+    mode = upscale_x4(str(src), str(up), command="", fallback_lanczos=True)
+    check(mode == "lanczos" and Image.open(up).size == (160, 240),
+          "fallback Lanczos ×4 (40x60 -> 160x240)")
 
-    jpgs = export_ratios(str(up), tmp, "raw", target_height=70, quality=90)
-    check(len(jpgs) == 5, "5 ratios exportés")
-    check(all(p.suffix == ".jpg" and p.exists() for p in jpgs), "tous des JPG écrits")
-    by_name = {p.name: p for p in jpgs}
-    im = Image.open(by_name["raw_2x3.jpg"])
-    check(im.size == (round(70 * 2 / 3), 70), "2:3 : hauteur fixe, largeur = ratio")
-    check(im.format == "JPEG", "format JPEG")
-    # garde-fou qualité : jamais 100
-    big = export_ratios(str(up), tmp, "q", target_height=70, quality=100)
-    check(len(big) == 5, "quality demandée 100 -> bridée, export OK")
+    # 4) export_ratio : math + JPEG metadata (petit anchor pour rester léger)
+    master = Image.new("RGB", (300, 450), (181, 117, 79))
+    d = Path(tmp) / "NWD_T1_WS_Dune_2x3.jpg"
+    w, h = export_ratio(master, "2x3", "height", 90, str(d), {"quality": 90})
+    check((w, h) == (60, 90), "export ancrage hauteur (2x3 @90 -> 60x90)")
+    info = jpeg_info(str(d))
+    check(info["dpi"] == (300, 300), "JPEG : 300 DPI")
+    check(info["mode"] == "RGB", "JPEG : mode RGB")
+    check(info["icc"], "JPEG : profil sRGB intégré")
+    w2, h2 = export_ratio(master, "3x4", "width", 90, str(Path(tmp) / "s_3x4.jpg"))
+    check((w2, h2) == (90, 120), "export ancrage largeur (single 3x4 @90 -> 90x120)")
+
+    # 5) ABORT si master trop petit (jamais d'agrandissement)
+    tiny = Image.new("RGB", (50, 50))
+    try:
+        export_ratio(tiny, "2x3", "height", 6912, str(Path(tmp) / "x.jpg")); ok = False
+    except ValueError:
+        ok = True
+    check(ok, "master trop petit -> ABORT (pas de ré-upscale au resize)")
 
 
 def test_zip_outputs():

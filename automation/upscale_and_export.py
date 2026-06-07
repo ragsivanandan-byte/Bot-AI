@@ -2,17 +2,20 @@
 """
 upscale_and_export.py — Commande INDÉPENDANTE (à lancer à la main).
 
-Pour le sous-dossier du JOUR (jj-mm-aaaa) de `~/Downloads/To Upscale/` :
-  1. upscale ×4 chaque image (Upscayl/Real-ESRGAN si configuré, sinon Lanczos) ;
-  2. exporte chaque image upscalée en 5 ratios JPG (qualité 90, hauteur 6912).
-Sortie : `~/Downloads/Upscaled_add_export_5_ratios/<jj-mm-aaaa>/` (créé auto).
+Pour le dossier du JOUR `~/Downloads/To Upscale/<jj-mm-aaaa>/` :
+  1. upscale ×4 (Upscayl/Real-ESRGAN ; sinon ABORT — pas de Lanczos muet) ;
+  2. export multi-ratios JPEG selon le profil (set/single), specs Claude Chat
+     (center-crop, downscale only, q90/4:4:4/300DPI/sRGB).
 
-N'a AUCUN lien avec le flux quotidien (grok_generate / make_mockups) : process à
-part, déclenché manuellement.
+Sortie : `<output_root>/<jj-mm-aaaa>/Upscaled/` (masters) + `.../Final/<ratio>/`.
+
+⚠️ Les bruts doivent être nommés à la convention NWD :
+   SET    : NWD_T#_{SetName}_{DesignName}.png   (ex. NWD_T1_WarmShapes_Dune.png)
+   SINGLE : NWD_T#_{DesignName}.png             (ex. NWD_T1_OliveBranch.png)
 
 Usage :
-    python automation/upscale_and_export.py            # dossier du jour
-    python automation/upscale_and_export.py --date 07-06-2026   # une autre date
+    python automation/upscale_and_export.py --type set
+    python automation/upscale_and_export.py --type single --date 07-06-2026
 """
 from __future__ import annotations
 
@@ -23,62 +26,121 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.config_loader import load_config             # noqa: E402
-from src.image_pipeline import export_ratios, upscale_x4  # noqa: E402
+from src.config_loader import load_config                       # noqa: E402
+from src.image_pipeline import (export_ratio, jpeg_info, profile_for,  # noqa: E402
+                                upscale_x4, validate_input_stem)
 
 _EXTS = (".png", ".jpg", ".jpeg", ".webp")
 
 
+def _verify(jpgs: list[Path], expected_dims: dict) -> list[str]:
+    """Checklist d'audit (§11) ; renvoie la liste des problèmes (vide = OK)."""
+    problems = []
+    for p in jpgs:
+        ratio = p.stem.split("_")[-1]
+        info = jpeg_info(str(p))
+        if ratio in expected_dims and info["size"] != expected_dims[ratio]:
+            problems.append(f"{p.name}: dim {info['size']} ≠ {expected_dims[ratio]}")
+        if info["mode"] != "RGB":
+            problems.append(f"{p.name}: mode {info['mode']} (attendu RGB)")
+        if info["dpi"] != (300, 300):
+            problems.append(f"{p.name}: dpi {info['dpi']} (attendu 300,300)")
+        if not info["icc"]:
+            problems.append(f"{p.name}: profil sRGB absent")
+        mb = info["bytes"] / 1e6
+        if mb > 2.5:
+            problems.append(f"{p.name}: {mb:.1f} Mo (> 2.5 Mo)")
+    return problems
+
+
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Upscale ×4 + export 5 ratios (jour).")
+    ap = argparse.ArgumentParser(description="Upscale ×4 + export ratios (jour).")
     ap.add_argument("--config", default="config.yaml")
-    ap.add_argument("--date", default=None,
-                    help="Sous-dossier daté (jj-mm-aaaa). Défaut : aujourd'hui.")
+    ap.add_argument("--type", choices=["set", "single"], default=None,
+                    help="set (5 ratios, ancrage hauteur) ou single (2 ratios, "
+                         "ancrage largeur). Défaut : config.")
+    ap.add_argument("--date", default=None, help="Dossier daté (jj-mm-aaaa).")
     args = ap.parse_args(argv)
 
     cfg = load_config(args.config)
     ip = cfg.get("image_pipeline", {})
+    kind = args.type or ip.get("default_type", "set")
+    profile = profile_for(kind, ip)
+    jpeg = ip.get("jpeg", {})
+    up = ip.get("upscale", {})
+
     downloads = Path(ip.get("downloads_dir", "~/Downloads")).expanduser()
     day = args.date or date.today().strftime("%d-%m-%Y")
-
     in_dir = downloads / ip.get("to_upscale_dir", "To Upscale") / day
-    out_dir = downloads / ip.get("output_dir", "Upscaled_add_export_5_ratios") / day
+
+    base = Path(ip.get("output_root", str(downloads / "Upscaled_add_export_5_ratios"))
+                ).expanduser()
+    if ip.get("date_subdir", True):
+        base = base / day
+    masters_dir = base / ip.get("masters_subdir", "Upscaled")
 
     if not in_dir.is_dir():
         print(f"⚠️ Dossier introuvable : {in_dir}")
-        print(f"   Mets les images brutes à upscaler dans : "
-              f"{downloads / ip.get('to_upscale_dir', 'To Upscale') / day}")
         return 0
     images = sorted(p for p in in_dir.iterdir() if p.suffix.lower() in _EXTS)
     if not images:
         print(f"⚠️ Aucune image dans {in_dir}.")
         return 0
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    command = ip.get("upscale_command", "")
-    target_h = int(ip.get("target_height", 6912))
-    quality = int(ip.get("jpg_quality", 90))
-    ratios = ip.get("ratios")
+    # Validation des noms AVANT tout (ABORT si un brut est mal nommé / incohérent).
+    try:
+        for img in images:
+            validate_input_stem(img.stem, kind)
+    except ValueError as e:
+        print(f"❌ ABORT (nommage) : {e}")
+        return 1
 
-    print(f"== Upscale ×4 + export 5 ratios — {day} — {len(images)} image(s) ==")
-    if not command.strip():
-        print("   (upscale : repli Lanczos ×4 — net pour des aplats ; configure "
-              "image_pipeline.upscale_command pour Upscayl/Real-ESRGAN)")
-    total_jpg = 0
-    for img in images:
-        stem = img.stem
-        upscaled = out_dir / f"{stem}_upscaled.png"
-        print(f"→ {img.name}")
-        if not upscale_x4(str(img), str(upscaled), command):
-            print("  ⚠️ upscale échoué, image ignorée")
-            continue
-        jpgs = export_ratios(str(upscaled), str(out_dir), stem,
-                             target_height=target_h, quality=quality, ratios=ratios)
-        total_jpg += len(jpgs)
-        print(f"  ✅ upscalé + {len(jpgs)} ratios JPG (q{quality})")
+    anchor, anchor_px = profile["anchor"], int(profile["anchor_px"])
+    ratios = profile["ratios"]
+    expected = {}
+    for rk in ratios:
+        from src.image_pipeline import RATIOS
+        rw, rh = RATIOS[rk]
+        if anchor == "height":
+            expected[rk] = (round(anchor_px * rw / rh), anchor_px)
+        else:
+            expected[rk] = (anchor_px, round(anchor_px * rh / rw))
 
-    print(f"\nTerminé : {total_jpg} fichiers JPG (5 ratios/image) dans {out_dir}")
-    print("⚠️ Vérifie les recadrages (centrés) avant mise en vente.")
+    print(f"== Upscale ×4 + export ({kind}) — {day} — {len(images)} image(s) ==")
+    from PIL import Image
+    all_jpgs: list[Path] = []
+    try:
+        for img in images:
+            stem = img.stem
+            master_path = masters_dir / f"{stem}_upscaled.png"
+            print(f"→ {img.name}")
+            mode = upscale_x4(str(img), str(master_path),
+                              command=up.get("command", ""),
+                              fallback_lanczos=bool(up.get("fallback_lanczos", False)),
+                              min_master_width=int(profile.get("min_master_width", 0)))
+            master = Image.open(master_path)
+            for rk in ratios:
+                crops_dir = (base / "Final" / rk
+                             if ip.get("crops_by_ratio_subdirs", True) else base)
+                dest = crops_dir / f"{stem}_{rk}.jpg"
+                export_ratio(master, rk, anchor, anchor_px, str(dest), jpeg)
+                all_jpgs.append(dest)
+            print(f"  ✅ upscalé ({mode}) + {len(ratios)} ratios JPG")
+    except (RuntimeError, ValueError) as e:
+        print(f"❌ ABORT : {e}")
+        return 1
+
+    # --- verify (§11) -------------------------------------------------------
+    problems = _verify(all_jpgs, expected)
+    print(f"\n== Vérification ({len(all_jpgs)} JPG) ==")
+    if problems:
+        print("⚠️ Problèmes :")
+        for p in problems:
+            print(f"   - {p}")
+    else:
+        print("✅ Dimensions, 300 DPI, sRGB, mode RGB, poids — tout conforme.")
+    print(f"Masters : {masters_dir}\nCrops   : {base}"
+          + ("/Final/<ratio>/" if ip.get("crops_by_ratio_subdirs", True) else ""))
     return 0
 
 

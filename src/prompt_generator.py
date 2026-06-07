@@ -35,11 +35,12 @@ _RAW_TEMPLATE = (
     "{subject}, depicted as ONE single flat solid shape in {shape_color}, fully "
     "painted, no outline, no shading, no gradient, set against a plain solid "
     "{bg_color} background. Warm minimalist organic wall-art style, matte finish. "
-    "{fmt}, centered composition with generous even margins and negative space "
-    "around the shape. Clean, calm, high-resolution printable poster art. "
-    "NEGATIVE: outline, line drawing, stroke, rainbow, multicolor, gradient, "
-    "drop shadow, 3D, photo-realistic, busy background, texture noise, frame, "
-    "mat, text, watermark, border, childish, cartoon."
+    "{fmt}, subject CENTERED with at least 12% empty margin on top, bottom and "
+    "sides (so it can be cropped to several print ratios without clipping). Clean, "
+    "calm, high-resolution printable poster art. NEGATIVE: outline, line drawing, "
+    "stroke, rainbow, multicolor, gradient, drop shadow, 3D, photo-realistic, "
+    "busy background, texture noise, frame, mat, text, watermark, border, "
+    "childish, cartoon."
 )
 
 # Repli si pas de palette nommée : on borne à 2 couleurs de la liste.
@@ -47,7 +48,8 @@ _RAW_TEMPLATE_FALLBACK = (
     "{subject}, ONE flat solid shape, no outline, using at most TWO of these "
     "warm-neutral colors: {palette}, on a plain solid background in the lightest "
     "of those colors. Warm minimalist organic wall-art style, matte finish. "
-    "{fmt}, centered composition with generous even margins and negative space. "
+    "{fmt}, subject CENTERED with at least 12% empty margin on top, bottom and "
+    "sides (croppable to several ratios without clipping). "
     "High-resolution printable poster art. NEGATIVE: outline, line drawing, "
     "rainbow, multicolor, gradient, drop shadow, 3D, photo-realistic, busy "
     "background, text, watermark, border, childish."

@@ -145,24 +145,34 @@ cover montre EXACTEMENT le fichier vendu), utilise le compositeur Python :
    Ajoute `--video` pour générer aussi la vidéo 6 s **depuis la cover composite**
    (zoom lent, sans balayage de lumière) et retirer l'audio via ffmpeg.
 
-### Upscale ×4 + export 5 ratios (commande indépendante)
+### Upscale ×4 + export ratios (commande indépendante, spec Claude Chat)
 
-Process **séparé** du flux quotidien, à lancer à la main. Il traite le dossier
-**du jour** dans `~/Downloads/To Upscale/<jj-mm-aaaa>/` :
+Process **séparé** du flux quotidien. Les bruts gagnants doivent être **nommés à
+la convention NWD** et placés dans `~/Downloads/To Upscale/<jj-mm-aaaa>/` :
+- SET : `NWD_T{tier}_{SetName}_{DesignName}.png` (ex. `NWD_T1_WarmShapes_Dune.png`)
+- SINGLE : `NWD_T{tier}_{DesignName}.png` (ex. `NWD_T1_OliveBranch.png`)
+
 ```bash
-python automation/upscale_and_export.py            # dossier du jour
-python automation/upscale_and_export.py --date 07-06-2026
+python automation/upscale_and_export.py --type set       # 5 ratios, ancrage hauteur 6912
+python automation/upscale_and_export.py --type single    # 2 ratios, ancrage largeur 4608
+python automation/upscale_and_export.py --type set --date 07-06-2026
 ```
-1. **upscale ×4** chaque image (Upscayl/Real-ESRGAN si `image_pipeline.upscale_command`
-   est configuré et présent ; sinon **Lanczos ×4**, très propre pour des aplats) ;
-2. **exporte** chaque image en **5 ratios JPG** (2:3, 3:4, 4:5, 5:7, 11:14),
-   hauteur fixe **6912 px**, **qualité 90** (jamais 100).
-Sortie : `~/Downloads/Upscaled_add_export_5_ratios/<jj-mm-aaaa>/` (créé auto) —
-ex. 3 images → 3 PNG upscalées + 15 JPG.
+1. **upscale ×4** ; 2. **center-crop** par ratio ; 3. **downscale** (jamais
+d'agrandissement) ; 4. **JPEG q90, 4:4:4, 300 DPI, sRGB**.
+Sortie : `~/Downloads/Upscaled_add_export_5_ratios/<date>/Upscaled/` (masters) +
+`.../Final/<ratio>/` (crops). Une étape **verify** contrôle dims / 300 DPI / sRGB /
+poids après chaque batch.
 
-> Pour un vrai upscale IA (au lieu de Lanczos), installe Upscayl/Real-ESRGAN et
-> renseigne `image_pipeline.upscale_command` dans `config.yaml` (placeholders
-> `{input}`/`{output}`).
+Dimensions produites : **SET** (h=6912) 4608×6912, 5184×6912, 5530×6912,
+4937×6912, 5431×6912 ; **SINGLE** (w=4608) 4608×6912, 4608×6144.
+
+> **Upscaler** : par défaut, si aucun upscaler n'est configuré, le script
+> **s'arrête** (pas de dégradation muette). Renseigne
+> `image_pipeline.upscale.command` (Upscayl/Real-ESRGAN, placeholders
+> `{input}`/`{output}`), **ou** mets `image_pipeline.upscale.fallback_lanczos: true`
+> pour autoriser un Lanczos ×4 (propre sur des aplats). Si un brut est trop petit
+> (master < `min_master_width`), le script **abort** : régénère un brut plus grand
+> (ne jamais combler par agrandissement).
 
 ### Veille jour à jour (historisation)
 
