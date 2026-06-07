@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import zipfile
 from datetime import date
 from pathlib import Path
 
@@ -153,6 +154,15 @@ def main(argv=None) -> int:
         print("✅ Dimensions, 300 DPI, sRGB, mode RGB, poids — tout conforme.")
     print(f"Masters : {masters_dir}\nCrops   : {base}/Final/"
           + ("<ratio>/" if ip.get("crops_by_ratio_subdirs", False) else ""))
+
+    # --- Archive ZIP des ratios, dans le même dossier Final/ ----------------
+    if all_jpgs and ip.get("zip_final", True):
+        zip_path = (base / "Final" / f"NWD_{kind}_{day}_ratios.zip")
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for p in all_jpgs:
+                zf.write(p, arcname=p.name)        # noms à plat (sans chemin)
+        mb = zip_path.stat().st_size / (1024 * 1024)
+        print(f"🗜️  ZIP : {zip_path.name} ({len(all_jpgs)} JPG, {mb:.1f} Mo) -> {zip_path.parent}")
     return 0
 
 

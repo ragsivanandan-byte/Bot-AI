@@ -589,6 +589,12 @@ def test_upscale_cli_any_name():
           "sortie nommée <nom_du_fichier>_<ratio>.jpg")
     check((Path(tmp) / "Out" / day / "Upscaled" /
            "random name 123_upscaled.png").exists(), "master _upscaled.png présent")
+    import zipfile as _zf
+    zips = list((Path(tmp) / "Out" / day).glob("Final/*.zip"))
+    check(len(zips) == 1, "ZIP des ratios créé dans Final/")
+    znames = _zf.ZipFile(zips[0]).namelist() if zips else []
+    check(len(znames) == len(jpgs) and not any(n.endswith(".zip") for n in znames),
+          "ZIP contient tous les JPG (à plat, sans s'inclure)")
 
 
 def test_zip_outputs():
