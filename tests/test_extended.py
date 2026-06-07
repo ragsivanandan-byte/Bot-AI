@@ -430,6 +430,62 @@ def test_automation_scripts():
     check(".grok/bin" in rd, "run_daily : ajoute ~/.grok/bin au PATH (grok en launchd)")
 
 
+def test_image_pipeline():
+    print("\n[image_pipeline : upscale ×4 + export 5 ratios JPG q90]")
+    try:
+        from PIL import Image
+    except Exception:
+        check(True, "Pillow absent -> test ignoré (OK)")
+        return
+    from src.image_pipeline import export_ratios, parse_ratios, upscale_x4
+
+    check(parse_ratios(["2:3", "11:14"]) == [(2, 3), (11, 14)], "parse_ratios")
+
+    tmp = tempfile.mkdtemp()
+    src = Path(tmp) / "raw.png"
+    Image.new("RGB", (40, 60), (180, 120, 90)).save(src)
+
+    up = Path(tmp) / "up.png"
+    check(upscale_x4(str(src), str(up)) and up.exists(), "upscale produit un fichier")
+    check(Image.open(up).size == (160, 240), "Lanczos ×4 : 40x60 -> 160x240")
+
+    jpgs = export_ratios(str(up), tmp, "raw", target_height=70, quality=90)
+    check(len(jpgs) == 5, "5 ratios exportés")
+    check(all(p.suffix == ".jpg" and p.exists() for p in jpgs), "tous des JPG écrits")
+    by_name = {p.name: p for p in jpgs}
+    im = Image.open(by_name["raw_2x3.jpg"])
+    check(im.size == (round(70 * 2 / 3), 70), "2:3 : hauteur fixe, largeur = ratio")
+    check(im.format == "JPEG", "format JPEG")
+    # garde-fou qualité : jamais 100
+    big = export_ratios(str(up), tmp, "q", target_height=70, quality=100)
+    check(len(big) == 5, "quality demandée 100 -> bridée, export OK")
+
+
+def test_zip_outputs():
+    print("\n[grok_generate : ZIP des images brutes]")
+    import importlib.util
+    base = Path(__file__).resolve().parent.parent / "automation"
+    spec = importlib.util.spec_from_file_location("grok_generate",
+                                                  base / "grok_generate.py")
+    gg = importlib.util.module_from_spec(spec)
+    sys.modules["grok_generate"] = gg
+    spec.loader.exec_module(gg)
+    import zipfile
+    tmp = tempfile.mkdtemp()
+    files = []
+    for i in range(3):
+        f = Path(tmp) / f"img_{i}.png"
+        f.write_bytes(b"PNGDATA")
+        files.append(f)
+    files.append(Path(tmp) / "missing.png")   # inexistant -> ignoré
+    zp = Path(tmp) / "24images_grok_brut.zip"
+    n = gg.zip_outputs(files, zp)
+    check(n == 3 and zp.exists(), "ZIP créé avec les 3 images existantes")
+    with zipfile.ZipFile(zp) as z:
+        check(sorted(z.namelist()) == ["img_0.png", "img_1.png", "img_2.png"],
+              "ZIP contient les bons fichiers (noms à plat)")
+
+
 def test_mockup_compositor():
     print("\n[mockup_compositor : compositing exact dans une zone chroma]")
     try:
@@ -777,6 +833,8 @@ def run() -> int:
     test_reports()
     test_automation_scripts()
     test_grok_runner()
+    test_zip_outputs()
+    test_image_pipeline()
     test_mockup_compositor()
     test_make_mockups_helpers()
     test_storage_extras()

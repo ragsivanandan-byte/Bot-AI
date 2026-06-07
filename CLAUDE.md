@@ -92,7 +92,17 @@ TV) / 2:3 (Pinterest), jamais 2:1.
   les gabarits **Frame TV authentiques** (bezel fin Samsung, art **bord-à-bord**,
   sur console, écran 100% vert) — recos Claude Chat intégrées.
 - Designs livrés ≥ 4608 px (bruts Grok sous la spec → Upscayl ×4) ; mockups en 4K.
-- (Optionnel) automatiser l'Upscayl ×4 du gagnant avant découpe 5 ratios/300 DPI.
+
+### ✅ Ajouts récents
+- `grok_generate.py --designs` crée aussi un **ZIP `24images_grok_brut.zip`**
+  (~/Downloads) regroupant toutes les images brutes — 1 seul envoi à Claude chat
+  (limite 20 fichiers/upload).
+- **Commande indépendante** `automation/upscale_and_export.py` : traite
+  `~/Downloads/To Upscale/<jj-mm-aaaa>/` → **upscale ×4** (Upscayl/Real-ESRGAN si
+  configuré dans `image_pipeline.upscale_command`, sinon Lanczos ×4) → **export 5
+  ratios JPG** (2:3,3:4,4:5,5:7,11:14, hauteur 6912, qualité 90) dans
+  `~/Downloads/Upscaled_add_export_5_ratios/<jj-mm-aaaa>/`. Logique testable
+  (`src/image_pipeline.py`). Specs Photopea confirmées par Claude Chat.
 - **Gallery-wall (3 œuvres)** = cas dur en headless → interactif/API ; fallback
   cover single déjà en place.
 - Résolution Grok vs spec NWD (4608 px) → sinon Upscayl ×4.

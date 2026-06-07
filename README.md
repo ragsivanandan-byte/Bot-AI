@@ -104,7 +104,9 @@ L'outil pilote Grok Build pour générer les visuels, en **2 phases** (QC humain
 entre les deux ; rien n'est publié automatiquement) :
 
 ```bash
-# Phase 1 (auto à 7h) : variations des 3 designs bruts -> ~/Downloads
+# Phase 1 (auto à 5h) : variations des designs bruts -> ~/Downloads
+# (+ un ZIP `24images_grok_brut.zip` regroupant toutes les images : 1 seul
+#  fichier à envoyer à Claude chat, qui limite à 20 fichiers/upload)
 python automation/grok_generate.py --designs
 
 # (tu choisis les gagnants avec Claude chat à partir des captures)
@@ -142,6 +144,25 @@ cover montre EXACTEMENT le fichier vendu), utilise le compositeur Python :
    est choisi selon le format du jour ; sinon dossier à plat).
    Ajoute `--video` pour générer aussi la vidéo 6 s **depuis la cover composite**
    (zoom lent, sans balayage de lumière) et retirer l'audio via ffmpeg.
+
+### Upscale ×4 + export 5 ratios (commande indépendante)
+
+Process **séparé** du flux quotidien, à lancer à la main. Il traite le dossier
+**du jour** dans `~/Downloads/To Upscale/<jj-mm-aaaa>/` :
+```bash
+python automation/upscale_and_export.py            # dossier du jour
+python automation/upscale_and_export.py --date 07-06-2026
+```
+1. **upscale ×4** chaque image (Upscayl/Real-ESRGAN si `image_pipeline.upscale_command`
+   est configuré et présent ; sinon **Lanczos ×4**, très propre pour des aplats) ;
+2. **exporte** chaque image en **5 ratios JPG** (2:3, 3:4, 4:5, 5:7, 11:14),
+   hauteur fixe **6912 px**, **qualité 90** (jamais 100).
+Sortie : `~/Downloads/Upscaled_add_export_5_ratios/<jj-mm-aaaa>/` (créé auto) —
+ex. 3 images → 3 PNG upscalées + 15 JPG.
+
+> Pour un vrai upscale IA (au lieu de Lanczos), installe Upscayl/Real-ESRGAN et
+> renseigne `image_pipeline.upscale_command` dans `config.yaml` (placeholders
+> `{input}`/`{output}`).
 
 ### Veille jour à jour (historisation)
 

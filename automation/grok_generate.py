@@ -24,6 +24,7 @@ import argparse
 import shutil
 import subprocess
 import sys
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -81,6 +82,18 @@ def build_design_jobs(brief, grok_cfg: dict) -> list[Job]:
 
 def _default_runner(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+
+
+def zip_outputs(files: list[Path], zip_path: Path) -> int:
+    """Compresse `files` (existants) dans `zip_path`. Renvoie le nb d'images zippées."""
+    existing = [f for f in files if Path(f).exists()]
+    if not existing:
+        return 0
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in existing:
+            z.write(f, Path(f).name)
+    return len(existing)
 
 
 def _run_one(job: Job, timeout: int, runner) -> tuple[Job, str, str]:
@@ -166,6 +179,16 @@ def main(argv=None) -> int:
     print(f"\nTerminé : {len(recap['ok'])} OK, {len(recap['failed'])} à refaire.")
     if recap["failed"]:
         print("À refaire :", ", ".join(recap["failed"]))
+
+    # ZIP de toutes les images brutes -> 1 seul fichier à envoyer à Claude chat
+    # (contourne la limite de 20 fichiers/upload).
+    all_outs = [o for j in jobs for o in j.outs]
+    zip_name = grok_cfg.get("zip_name", "24images_grok_brut")
+    zip_path = _out_dir(grok_cfg) / f"{zip_name}.zip"
+    n = zip_outputs(all_outs, zip_path)
+    if n:
+        print(f"📦 ZIP créé : {zip_path} ({n} images) — à envoyer à Claude chat.")
+
     print("⚠️ QC humain obligatoire. Mockups -> make_mockups.py. Rien publié.")
     return 0
 

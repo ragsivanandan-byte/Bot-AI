@@ -213,6 +213,7 @@ grok_prompts:
   count_per_day: 5             # (héritage : nb de prompts si recettes absentes)
   # Sortie imposée : tout (images/mockups/vidéo) va dans le dossier Téléchargements.
   output_dir: "~/Downloads"
+  zip_name: "24images_grok_brut"   # ZIP des images brutes (1 envoi Claude chat)
   set_size: 3                  # un set = 3 designs cohérents
   # --- Génération automatique via Grok Build (headless) --------------------
   auto_generate: true          # 5h : génère les designs bruts via `grok -p`
@@ -299,6 +300,22 @@ grok_prompts:
       designs:
         - "solid filled composition of two or three overlapping organic shapes, warm neutral, landscape, flat gallery-quality color"
       mockup_rooms: ["mounted on a Frame TV on a neutral wall above a console"]
+
+# --- Pipeline upscale + export 5 ratios (commande indépendante) ---------------
+# `automation/upscale_and_export.py` : prend les images de
+# Downloads/<to_upscale_dir>/<jj-mm-aaaa>/, les upscale ×4, puis exporte chacune
+# en 5 ratios JPG (qualité 90) dans Downloads/<output_dir>/<jj-mm-aaaa>/.
+image_pipeline:
+  downloads_dir: "~/Downloads"
+  to_upscale_dir: "To Upscale"
+  output_dir: "Upscaled_add_export_5_ratios"
+  # Commande d'upscale externe (Upscayl/Real-ESRGAN). Placeholders {input}/{output}.
+  # Si vide ou binaire absent -> repli Lanczos ×4 (net pour des aplats de couleur).
+  # Ex Real-ESRGAN : "realesrgan-ncnn-vulkan -i {input} -o {output} -s 4 -n realesrgan-x4plus"
+  upscale_command: ""
+  target_height: 6912          # hauteur fixe des exports (largeur = ratio)
+  jpg_quality: 90              # JAMAIS 100 (fichiers trop lourds pour Etsy)
+  ratios: ["2:3", "3:4", "4:5", "5:7", "11:14"]
 
 # --- Connecteurs API (optionnels) --------------------------------------------
 # Les CLÉS ne se mettent JAMAIS ici : elles se lisent dans des variables
