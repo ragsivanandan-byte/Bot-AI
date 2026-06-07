@@ -333,16 +333,16 @@ image_pipeline:
     dpi: [300, 300]
     sharpen: false             # pas de nettete par defaut (halo sur aplats)
   upscale:
-    # Commande externe (placeholders {input}/{output}). Ex Real-ESRGAN :
-    # "realesrgan-ncnn-vulkan -i {input} -o {output} -s 4 -n realesrgan-x4plus"
-    command: ""                # vide -> repli Lanczos (ci-dessous). Pour un VRAI
-                               # upscale IA : renseigne une commande, ex Real-ESRGAN :
-                               # "realesrgan-ncnn-vulkan -i {input} -o {output} -s 4 -n realesrgan-x4plus"
+    # Commande externe (placeholders {input}/{output}). MULTI-PASSES auto jusqu'à
+    # atteindre min_master_width (784 -> ×4 -> 3136 -> ×4 -> 12544...).
+    # >>> Upscayl (app Mac) en CLI — adapte le chemin/modèle à ta version :
+    # "/Applications/Upscayl.app/Contents/Resources/bin/upscayl-bin -i {input} -o {output} -s 4 -n upscayl-standard-4x -m /Applications/Upscayl.app/Contents/Resources/models -f png"
+    command: ""
     model: "upscayl-standard-4x"
     factor: 4
-    fallback_lanczos: true     # true = autorise Lanczos ×4 (net sur des aplats ;
-                               # warning affiché à chaque fois -> pas de degradation muette).
-                               # false = ABORT si aucun upscaler -> pour exiger un vrai upscale IA.
+    max_passes: 4              # nb max de passes pour atteindre la résolution cible
+    fallback_lanczos: true     # true = Lanczos ×4 si pas de commande (warning affiché).
+                               # ⚠️ Lanczos = 1 seule passe -> peut rester < min -> ABORT.
 
 # --- Connecteurs API (optionnels) --------------------------------------------
 # Les CLÉS ne se mettent JAMAIS ici : elles se lisent dans des variables

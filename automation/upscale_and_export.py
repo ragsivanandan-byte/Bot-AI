@@ -120,7 +120,8 @@ def main(argv=None) -> int:
             mode = upscale_x4(str(img), str(master_path),
                               command=up.get("command", ""),
                               fallback_lanczos=bool(up.get("fallback_lanczos", False)),
-                              min_master_width=int(profile.get("min_master_width", 0)))
+                              min_master_width=int(profile.get("min_master_width", 0)),
+                              max_passes=int(up.get("max_passes", 4)))
             master = Image.open(master_path)
             for rk in ratios:
                 crops_dir = (base / "Final" / rk

@@ -99,11 +99,14 @@ def _flatten(img):
 
 
 def upscale_x4(in_path: str, out_path: str, command: str = "",
-               fallback_lanczos: bool = False, min_master_width: int = 0) -> str:
+               fallback_lanczos: bool = False, min_master_width: int = 0,
+               max_passes: int = 4) -> str:
     """
-    Upscale ×4. Renvoie 'external' ou 'lanczos'. Lève RuntimeError si :
+    Upscale jusqu'à atteindre `min_master_width` (plusieurs passes si besoin :
+    784 → ×4 → 3136 → ×4 → 12544...). Renvoie 'external' ou 'lanczos'.
+    Lève RuntimeError si :
       - upscaler absent ET fallback_lanczos=False (pas de dégradation muette) ;
-      - master sous `min_master_width` (régénérer un brut plus grand).
+      - master toujours sous `min_master_width` après les passes.
     """
     Image = _pil()
     if Image is None:
@@ -114,16 +117,26 @@ def upscale_x4(in_path: str, out_path: str, command: str = "",
     used = ""
 
     if binary and shutil.which(binary):
-        cmd = [in_path if p == "{input}" else (out_path if p == "{output}" else p)
-               for p in command.split()]
-        subprocess.run(cmd, capture_output=True, timeout=900)
-        if not out.exists():     # certains upscalers ajoutent un suffixe -> on strip
-            for cand in out.parent.glob("*upscayl*" + out.suffix):
-                if cand.name.startswith(Path(in_path).stem):
-                    cand.rename(out)
+        import shutil as _sh
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            cur = in_path
+            last = None
+            for i in range(max(1, max_passes)):
+                step = str(Path(td) / f"pass{i}.png")
+                cmd = [cur if p == "{input}" else (step if p == "{output}" else p)
+                       for p in command.split()]
+                subprocess.run(cmd, capture_output=True, timeout=1800)
+                if not Path(step).exists():     # certains outils ajoutent un suffixe
+                    for cand in Path(td).glob("*upscayl*" + Path(step).suffix):
+                        cand.rename(step)
+                        break
+                if not (Path(step).exists() and Path(step).stat().st_size > 0):
+                    raise RuntimeError("Upscaler externe : aucune sortie produite.")
+                last, cur = step, step
+                if not min_master_width or Image.open(step).width >= min_master_width:
                     break
-        if not (out.exists() and out.stat().st_size > 0):
-            raise RuntimeError("Upscaler externe : aucune sortie produite.")
+            _sh.copyfile(last, out)
         used = "external"
     elif fallback_lanczos:
         logger.warning("⚠️ Upscaler absent -> repli Lanczos ×4 (accepté car "
@@ -141,8 +154,8 @@ def upscale_x4(in_path: str, out_path: str, command: str = "",
         w = Image.open(out).width
         if w < min_master_width:
             raise RuntimeError(
-                f"Master trop petit ({w}px < {min_master_width}px requis pour ce "
-                "profil). Régénère un brut Grok PLUS GRAND — NE PAS combler en Lanczos.")
+                f"Master trop petit ({w}px < {min_master_width}px requis) même "
+                f"après upscale. Régénère un brut PLUS GRAND ou augmente max_passes.")
     return used
 
 

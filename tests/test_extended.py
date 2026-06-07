@@ -478,6 +478,20 @@ def test_image_pipeline():
     check(mode == "lanczos" and Image.open(up).size == (160, 240),
           "fallback Lanczos ×4 (40x60 -> 160x240)")
 
+    # 3bis) Multi-passes via un "upscaler externe" simulé (×2/passe) jusqu'à min
+    fake = Path(tmp) / "fake_up.py"
+    fake.write_text(
+        "import sys\nfrom PIL import Image\n"
+        "a=sys.argv\ni=a[a.index('-i')+1]; o=a[a.index('-o')+1]\n"
+        "im=Image.open(i); im.resize((im.width*2, im.height*2)).save(o)\n")
+    cmd = f"{sys.executable} {fake} -i {{input}} -o {{output}}"
+    big = Path(tmp) / "big.png"
+    Image.new("RGB", (100, 150), (181, 117, 79)).save(src)   # 100px -> besoin >=350
+    mode = upscale_x4(str(src), str(big), command=cmd, fallback_lanczos=False,
+                      min_master_width=350, max_passes=4)
+    check(mode == "external", "multi-passes : upscaler externe utilisé")
+    check(Image.open(big).width >= 350, "multi-passes : 100 -> ×2 jusqu'à ≥350 px")
+
     # 4) export_ratio : math + JPEG metadata (petit anchor pour rester léger)
     master = Image.new("RGB", (300, 450), (181, 117, 79))
     d = Path(tmp) / "NWD_T1_WS_Dune_2x3.jpg"
