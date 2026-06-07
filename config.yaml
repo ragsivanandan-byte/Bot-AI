@@ -335,10 +335,14 @@ image_pipeline:
   upscale:
     # Commande externe (placeholders {input}/{output}). Ex Real-ESRGAN :
     # "realesrgan-ncnn-vulkan -i {input} -o {output} -s 4 -n realesrgan-x4plus"
-    command: ""
+    command: ""                # vide -> repli Lanczos (ci-dessous). Pour un VRAI
+                               # upscale IA : renseigne une commande, ex Real-ESRGAN :
+                               # "realesrgan-ncnn-vulkan -i {input} -o {output} -s 4 -n realesrgan-x4plus"
     model: "upscayl-standard-4x"
     factor: 4
-    fallback_lanczos: false    # absent -> ABORT (pas de Lanczos muet). true = autorise Lanczos.
+    fallback_lanczos: true     # true = autorise Lanczos ×4 (net sur des aplats ;
+                               # warning affiché à chaque fois -> pas de degradation muette).
+                               # false = ABORT si aucun upscaler -> pour exiger un vrai upscale IA.
 
 # --- Connecteurs API (optionnels) --------------------------------------------
 # Les CLÉS ne se mettent JAMAIS ici : elles se lisent dans des variables
