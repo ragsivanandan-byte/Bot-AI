@@ -221,57 +221,81 @@ grok_prompts:
   parallel_workers: 1          # nb de générations en parallèle (3 = + rapide, + de quota)
   grok_command: "grok"         # binaire Grok Build (dans le PATH après install)
   per_call_timeout_s: 600      # délai max par appel (s) — batch = plus long
-  # Palette warm/neutre (noms + codes hex). Imposer les HEX dans les prompts.
+  # Palette de repli (liste à plat) si une recette n'a pas de palette nommée.
   palette:
-    - "terracotta #B5754F"
-    - "muted sand #D8C3A5"
-    - "soft cream #F3EBDD"
-    - "olive sage #8A8B6C"
+    - "terracotta clay #B5754F"
     - "warm taupe #B9A88F"
     - "oat beige #E7DCC8"
+    - "cream #F4EBDD"
+  # Palettes NOMMÉES (Claude Chat) : 1 couleur de forme + 1 couleur de fond par
+  # design (anti-orange criard, set cohérent). shapes = couleurs de forme
+  # possibles ; bg = couleur de fond (la plus claire).
+  palettes:
+    "Warm Clay":
+      shapes: ["terracotta clay #B5754F", "warm taupe #B9A88F"]
+      bg: "cream #F4EBDD"
+    "Sage Organic":
+      shapes: ["olive sage #8A9A7B", "soft sage #8A8B6C"]
+      bg: "cream #F4EBDD"
+    "Neutral Sand":
+      shapes: ["soft sand #D9C7AE", "warm taupe #B9A88F"]
+      bg: "cream #F4EBDD"
   styles:
     - "warm minimalist organic"
     - "wabi-sabi organic"
     - "japandi flat"
-  # Scènes de pièce pour les mockups d'ambiance (cadre chêne clair + passe-partout).
+  # Scènes d'ambiance par défaut (cadre chêne clair + passe-partout) si une
+  # recette ne fournit pas ses propres mockup_rooms.
   mockup_rooms:
-    - "above a neutral linen bed"
-    - "on a console table with a ceramic vase and dried grass"
-    - "leaning on a wooden shelf next to a monstera"
-    - "in a calm home-office above a light wood desk"
-    - "above a beige linen sofa, generous wall space"
-  # RECETTES de sets (sous-exploitées, anti-répétition). L'outil pioche une
-  # recette/jour (rotation par date). designs = 3 sujets en FORMES PLEINES.
+    - "above a neutral linen sofa"
+    - "neutral adult bedroom above the headboard"
+    - "a calm home-office above a light wood desk"
+    - "a minimalist hallway console"
+  # RECETTES (sous-niches sous-exploitées, différenciées). Rotation par date.
+  # `palette` = nom d'une palette ci-dessus. designs = sujets en FORMES PLEINES
+  # (1 pour un single panorama/Frame TV, 3 pour un set). Piliers SEO À VALIDER eRank.
   set_recipes:
-    - name: "Warm organic shapes (adult bedroom)"
-      keyword: "neutral organic shapes wall art set"
+    - name: "Abstract dune & horizon trio (sand)"
+      keyword: "warm minimalist abstract art set"
       format: "2:3 vertical"
+      palette: "Neutral Sand"
       designs:
-        - "ONE large bold solid arch + ONE solid circle, two flat color blocks only"
-        - "solid filled rolling dune ridge silhouette, layered flat horizontal bands"
-        - "solid filled organic pebble cluster, three flat color blocks"
-    - name: "Botanical trio (sage + warm)"
-      keyword: "neutral botanical line wall art set"
+        - "ONE solid filled rolling sand-dune curve"
+        - "solid filled layered horizon (two stacked flat bands)"
+        - "solid filled half-sun semicircle resting on a single horizon line"
+      mockup_rooms: ["above a neutral linen sofa", "neutral adult bedroom above the headboard", "minimalist hallway console"]
+    - name: "Wabi-sabi vessels trio (clay)"
+      keyword: "wabi sabi neutral wall art set"
       format: "2:3 vertical"
-      # Discipline anti-confusion : EUCALYPTUS != OLIVE BRANCH != FERN.
+      palette: "Warm Clay"
       designs:
-        - "solid filled eucalyptus sprig silhouette (oval leaves + small berries)"
-        - "solid filled olive branch silhouette (thin arc, spaced narrow leaves)"
-        - "solid filled fern frond silhouette (serrated frond + curled crozier)"
-    - name: "Above-sofa panorama (wide)"
-      keyword: "panoramic above sofa wall art"
-      format: "3:1 horizontal panorama"
+        - "ONE solid filled minimalist vase silhouette (rounded body, narrow neck)"
+        - "solid filled wide shallow bowl silhouette"
+        - "solid filled tall slim bottle vessel silhouette"
+      mockup_rooms: ["light wood dining shelf", "kitchen open shelf", "neutral living room above a sideboard"]
+    - name: "Japandi minimal marks trio (sage)"
+      keyword: "japandi minimalist wall art set"
+      format: "2:3 vertical"
+      palette: "Sage Organic"
       designs:
-        - "solid filled wide horizon bands, calm layered flat color blocks, panoramic"
-        - "solid filled abstract dune ridge, soft wide silhouette, panoramic"
-        - "ONE large solid arch low on the horizon + flat sky block, panoramic"
-    - name: "Frame TV art (neutral)"
-      keyword: "frame tv art neutral organic"
+        - "ONE solid filled single bold ink-brush sweep (one stroke, no outline)"
+        - "solid filled three stacked balancing stones"
+        - "solid filled single large dot above one thin horizontal line"
+      mockup_rooms: ["calm home office above the desk", "neutral bedroom", "minimalist reading corner"]
+    - name: "Above-sofa panorama (single, warm desert)"
+      keyword: "above sofa panoramic wall art"
+      format: "3:1 horizontal"
+      palette: "Warm Clay"
+      designs:
+        - "ONE wide solid filled desert horizon with low rolling dunes and a small half-sun, panoramic, flat color blocks"
+      mockup_rooms: ["wide shot above a long neutral sofa"]
+    - name: "Frame TV warm organic (single, 16:9)"
+      keyword: "samsung frame tv art warm neutral"
       format: "16:9 horizontal"
+      palette: "Neutral Sand"
       designs:
-        - "solid filled minimalist organic landscape, flat color blocks, 16:9"
-        - "solid filled abstract arch and pebble composition, flat blocks, 16:9"
-        - "solid filled wavy horizon and sun block, muted flat tones, 16:9"
+        - "solid filled composition of two or three overlapping organic shapes, warm neutral, landscape, flat gallery-quality color"
+      mockup_rooms: ["mounted on a Frame TV on a neutral wall above a console"]
 
 # --- Connecteurs API (optionnels) --------------------------------------------
 # Les CLÉS ne se mettent JAMAIS ici : elles se lisent dans des variables

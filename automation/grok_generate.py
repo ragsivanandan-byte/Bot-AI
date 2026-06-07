@@ -84,16 +84,17 @@ def build_mockup_jobs(brief, grok_cfg: dict, design_files: list[str]) -> list[Jo
     out = _out_dir(grok_cfg)
     grok = grok_cfg.get("grok_command", "grok")
     jobs: list[Job] = []
-    for k, mk in enumerate(brief.mockup_prompts):
-        # Le mockup k référence "Design (k)" ; on mappe sur le fichier fourni.
-        ref_idx = 0 if mk.is_cover else (k - 1)
-        ref_idx = max(0, min(ref_idx, len(design_files) - 1))
+    for mk in brief.mockup_prompts:
+        # Chaque mockup sait quel design il colle (design_index) -> bon gagnant.
+        ref_idx = max(0, min(getattr(mk, "design_index", 0), len(design_files) - 1))
         ref_file = str(Path(design_files[ref_idx]).expanduser())
         path = out / mk.filename
+        # ⚠️ [À TESTER] le compositing headless suppose que `grok` lit/colle le
+        # fichier image fourni ; sinon il régénère (voir avis Claude Chat §0).
         prompt = (mk.prompt_text +
-                  f" Use the existing image file at {ref_file} as the poster — "
-                  f"paste it UNCHANGED (pixel-for-pixel, opaque)." +
-                  _save_clause(path))
+                  f" Use the existing image file at {ref_file} as the poster to "
+                  f"paste UNCHANGED (do not redraw; if unsure, reproduce it "
+                  f"exactly)." + _save_clause(path))
         jobs.append(Job(label=mk.label, cmd=[grok, "-p", prompt], outs=[path]))
     return jobs
 

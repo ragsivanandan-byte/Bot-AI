@@ -315,7 +315,7 @@ def test_prompts_extras():
     d1 = generate_daily_brief(grok, {"saturated_topics": []}, ops, date(2026, 6, 1))
     d2 = generate_daily_brief(grok, {"saturated_topics": []}, ops, date(2026, 6, 2))
     check(d1.theme != d2.theme, "rotation quotidienne des recettes (thème différent)")
-    check("no rainbow" in d1.raw_prompts[0].prompt_text.lower(),
+    check("rainbow" in d1.raw_prompts[0].prompt_text.lower(),
           "negative anti-arc-en-ciel présent dans l'image brute")
 
 

@@ -68,11 +68,21 @@ les prompts du jour, puis veille (Annexe A) et stratégie (Annexe B) en référe
    listées (noms `_vK.png`) dans le bloc pour que Claude chat choisisse la
    meilleure à partir des images jointes.
 
-### ⏳ À faire
-- Ingestion fine de la **liste réelle des ~20 fiches** (carte NWD_T*) pour
-  durcir l'anti-répétition (Claude Chat doit transmettre la liste à jour).
-- Tester sur Mac le runner mockups/vidéo headless (designs OK confirmé) ; affiner
-  les prompts compositing si Grok régénère au lieu de coller.
+9. **Prompts raffinés (avis Claude Chat 06/06)** : 1 `{shape_color}` + 1
+   `{bg_color}` par design (anti arc-en-ciel, set cohérent), fond explicite,
+   negatives courts/priorisés, cover « FILLS MOST », cadre au ratio, mockup
+   « gros plan détail », palettes HEX nommées (Warm Clay/Sage Organic/Neutral
+   Sand), nouvelles recettes (vessels, dunes, marks, panorama, Frame TV),
+   prompt **gallery-wall bonus** pour les sets.
+
+### ⏳ À faire / À TESTER (conditionnent le compositing)
+- **[À TESTER bloquant]** `grok -p` reçoit-il vraiment l'image en ENTRÉE pour
+  COLLER (sinon il régénère) ? Sinon mockups en interactif ou API édition-image.
+- **Gallery-wall (3 œuvres)** = cas dur en headless → interactif/API ; fallback
+  cover single déjà en place.
+- Résolution Grok vs spec NWD (4608 px) → sinon Upscayl ×4.
+- Ingestion fine de la **liste réelle des ~20 fiches** (carte NWD_T*) pour durcir
+  l'anti-répétition.
 > Voir BRIEF_POUR_CLAUDE_CHAT.md + la réponse de Claude Chat (06/06) pour specs,
 > formules de prompts éprouvées et pièges.
 

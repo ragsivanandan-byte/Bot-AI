@@ -216,6 +216,16 @@ def render_grok_prompts(brief) -> str:
         out.append(m.prompt_text)
         out.append("```\n")
 
+    if b.gallery_prompt:
+        out.append("### ⭐ (Bonus set) Gallery wall — cover IDÉALE d'un set  →  "
+                   f"`{b.slug}_Cover_Gallery.png`")
+        out.append("> ⚠️ Cas le plus DUR en headless (artefacts) : à faire de "
+                   "préférence en **interactif** ou via **API édition-image** "
+                   "(3 réf.). Si ça rate, garde la cover single ci-dessus.")
+        out.append("```text")
+        out.append(b.gallery_prompt)
+        out.append("```\n")
+
     out.append("## 3) VIDÉO 6 s (image-to-video, image figée)\n")
     out.append(f"→  `{b.slug}_Video.mp4`")
     out.append("```text")

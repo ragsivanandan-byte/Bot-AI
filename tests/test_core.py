@@ -93,31 +93,44 @@ def test_ai_inference():
 def test_prompts():
     print("\n[brief visuel Grok : 3 images -> 4 mockups+cover -> 1 vidéo]")
     from datetime import date
-    cfg = load_config("config.yaml")
-    ops = build_opportunities(cfg["niche"], [])
-    b = generate_daily_brief(cfg["grok_prompts"], cfg["niche"], ops, date(2026, 6, 6))
+    # Config contrôlée : une recette SET de 3 designs + palette nommée -> rendu
+    # déterministe quel que soit le jour (la vraie config mêle sets et singles).
+    grok_cfg = {
+        "output_dir": "~/Downloads", "variations_per_design": 8,
+        "palettes": {"P": {"shapes": ["clay #B5754F", "sage #8A8B6C"],
+                           "bg": "cream #F4EBDD"}},
+        "mockup_rooms": ["a bedroom", "a sofa wall", "an office"],
+        "set_recipes": [{"name": "Trio Test", "keyword": "neutral art set",
+                         "format": "2:3 vertical", "palette": "P",
+                         "designs": ["solid filled arch", "solid filled dune",
+                                     "solid filled pebble"]}]}
+    b = generate_daily_brief(grok_cfg, {"saturated_topics": []}, [], date(2026, 6, 6))
     check(len(b.raw_prompts) == 3, "3 prompts d'images brutes")
     check(len(b.mockup_prompts) == 4, "4 prompts de mockups")
     check(sum(1 for m in b.mockup_prompts if m.is_cover) == 1, "exactement 1 cover")
     check(bool(b.video_prompt), "1 prompt vidéo présent")
+    check(bool(b.gallery_prompt), "set -> prompt gallery-wall bonus présent")
 
     raw = b.raw_prompts[0].prompt_text.lower()
-    check("no outline" in raw and "no rainbow" in raw,
-          "image brute : negative 'no outline / no rainbow' présent")
+    check("no outline" in raw and "rainbow" in raw,
+          "image brute : 'no outline' + negative 'rainbow' présents")
+    check("#b5754f" in raw and "cream #f4ebdd" in raw,
+          "image brute : 1 couleur de forme + 1 fond explicites (rôles couleur)")
     cover = next(m for m in b.mockup_prompts if m.is_cover).prompt_text.lower()
-    check("paste the provided poster" in cover and "opaque" in cover,
-          "mockup cover : règle compositing 'PASTE UNCHANGED / OPAQUE'")
-    check("frozen and identical in every frame" in b.video_prompt.lower(),
-          "vidéo : règle anti-morphing 'frozen every frame'")
+    check("unchanged" in cover and "opaque" in cover and "fills most" in cover,
+          "cover : compositing 'UNCHANGED/OPAQUE' + 'FILLS MOST'")
+    check(any("détail" in m.label.lower() for m in b.mockup_prompts),
+          "un mockup gros plan détail présent")
+    vid = b.video_prompt.lower()
+    check("frozen" in vid and "every frame" in vid, "vidéo : anti-morphing")
     check(b.output_dir == "~/Downloads", "sortie imposée vers ~/Downloads")
-    nvar = cfg["grok_prompts"].get("variations_per_design", 8)
-    check(len(b.raw_prompts[0].variation_files) == nvar,
-          f"{nvar} variations attendues listées par design")
+    check(len(b.raw_prompts[0].variation_files) == 8,
+          "8 variations attendues listées par design")
     check(b.raw_prompts[0].variation_files[0].endswith("_01_v1.png"),
           "nommage des variations correct")
 
     # Déterminisme par date
-    b2 = generate_daily_brief(cfg["grok_prompts"], cfg["niche"], ops, date(2026, 6, 6))
+    b2 = generate_daily_brief(grok_cfg, {"saturated_topics": []}, [], date(2026, 6, 6))
     check(b.raw_prompts[0].prompt_text == b2.raw_prompts[0].prompt_text,
           "brief déterministe pour une date donnée")
 
