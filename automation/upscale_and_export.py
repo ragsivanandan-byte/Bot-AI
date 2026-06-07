@@ -7,7 +7,8 @@ Pour le dossier du JOUR `~/Downloads/To Upscale/<jj-mm-aaaa>/` :
   2. export multi-ratios JPEG selon le profil (set/single), specs Claude Chat
      (center-crop, downscale only, q90/4:4:4/300DPI/sRGB).
 
-Sortie : `<output_root>/<jj-mm-aaaa>/Upscaled/` (masters) + `.../Final/<ratio>/`.
+Sortie : `<output_root>/<jj-mm-aaaa>/Upscaled/` (masters) + `.../Final/` (JPG à
+plat, ratio dans le nom ; `Final/<ratio>/` si crops_by_ratio_subdirs: true).
 
 ⚠️ Les bruts doivent être nommés à la convention NWD :
    SET    : NWD_T#_{SetName}_{DesignName}.png   (ex. NWD_T1_WarmShapes_Dune.png)
@@ -124,8 +125,12 @@ def main(argv=None) -> int:
                               max_passes=int(up.get("max_passes", 4)))
             master = Image.open(master_path)
             for rk in ratios:
+                # Par défaut : tous les JPG à plat dans Final/ (le ratio est déjà
+                # dans le nom -> pas de sous-dossiers). Mets crops_by_ratio_subdirs:
+                # true pour revenir à Final/<ratio>/.
                 crops_dir = (base / "Final" / rk
-                             if ip.get("crops_by_ratio_subdirs", True) else base)
+                             if ip.get("crops_by_ratio_subdirs", False)
+                             else base / "Final")
                 dest = crops_dir / f"{stem}_{rk}.jpg"
                 export_ratio(master, rk, anchor, anchor_px, str(dest), jpeg)
                 all_jpgs.append(dest)
@@ -143,8 +148,8 @@ def main(argv=None) -> int:
             print(f"   - {p}")
     else:
         print("✅ Dimensions, 300 DPI, sRGB, mode RGB, poids — tout conforme.")
-    print(f"Masters : {masters_dir}\nCrops   : {base}"
-          + ("/Final/<ratio>/" if ip.get("crops_by_ratio_subdirs", True) else ""))
+    print(f"Masters : {masters_dir}\nCrops   : {base}/Final/"
+          + ("<ratio>/" if ip.get("crops_by_ratio_subdirs", False) else ""))
     return 0
 
 

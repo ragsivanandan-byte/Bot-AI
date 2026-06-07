@@ -311,7 +311,8 @@ image_pipeline:
   output_root: "~/Downloads/Upscaled_add_export_5_ratios"
   date_subdir: true            # ranger par sous-dossier <jj-mm-aaaa>/
   masters_subdir: "Upscaled"   # masters _upscaled.png ici (jamais dans le livrable)
-  crops_by_ratio_subdirs: true # crops -> Final/<ratio>/
+  crops_by_ratio_subdirs: false # false = tous les JPG à plat dans Final/ (le ratio
+                                # est déjà dans le nom). true = Final/<ratio>/.
   default_type: "set"          # set (5 ratios) ou single (2 ratios)
   validate_naming: false       # false = upscale tout fichier (sortie <nom>_<ratio>.jpg) ;
                                # true = exige la convention NWD_T#_... (sinon ABORT)
