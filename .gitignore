@@ -19,3 +19,8 @@ __pycache__/
 # OS
 .DS_Store
 reports/
+
+# Gabarits de mockups (images locales de l'utilisateur ; on garde juste le README)
+mockup_templates/*.png
+mockup_templates/*.jpg
+mockup_templates/*.jpeg

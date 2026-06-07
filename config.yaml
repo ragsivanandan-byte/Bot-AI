@@ -221,6 +221,9 @@ grok_prompts:
   parallel_workers: 1          # nb de générations en parallèle (3 = + rapide, + de quota)
   grok_command: "grok"         # binaire Grok Build (dans le PATH après install)
   per_call_timeout_s: 600      # délai max par appel (s) — batch = plus long
+  # Mockups EXACTS par compositing Python (Pillow) : dossier des gabarits de
+  # pièces (chacun avec un rectangle vert #00FF00 à l'emplacement du cadre).
+  mockup_templates_dir: "mockup_templates"
   # Palette de repli (liste à plat) si une recette n'a pas de palette nommée.
   palette:
     - "terracotta clay #B5754F"

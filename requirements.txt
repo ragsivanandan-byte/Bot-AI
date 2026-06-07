@@ -6,6 +6,8 @@ requests>=2.31,<3        # requêtes HTTP respectueuses
 PyYAML>=6.0,<7           # lecture de config.yaml
 beautifulsoup4>=4.12,<5  # parsing HTML des pages Etsy
 lxml>=4.9                # parseur rapide pour BeautifulSoup
+Pillow>=10               # compositing EXACT des mockups (automation/make_mockups.py)
+numpy>=1.24              # transformation perspective du compositing
 
 # --- Optionnel ---------------------------------------------------------------
 # Google Trends. Si absent, le module trends dégrade gracieusement (les

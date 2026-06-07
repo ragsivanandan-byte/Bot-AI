@@ -75,9 +75,18 @@ les prompts du jour, puis veille (Annexe A) et stratégie (Annexe B) en référe
    Sand), nouvelles recettes (vessels, dunes, marks, panorama, Frame TV),
    prompt **gallery-wall bonus** pour les sets.
 
-### ⏳ À faire / À TESTER (conditionnent le compositing)
-- **[À TESTER bloquant]** `grok -p` reçoit-il vraiment l'image en ENTRÉE pour
-  COLLER (sinon il régénère) ? Sinon mockups en interactif ou API édition-image.
+### ✅ Mockups EXACTS (compositing Python) — résout le piège de régénération
+Test réel : `grok -p` **régénère** une œuvre proche au lieu de coller (confirmé
+sur la cover panorama : bandes différentes). → Solution retenue : **compositing
+Pillow** (`src/mockup_compositor.py` + `automation/make_mockups.py`). On colle le
+fichier EXACT dans des gabarits `mockup_templates/*.png` (rectangle vert #00FF00
+détecté + perspective). Pixel-for-pixel, gratuit, déterministe. Pillow+numpy
+ajoutés à requirements. Gabarits gitignored (assets locaux).
+
+### ⏳ À faire / À TESTER
+- Créer les **gabarits** réels (prompt Grok « cadre vide + rectangle vert » dans
+  `mockup_templates/README_TEMPLATES.md`).
+- (Optionnel) vidéo : image-to-video Grok à partir de la cover composite.
 - **Gallery-wall (3 œuvres)** = cas dur en headless → interactif/API ; fallback
   cover single déjà en place.
 - Résolution Grok vs spec NWD (4608 px) → sinon Upscayl ×4.

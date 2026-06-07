@@ -122,6 +122,22 @@ design en **un seul appel** `grok` (au lieu de N) → beaucoup plus rapide.
 `parallel_workers: 3` lance plusieurs designs **en parallèle** (plus rapide,
 consomme plus de quota simultanément).
 
+### Mockups EXACTS par compositing Python (recommandé)
+
+Demander à Grok de « coller » l'œuvre en headless **régénère souvent** une œuvre
+proche au lieu de coller la tienne. Pour des mockups **pixel-pour-pixel** (la
+cover montre EXACTEMENT le fichier vendu), utilise le compositeur Python :
+
+1. Prépare une fois des **gabarits** de pièces dans `mockup_templates/` (photo
+   avec un cadre dont l'intérieur est un **rectangle vert `#00FF00`**). Voir
+   `mockup_templates/README_TEMPLATES.md` (inclut un prompt Grok pour les créer).
+2. Lance le compositing avec tes designs gagnants :
+   ```bash
+   python automation/make_mockups.py ~/Downloads/<g1>.png ~/Downloads/<g2>.png ~/Downloads/<g3>.png
+   ```
+   → mockups exacts dans `~/Downloads` (le code détecte le vert et y plaque ton
+   design, perspective comprise). Gratuit, instantané, déterministe.
+
 ### Veille jour à jour (historisation)
 
 À chaque run, l'état public des concurrents est enregistré dans une base SQLite

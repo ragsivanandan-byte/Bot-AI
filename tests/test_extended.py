@@ -430,6 +430,45 @@ def test_automation_scripts():
     check(".grok/bin" in rd, "run_daily : ajoute ~/.grok/bin au PATH (grok en launchd)")
 
 
+def test_mockup_compositor():
+    print("\n[mockup_compositor : compositing exact dans une zone chroma]")
+    try:
+        from PIL import Image
+    except Exception:
+        check(True, "Pillow absent -> test compositing ignoré (OK)")
+        return
+    from src.mockup_compositor import (composite_into_template,
+                                       find_placeholder_quad)
+
+    tmp = tempfile.mkdtemp()
+    tpl = Path(tmp) / "tpl.png"
+    design = Path(tmp) / "design.png"
+    out = Path(tmp) / "out.png"
+
+    # Gabarit : fond blanc + rectangle vert chroma (60,40)->(180,140)
+    t = Image.new("RGB", (240, 180), (255, 255, 255))
+    for x in range(60, 180):
+        for y in range(40, 140):
+            t.putpixel((x, y), (0, 255, 0))
+    t.save(tpl)
+    # Design : rouge uni
+    Image.new("RGB", (120, 100), (220, 30, 30)).save(design)
+
+    quad = find_placeholder_quad(str(tpl))
+    check(quad is not None and len(quad) == 4, "zone chroma détectée (4 coins)")
+
+    ok = composite_into_template(str(design), str(tpl), str(out))
+    check(ok and out.exists(), "compositing réussi, fichier écrit")
+
+    res = Image.open(out).convert("RGB")
+    cx, cy = 120, 90                      # centre de l'ancienne zone verte
+    r, g, b = res.getpixel((cx, cy))
+    check(r > 150 and g < 100 and b < 100, "design (rouge) collé dans la zone")
+    check(res.getpixel((5, 5)) == (255, 255, 255), "hors-zone : gabarit intact (blanc)")
+    # plus aucun vert chroma résiduel au centre
+    check(not (g > 180 and r < 100), "le vert chroma a été recouvert")
+
+
 def test_grok_runner():
     print("\n[grok_generate : jobs + orchestration (runner simulé, sans grok)]")
     import importlib.util
@@ -711,6 +750,7 @@ def run() -> int:
     test_reports()
     test_automation_scripts()
     test_grok_runner()
+    test_mockup_compositor()
     test_storage_extras()
     test_currency_extras()
     test_etsy_api_http()
