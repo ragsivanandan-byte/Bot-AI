@@ -1,0 +1,16 @@
+# config.local.example.yaml — MODÈLE de surcharge locale (propre à TA machine).
+#
+# Copie ce fichier en `config.local.yaml` (gitignored) et n'y mets QUE les
+# valeurs spécifiques à ta machine. Elles sont fusionnées (deep-merge) PAR-DESSUS
+# config.yaml au chargement -> tu n'as plus besoin de modifier ni de stasher
+# config.yaml, et `git pull` passe tout seul.
+#
+#   cp config.local.example.yaml config.local.yaml
+#
+# Exemple : brancher Upscayl (app Mac) en ligne de commande + sortie à plat.
+
+image_pipeline:
+  upscale:
+    # Chemin/réglages Upscayl propres à cette machine (adapte si besoin) :
+    command: "/Applications/Upscayl.app/Contents/Resources/bin/upscayl-bin -i {input} -o {output} -s 4 -n upscayl-standard-4x -m /Applications/Upscayl.app/Contents/Resources/models"
+  crops_by_ratio_subdirs: false   # false = JPG à plat dans Final/ ; true = Final/<ratio>/

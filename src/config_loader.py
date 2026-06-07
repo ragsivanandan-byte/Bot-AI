@@ -39,12 +39,36 @@ def load_config(path: str = "config.yaml") -> dict[str, Any]:
     if not isinstance(cfg, dict):
         raise ConfigError("config.yaml doit contenir un mapping au niveau racine.")
 
+    # Surcharge locale optionnelle : config.local.yaml (gitignored, propre à la
+    # machine — ex. chemin Upscayl, préférences de sortie). Fusion profonde par-
+    # dessus le YAML versionné -> plus besoin de modifier/stasher config.yaml.
+    local = p.with_name("config.local.yaml")
+    if local.exists():
+        try:
+            with local.open(encoding="utf-8") as f:
+                override = yaml.safe_load(f) or {}
+        except yaml.YAMLError as e:
+            raise ConfigError(f"config.local.yaml invalide (erreur YAML) : {e}") from e
+        if not isinstance(override, dict):
+            raise ConfigError("config.local.yaml doit contenir un mapping au niveau racine.")
+        _deep_merge(cfg, override)
+
     missing = [k for k in REQUIRED_TOP_KEYS if k not in cfg]
     if missing:
         raise ConfigError(f"Sections manquantes dans config.yaml : {missing}")
 
     _apply_defaults(cfg)
     return cfg
+
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> None:
+    """Fusionne `override` dans `base` en place. Les mappings sont fusionnés
+    récursivement ; toute autre valeur (scalaire, liste) remplace celle de base."""
+    for key, val in override.items():
+        if (key in base and isinstance(base[key], dict) and isinstance(val, dict)):
+            _deep_merge(base[key], val)
+        else:
+            base[key] = val
 
 
 def _apply_defaults(cfg: dict[str, Any]) -> None:

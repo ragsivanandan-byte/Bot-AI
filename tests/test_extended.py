@@ -94,6 +94,35 @@ def test_config_defaults():
         os.unlink(path)
 
 
+def test_config_local_override():
+    print("\n[config_loader : surcharge config.local.yaml]")
+    from src.config_loader import load_config
+    base = ("shop: {name: NWD}\nniche: {pillars: []}\n"
+            "network: {max_retries: 4}\ngrok_prompts: {}\noutput: {}\n"
+            "image_pipeline:\n  crops_by_ratio_subdirs: true\n"
+            "  upscale: {command: '', factor: 4}\n")
+    override = ("image_pipeline:\n  crops_by_ratio_subdirs: false\n"
+                "  upscale: {command: '/path/upscayl-bin -i {input} -o {output}'}\n")
+    with tempfile.TemporaryDirectory() as d:
+        (Path(d) / "config.yaml").write_text(base, encoding="utf-8")
+        # Sans surcharge -> valeurs de base
+        cfg = load_config(str(Path(d) / "config.yaml"))
+        check(cfg["image_pipeline"]["crops_by_ratio_subdirs"] is True,
+              "sans config.local -> valeur de base conservée")
+        # Avec surcharge -> deep-merge par-dessus
+        (Path(d) / "config.local.yaml").write_text(override, encoding="utf-8")
+        cfg = load_config(str(Path(d) / "config.yaml"))
+        ip = cfg["image_pipeline"]
+        check(ip["crops_by_ratio_subdirs"] is False,
+              "config.local surcharge crops_by_ratio_subdirs")
+        check("upscayl-bin" in ip["upscale"]["command"],
+              "config.local surcharge upscale.command")
+        check(ip["upscale"]["factor"] == 4,
+              "deep-merge : clé soeur (factor) préservée")
+        check(cfg["network"]["max_retries"] == 4,
+              "deep-merge : sections non surchargées intactes")
+
+
 # --- fetcher -----------------------------------------------------------------
 
 def test_fetcher_robots_block():
@@ -922,6 +951,7 @@ def run() -> int:
     print("=== TESTS ÉTENDUS — couverture exhaustive ===")
     test_config_errors()
     test_config_defaults()
+    test_config_local_override()
     test_fetcher_robots_block()
     test_fetcher_cache_and_status()
     test_fetcher_cache_expiry()

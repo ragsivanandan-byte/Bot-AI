@@ -135,8 +135,10 @@ def main(argv=None) -> int:
                 export_ratio(master, rk, anchor, anchor_px, str(dest), jpeg)
                 all_jpgs.append(dest)
             print(f"  ✅ upscalé ({mode}) + {len(ratios)} ratios JPG")
-    except (RuntimeError, ValueError) as e:
-        print(f"❌ ABORT : {e}")
+    except Exception as e:  # noqa: BLE001 — CLI : un échec (timeout upscaler,
+        # PNG corrompu, I/O, master trop petit...) doit donner un ABORT lisible,
+        # jamais une stacktrace. KeyboardInterrupt (BaseException) reste propagé.
+        print(f"❌ ABORT : {type(e).__name__}: {e}")
         return 1
 
     # --- verify (§11) -------------------------------------------------------

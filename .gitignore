@@ -20,6 +20,9 @@ __pycache__/
 .DS_Store
 reports/
 
+# Surcharge de config propre à la machine (chemin Upscayl, etc.) — jamais versionnée
+config.local.yaml
+
 # Gabarits de mockups (images locales de l'utilisateur ; on garde juste le README)
 mockup_templates/*.png
 mockup_templates/*.jpg

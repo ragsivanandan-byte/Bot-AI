@@ -125,7 +125,6 @@ def upscale_x4(in_path: str, out_path: str, command: str = "",
     used = ""
 
     if binary and shutil.which(binary):
-        import shutil as _sh
         import tempfile
         with tempfile.TemporaryDirectory() as td:
             cur = in_path
@@ -154,7 +153,7 @@ def upscale_x4(in_path: str, out_path: str, command: str = "",
                 new_h = round(img.height * cap / img.width)
                 img.resize((cap, new_h), Image.LANCZOS).save(out)
             else:
-                _sh.copyfile(last, out)
+                shutil.copyfile(last, out)
         used = "external"
     elif fallback_lanczos:
         logger.warning("⚠️ Upscaler absent -> repli Lanczos ×4 (accepté car "
