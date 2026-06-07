@@ -122,7 +122,8 @@ def main(argv=None) -> int:
                               command=up.get("command", ""),
                               fallback_lanczos=bool(up.get("fallback_lanczos", False)),
                               min_master_width=int(profile.get("min_master_width", 0)),
-                              max_passes=int(up.get("max_passes", 4)))
+                              passes=int(up.get("passes", 1)),
+                              target_width=int(up.get("target_width", 0)))
             master = Image.open(master_path)
             for rk in ratios:
                 # Par défaut : tous les JPG à plat dans Final/ (le ratio est déjà

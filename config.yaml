@@ -328,22 +328,26 @@ image_pipeline:
       ratios: ["2x3", "3x4"]
       min_master_width: 4608
   jpeg:
-    quality: 90                # JAMAIS 100
+    quality: 92                # ↑90->92 : anti-banding des dégradés (q95 = inutile)
     subsampling: 0             # 4:4:4 (pas de lisere couleur sur les bords)
     optimize: true
     dpi: [300, 300]
     sharpen: false             # pas de nettete par defaut (halo sur aplats)
+    dither: true               # bruit gaussien léger avant la quantif 8-bit (anti-banding)
+    dither_sigma: 0.7          # ~0,7 niveau/255 : invisible à l'œil, casse les marches
   upscale:
-    # Commande externe (placeholders {input}/{output}). MULTI-PASSES auto jusqu'à
-    # atteindre min_master_width (784 -> ×4 -> 3136 -> ×4 -> 12544...).
+    # Commande externe (placeholders {input}/{output}). MODE B (reco Claude Chat) :
+    # 1 passe IA (×4) puis FINITION Lanczos jusqu'à target_width. Sur des aplats,
+    # une 2e passe IA n'apporte rien de visible et coûte 3-4× le temps.
     # >>> Upscayl (app Mac) en CLI — adapte le chemin/modèle à ta version :
-    # "/Applications/Upscayl.app/Contents/Resources/bin/upscayl-bin -i {input} -o {output} -s 4 -n upscayl-standard-4x -m /Applications/Upscayl.app/Contents/Resources/models -f png"
+    # "/Applications/Upscayl.app/Contents/Resources/bin/upscayl-bin -i {input} -o {output} -s 4 -n upscayl-standard-4x -m /Applications/Upscayl.app/Contents/Resources/models"
     command: ""
-    model: "upscayl-standard-4x"
+    model: "upscayl-standard-4x"  # à tester en A/B vs "digital-art" sur tes dégradés
     factor: 4
-    max_passes: 4              # nb max de passes pour atteindre la résolution cible
-    fallback_lanczos: true     # true = Lanczos ×4 si pas de commande (warning affiché).
-                               # ⚠️ Lanczos = 1 seule passe -> peut rester < min -> ABORT.
+    passes: 1                  # Mode B = 1 passe IA (mets 2 pour du full-IA ×16)
+    target_width: 6000         # largeur du master après finition Lanczos (>= min_master_width)
+    fallback_lanczos: false    # IA absente -> ABORT (pas de dégradation muette).
+                               # NB : ≠ finition Lanczos du Mode B (elle, toujours appliquée).
 
 # --- Connecteurs API (optionnels) --------------------------------------------
 # Les CLÉS ne se mettent JAMAIS ici : elles se lisent dans des variables

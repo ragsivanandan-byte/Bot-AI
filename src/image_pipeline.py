@@ -37,12 +37,13 @@ _DEFAULT_PROFILES = {
     "single": {"anchor": "width", "anchor_px": 4608,
                "ratios": ["2x3", "3x4"], "min_master_width": 4608},
 }
-_DEFAULT_JPEG = {"quality": 90, "subsampling": 0, "optimize": True,
-                 "dpi": [300, 300], "sharpen": False}
+_DEFAULT_JPEG = {"quality": 92, "subsampling": 0, "optimize": True,
+                 "dpi": [300, 300], "sharpen": False,
+                 "dither": True, "dither_sigma": 0.7}
 
 
-# Marge de sécurité : on cape le master juste au-dessus du minimum requis
-# (l'upscaler ne fait que des ×4, donc 784 -> 12544 dépasse largement la cible).
+# Largeur cible du master par défaut quand `target_width` n'est pas configuré :
+# un peu au-dessus du minimum requis (marge pour le center-crop).
 _MASTER_CAP_FACTOR = 1.08
 
 
@@ -106,15 +107,36 @@ def _flatten(img):
     return img.convert("RGB") if img.mode != "RGB" else img
 
 
+def _dither_8bit(img, sigma: float = 0.7):
+    """Anti-banding : ajoute un bruit gaussien TRÈS faible (σ≈0,7 niveau/255) en
+    flottant avant la quantif 8-bit finale -> casse les marches des dégradés doux,
+    invisible à l'œil. Sans effet si numpy absent ou σ<=0 (on renvoie tel quel)."""
+    if sigma <= 0:
+        return img
+    try:
+        import numpy as np
+    except Exception:
+        logger.warning("numpy absent : dithering anti-banding ignoré.")
+        return img
+    Image = _pil()
+    arr = np.asarray(img, dtype=np.float32)
+    arr += np.random.normal(0.0, sigma, arr.shape).astype(np.float32)
+    arr = np.clip(arr, 0, 255).round().astype(np.uint8)
+    return Image.fromarray(arr, "RGB")
+
+
 def upscale_x4(in_path: str, out_path: str, command: str = "",
                fallback_lanczos: bool = False, min_master_width: int = 0,
-               max_passes: int = 4) -> str:
+               passes: int = 1, target_width: int = 0) -> str:
     """
-    Upscale jusqu'à atteindre `min_master_width` (plusieurs passes si besoin :
-    784 → ×4 → 3136 → ×4 → 12544...). Renvoie 'external' ou 'lanczos'.
-    Lève RuntimeError si :
-      - upscaler absent ET fallback_lanczos=False (pas de dégradation muette) ;
-      - master toujours sous `min_master_width` après les passes.
+    Mode B (défaut, reco Claude Chat) : `passes` passe(s) d'upscale IA, puis
+    FINITION Lanczos jusqu'à `target_width`. Sur des aplats/dégradés, au-delà du
+    1er ×4 l'IA n'apporte rien de visible (et risque des halos) : on agrandit la
+    fin en Lanczos. Renvoie 'external' ou 'lanczos'. Lève RuntimeError si :
+      - upscaler IA absent ET fallback_lanczos=False (pas de dégradation muette) ;
+      - master final sous `min_master_width`.
+    ⚠️ `fallback_lanczos` (binaire IA absent -> repli/ABORT) est une notion
+    DISTINCTE de la finition Lanczos du Mode B (toujours appliquée, assumée).
     """
     Image = _pil()
     if Image is None:
@@ -122,14 +144,15 @@ def upscale_x4(in_path: str, out_path: str, command: str = "",
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     binary = command.split()[0] if command.strip() else ""
+    target = int(target_width) or round(min_master_width * _MASTER_CAP_FACTOR)
     used = ""
 
     if binary and shutil.which(binary):
         import tempfile
         with tempfile.TemporaryDirectory() as td:
             cur = in_path
-            last = None
-            for i in range(max(1, max_passes)):
+            last = in_path
+            for i in range(max(1, int(passes))):     # Mode B = 1 passe IA
                 step = str(Path(td) / f"pass{i}.png")
                 cmd = [cur if p == "{input}" else (step if p == "{output}" else p)
                        for p in command.split()]
@@ -141,29 +164,25 @@ def upscale_x4(in_path: str, out_path: str, command: str = "",
                 if not (Path(step).exists() and Path(step).stat().st_size > 0):
                     raise RuntimeError("Upscaler externe : aucune sortie produite.")
                 last, cur = step, step
-                if not min_master_width or Image.open(step).width >= min_master_width:
-                    break
-            # L'upscaler ne fait que des ×4 -> souvent un gros dépassement
-            # (ex. 784->12544). On redescend le master juste au-dessus de la cible
-            # (downscale = conforme, nets, et exports rapides/légers).
-            cap = round(min_master_width * _MASTER_CAP_FACTOR) if min_master_width else 0
+            # Finition Mode B : normalise la largeur du master à `target` (Lanczos
+            # — agrandissement assumé sur aplats, ou réduction si passes>1).
             img = Image.open(last)
-            if cap and img.width > cap:
+            if target and img.width != target:
                 img = _flatten(img)
-                new_h = round(img.height * cap / img.width)
-                img.resize((cap, new_h), Image.LANCZOS).save(out)
+                new_h = round(img.height * target / img.width)
+                img.resize((target, new_h), Image.LANCZOS).save(out)
             else:
                 shutil.copyfile(last, out)
         used = "external"
     elif fallback_lanczos:
-        logger.warning("⚠️ Upscaler absent -> repli Lanczos ×4 (accepté car "
+        logger.warning("⚠️ Upscaler IA absent -> repli Lanczos ×4 (accepté car "
                        "fallback_lanczos=true).")
         img = _flatten(Image.open(in_path))
         img.resize((img.width * 4, img.height * 4), Image.LANCZOS).save(out)
         used = "lanczos"
     else:
         raise RuntimeError(
-            "Upscaler introuvable ET fallback_lanczos=false -> ABORT (aucune "
+            "Upscaler IA introuvable ET fallback_lanczos=false -> ABORT (aucune "
             "dégradation muette). Configure image_pipeline.upscale.command "
             "(Upscayl/Real-ESRGAN) ou mets image_pipeline.upscale.fallback_lanczos: true.")
 
@@ -171,8 +190,8 @@ def upscale_x4(in_path: str, out_path: str, command: str = "",
         w = Image.open(out).width
         if w < min_master_width:
             raise RuntimeError(
-                f"Master trop petit ({w}px < {min_master_width}px requis) même "
-                f"après upscale. Régénère un brut PLUS GRAND ou augmente max_passes.")
+                f"Master trop petit ({w}px < {min_master_width}px requis) après "
+                f"upscale. Régénère un brut PLUS GRAND ou augmente upscale.target_width.")
     return used
 
 
@@ -208,6 +227,8 @@ def export_ratio(master, ratio_key: str, anchor: str, anchor_px: int,
             f"master trop petit pour {ratio_key} : crop {crop.size} < cible {(w, h)}. "
             "Régénérer un brut plus grand — NE PAS upscaler ici.")
     out = _flatten(crop.resize((w, h), Image.LANCZOS))   # toujours une réduction
+    if jpeg.get("dither", True):                          # anti-banding des dégradés
+        out = _dither_8bit(out, float(jpeg.get("dither_sigma", 0.7)))
     save_kwargs = dict(quality=min(int(jpeg["quality"]), 95),
                        optimize=bool(jpeg.get("optimize", True)),
                        subsampling=int(jpeg.get("subsampling", 0)),
