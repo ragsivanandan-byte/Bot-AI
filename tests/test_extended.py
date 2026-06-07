@@ -499,6 +499,54 @@ def test_image_pipeline():
     check(ok, "master trop petit -> ABORT (pas de ré-upscale au resize)")
 
 
+def test_upscale_cli_any_name():
+    print("\n[upscale_and_export : upscale TOUT fichier (nom quelconque)]")
+    try:
+        from PIL import Image
+    except Exception:
+        check(True, "Pillow absent -> test ignoré (OK)")
+        return
+    import importlib.util
+    from datetime import date
+    import yaml
+
+    repo = Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_file_location(
+        "upscale_and_export", repo / "automation" / "upscale_and_export.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["upscale_and_export"] = mod
+    spec.loader.exec_module(mod)
+
+    tmp = tempfile.mkdtemp()
+    with open(repo / "config.yaml", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+    cfg["image_pipeline"] = {
+        "downloads_dir": tmp, "to_upscale_dir": "In", "output_root": f"{tmp}/Out",
+        "date_subdir": True, "masters_subdir": "Upscaled",
+        "crops_by_ratio_subdirs": True, "default_type": "set",
+        "validate_naming": False,
+        "profiles": {"set": {"anchor": "height", "anchor_px": 90,
+                             "ratios": ["2x3", "3x4"], "min_master_width": 100}},
+        "jpeg": {"quality": 90, "subsampling": 0, "optimize": True, "dpi": [300, 300]},
+        "upscale": {"command": "", "fallback_lanczos": True}}
+    day = date.today().strftime("%d-%m-%Y")
+    indir = Path(tmp) / "In" / day
+    indir.mkdir(parents=True)
+    Image.new("RGB", (40, 60), (180, 120, 90)).save(indir / "random name 123.png")
+    cfgp = Path(tmp) / "c.yaml"
+    with open(cfgp, "w", encoding="utf-8") as f:
+        yaml.safe_dump(cfg, f, allow_unicode=True)
+
+    rc = mod.main(["--type", "set", "--config", str(cfgp)])
+    check(rc == 0, "CLI traite un fichier au nom quelconque (validate_naming=false)")
+    jpgs = list((Path(tmp) / "Out" / day).glob("Final/**/*.jpg"))
+    check(len(jpgs) == 2, "2 ratios exportés depuis un nom non-NWD")
+    check(any(p.name == "random name 123_2x3.jpg" for p in jpgs),
+          "sortie nommée <nom_du_fichier>_<ratio>.jpg")
+    check((Path(tmp) / "Out" / day / "Upscaled" /
+           "random name 123_upscaled.png").exists(), "master _upscaled.png présent")
+
+
 def test_zip_outputs():
     print("\n[grok_generate : ZIP des images brutes]")
     import importlib.util
@@ -873,6 +921,7 @@ def run() -> int:
     test_grok_runner()
     test_zip_outputs()
     test_image_pipeline()
+    test_upscale_cli_any_name()
     test_mockup_compositor()
     test_make_mockups_helpers()
     test_storage_extras()

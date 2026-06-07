@@ -87,13 +87,16 @@ def main(argv=None) -> int:
         print(f"⚠️ Aucune image dans {in_dir}.")
         return 0
 
-    # Validation des noms AVANT tout (ABORT si un brut est mal nommé / incohérent).
-    try:
-        for img in images:
-            validate_input_stem(img.stem, kind)
-    except ValueError as e:
-        print(f"❌ ABORT (nommage) : {e}")
-        return 1
+    # Validation des noms (OPTIONNELLE) : par défaut on upscale TOUT fichier, quel
+    # que soit son nom (sortie = <nom>_<ratio>.jpg). Active validate_naming pour
+    # imposer la convention NWD_T#_... (ABORT sinon).
+    if ip.get("validate_naming", False):
+        try:
+            for img in images:
+                validate_input_stem(img.stem, kind)
+        except ValueError as e:
+            print(f"❌ ABORT (nommage) : {e}")
+            return 1
 
     anchor, anchor_px = profile["anchor"], int(profile["anchor_px"])
     ratios = profile["ratios"]

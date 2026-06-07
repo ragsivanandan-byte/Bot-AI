@@ -147,10 +147,11 @@ cover montre EXACTEMENT le fichier vendu), utilise le compositeur Python :
 
 ### Upscale ×4 + export ratios (commande indépendante, spec Claude Chat)
 
-Process **séparé** du flux quotidien. Les bruts gagnants doivent être **nommés à
-la convention NWD** et placés dans `~/Downloads/To Upscale/<jj-mm-aaaa>/` :
-- SET : `NWD_T{tier}_{SetName}_{DesignName}.png` (ex. `NWD_T1_WarmShapes_Dune.png`)
-- SINGLE : `NWD_T{tier}_{DesignName}.png` (ex. `NWD_T1_OliveBranch.png`)
+Process **séparé** du flux quotidien. Place tes bruts gagnants dans
+`~/Downloads/To Upscale/<jj-mm-aaaa>/` — **n'importe quel nom de fichier** : la
+sortie reprend le nom + le ratio (`<nom>_<ratio>.jpg`, ex.
+`NWD_T1_WarmShapes_Dune_2x3.jpg`). La convention NWD n'est PAS imposée (mets
+`image_pipeline.validate_naming: true` si tu veux l'exiger).
 
 ```bash
 python automation/upscale_and_export.py --type set       # 5 ratios, ancrage hauteur 6912
