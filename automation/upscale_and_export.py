@@ -146,6 +146,12 @@ def main(argv=None) -> int:
                                   min_master_width=int(profile.get("min_master_width", 0)),
                                   passes=int(up.get("passes", 1)),
                                   target_width=int(up.get("target_width", 0)))
+                # Archive l'entrée traitée -> To Upscale/_fait/ (pas de re-upscale
+                # au prochain run). _fait/ est ignoré (iterdir non récursif + dossier).
+                if ip.get("to_upscale_archive_done", False):
+                    arch = in_dir / "_fait"
+                    arch.mkdir(exist_ok=True)
+                    img.replace(arch / img.name)
             else:
                 if not master_path.exists():
                     raise FileNotFoundError(

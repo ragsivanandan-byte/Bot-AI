@@ -310,6 +310,8 @@ image_pipeline:
   to_upscale_dir: "To Upscale"
   to_upscale_date_subdir: true # true = lit 'To Upscale/<jj-mm-aaaa>/'. false = lit
                                # TOUS les fichiers directement dans 'To Upscale/'.
+  to_upscale_archive_done: false # true = déplace les fichiers traités dans
+                               # 'To Upscale/_fait/' après upscale (anti-re-upscale).
   output_root: "~/Downloads/Upscaled_add_export_5_ratios"
   date_subdir: true            # ranger par sous-dossier <jj-mm-aaaa>/
   masters_subdir: "Upscaled"   # masters _upscaled.png ici (jamais dans le livrable)
