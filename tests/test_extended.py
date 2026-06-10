@@ -596,6 +596,17 @@ def test_upscale_cli_any_name():
     check(len(znames) == len(jpgs) and not any(n.endswith(".zip") for n in znames),
           "ZIP contient tous les JPG (à plat, sans s'inclure)")
 
+    # --upscale-only : master ré-écrit, AUCUN ratio (pas de dossier Final/)
+    import shutil as _sh
+    _sh.rmtree(Path(tmp) / "Out" / day / "Final")
+    rc2 = mod.main(["--type", "set", "--upscale-only", "--config", str(cfgp)])
+    check(rc2 == 0 and not (Path(tmp) / "Out" / day / "Final").exists(),
+          "--upscale-only : master sans dossier Final/ (0 ratio)")
+    # --ratios-only : exporte depuis le master existant (sans re-upscale)
+    rc3 = mod.main(["--type", "set", "--ratios-only", "--config", str(cfgp)])
+    check(rc3 == 0 and list((Path(tmp) / "Out" / day).glob("Final/**/*.jpg")),
+          "--ratios-only : ratios exportés depuis le master existant")
+
 
 def test_zip_outputs():
     print("\n[grok_generate : ZIP des images brutes]")

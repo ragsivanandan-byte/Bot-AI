@@ -62,7 +62,16 @@ def main(argv=None) -> int:
                     help="set (5 ratios, ancrage hauteur) ou single (2 ratios, "
                          "ancrage largeur). Défaut : config.")
     ap.add_argument("--date", default=None, help="Dossier daté (jj-mm-aaaa).")
+    ap.add_argument("--upscale-only", action="store_true",
+                    help="Upscale seul (masters dans Upscaled/), AUCUN ratio généré.")
+    ap.add_argument("--ratios-only", action="store_true",
+                    help="Exporte les ratios depuis les masters existants (pas d'upscale).")
     args = ap.parse_args(argv)
+    if args.upscale_only and args.ratios_only:
+        print("❌ --upscale-only et --ratios-only sont exclusifs.")
+        return 2
+    do_upscale = not args.ratios_only
+    do_export = not args.upscale_only
 
     cfg = load_config(args.config)
     ip = cfg.get("image_pipeline", {})
@@ -111,7 +120,9 @@ def main(argv=None) -> int:
         else:
             expected[rk] = (anchor_px, round(anchor_px * rh / rw))
 
-    print(f"== Upscale ×4 + export ({kind}) — {day} — {len(images)} image(s) ==")
+    title = ("Upscale SEUL" if args.upscale_only else
+             "Export ratios SEUL" if args.ratios_only else "Upscale + export")
+    print(f"== {title} ({kind}) — {day} — {len(images)} image(s) ==")
     from PIL import Image
     all_jpgs: list[Path] = []
     try:
@@ -119,12 +130,22 @@ def main(argv=None) -> int:
             stem = img.stem
             master_path = masters_dir / f"{stem}_upscaled.png"
             print(f"→ {img.name}")
-            mode = upscale_x4(str(img), str(master_path),
-                              command=up.get("command", ""),
-                              fallback_lanczos=bool(up.get("fallback_lanczos", False)),
-                              min_master_width=int(profile.get("min_master_width", 0)),
-                              passes=int(up.get("passes", 1)),
-                              target_width=int(up.get("target_width", 0)))
+            if do_upscale:
+                mode = upscale_x4(str(img), str(master_path),
+                                  command=up.get("command", ""),
+                                  fallback_lanczos=bool(up.get("fallback_lanczos", False)),
+                                  min_master_width=int(profile.get("min_master_width", 0)),
+                                  passes=int(up.get("passes", 1)),
+                                  target_width=int(up.get("target_width", 0)))
+            else:
+                if not master_path.exists():
+                    raise FileNotFoundError(
+                        f"master manquant : {master_path.name} (lance d'abord "
+                        "--upscale-only, ou sans flag).")
+                mode = "master existant"
+            if not do_export:
+                print(f"  ✅ upscalé ({mode}) — master : {master_path.name}")
+                continue
             master = Image.open(master_path)
             for rk in ratios:
                 # Par défaut : tous les JPG à plat dans Final/ (le ratio est déjà
@@ -136,12 +157,17 @@ def main(argv=None) -> int:
                 dest = crops_dir / f"{stem}_{rk}.jpg"
                 export_ratio(master, rk, anchor, anchor_px, str(dest), jpeg)
                 all_jpgs.append(dest)
-            print(f"  ✅ upscalé ({mode}) + {len(ratios)} ratios JPG")
+            print(f"  ✅ {mode} + {len(ratios)} ratios JPG")
     except Exception as e:  # noqa: BLE001 — CLI : un échec (timeout upscaler,
         # PNG corrompu, I/O, master trop petit...) doit donner un ABORT lisible,
         # jamais une stacktrace. KeyboardInterrupt (BaseException) reste propagé.
         print(f"❌ ABORT : {type(e).__name__}: {e}")
         return 1
+
+    if not do_export:
+        print(f"\n✅ {len(images)} master(s) upscalé(s) dans : {masters_dir}")
+        print("   (aucun ratio généré — relance avec --ratios-only pour les exporter.)")
+        return 0
 
     # --- verify (§11) -------------------------------------------------------
     problems = _verify(all_jpgs, expected)
