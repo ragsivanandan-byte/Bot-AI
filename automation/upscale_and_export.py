@@ -88,7 +88,12 @@ def main(argv=None) -> int:
                 ).expanduser()
     if ip.get("date_subdir", True):
         base = base / day
-    masters_dir = base / ip.get("masters_subdir", "Upscaled")
+    # Masters : par défaut <base>/Upscaled/. Si image_pipeline.masters_dir est
+    # renseigné (ex. "~/Downloads"), les masters _upscaled.png y vont directement.
+    if ip.get("masters_dir"):
+        masters_dir = Path(ip["masters_dir"]).expanduser()
+    else:
+        masters_dir = base / ip.get("masters_subdir", "Upscaled")
 
     if not in_dir.is_dir():
         print(f"⚠️ Dossier introuvable : {in_dir}")

@@ -311,6 +311,8 @@ image_pipeline:
   output_root: "~/Downloads/Upscaled_add_export_5_ratios"
   date_subdir: true            # ranger par sous-dossier <jj-mm-aaaa>/
   masters_subdir: "Upscaled"   # masters _upscaled.png ici (jamais dans le livrable)
+  masters_dir: ""              # vide = <output_root>/<date>/Upscaled/. Renseigne un
+                               # chemin (ex. "~/Downloads") -> masters générés là, direct.
   crops_by_ratio_subdirs: false # false = tous les JPG à plat dans Final/ (le ratio
                                 # est déjà dans le nom). true = Final/<ratio>/.
   zip_final: true              # crée NWD_<type>_<jour>_ratios.zip dans Final/ (tous les JPG)
