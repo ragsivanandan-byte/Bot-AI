@@ -47,15 +47,21 @@ echo "== [1/2] Mockups exacts (+ vidéo 6 s) =="
 "$PY" automation/make_mockups.py "${ABS[@]}" --video \
   || echo "⚠️ Mockups en échec (gabarits mockup_templates/ ? 'grok' dispo ?) — on continue vers l'export."
 
-# --- Placement des gagnants dans To Upscale/<jour>/ --------------------------
+# --- Placement des gagnants là où l'export va les lire -----------------------
+# Cohérent avec image_pipeline.to_upscale_date_subdir : avec dossier daté ou non.
 DAY="$(date +%d-%m-%Y)"
-DEST="$HOME/Downloads/To Upscale/$DAY"
+SUBDIR="$("$PY" -c "from src.config_loader import load_config; print('1' if load_config()['image_pipeline'].get('to_upscale_date_subdir', True) else '0')" 2>/dev/null || echo 1)"
+if [ "$SUBDIR" = "1" ]; then
+  DEST="$HOME/Downloads/To Upscale/$DAY"
+else
+  DEST="$HOME/Downloads/To Upscale"
+fi
 mkdir -p "$DEST"
 for p in "${ABS[@]}"; do
   if [ "$FROM_DROP" -eq 1 ]; then
-    mv -f "$p" "$DEST/"; echo "  -> déplacé dans To Upscale/$DAY/ : $(basename "$p")"
+    mv -f "$p" "$DEST/"; echo "  -> déplacé dans ${DEST#$HOME/} : $(basename "$p")"
   else
-    cp -f "$p" "$DEST/"; echo "  -> copié dans To Upscale/$DAY/ : $(basename "$p")"
+    cp -f "$p" "$DEST/"; echo "  -> copié dans ${DEST#$HOME/} : $(basename "$p")"
   fi
 done
 

@@ -82,7 +82,11 @@ def main(argv=None) -> int:
 
     downloads = Path(ip.get("downloads_dir", "~/Downloads")).expanduser()
     day = args.date or date.today().strftime("%d-%m-%Y")
-    in_dir = downloads / ip.get("to_upscale_dir", "To Upscale") / day
+    # Entrée : par défaut 'To Upscale/<jj-mm-aaaa>/'. Si to_upscale_date_subdir=false,
+    # on lit TOUS les fichiers directement dans 'To Upscale/' (sans dossier daté).
+    in_dir = downloads / ip.get("to_upscale_dir", "To Upscale")
+    if ip.get("to_upscale_date_subdir", True):
+        in_dir = in_dir / day
 
     base = Path(ip.get("output_root", str(downloads / "Upscaled_add_export_5_ratios"))
                 ).expanduser()
