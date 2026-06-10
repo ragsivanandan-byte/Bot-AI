@@ -22,11 +22,12 @@ source .venv/bin/activate
 # Étape critique : générer les rapports. On loggue tout dans logs/.
 python main.py >> logs/launchd.out.log 2>&1
 
-# Génération auto des DESIGNS bruts via Grok Build (headless), si `grok` présent
-# et auto_generate=true. Best-effort : ne bloque jamais le run. Les mockups +
-# vidéo se génèrent APRÈS ton QC, via :
-#   python automation/grok_generate.py --mockups <gagnant1> <gagnant2> <gagnant3>
-python automation/grok_generate.py --designs >> logs/grok.out.log 2>&1 || true
+# ⛔ Génération auto des DESIGNS bruts DÉSACTIVÉE (à la demande de l'opérateur) :
+# plus aucune image n'est créée automatiquement dans ~/Downloads le matin.
+# La génération se fait désormais À LA MAIN, quand tu le décides :
+#   ./run_phase1.sh        (prompts + designs, puis QC)
+# Pour réactiver l'auto au matin, dé-commente la ligne ci-dessous :
+# python automation/grok_generate.py --designs >> logs/grok.out.log 2>&1 || true
 
 # Étape best-effort : ouvrir le dossier du jour si une session graphique est
 # active. Les rapports sont écrits dans ~/Downloads/reports/AAAA-MM-JJ/ (cf.

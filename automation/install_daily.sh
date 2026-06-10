@@ -61,7 +61,8 @@ launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
 
 echo "✅ Automatisation installée."
-echo "   -> Rapports + génération des designs TOUS LES JOURS à ${TIMESTR} (heure locale du Mac)."
+echo "   -> Rapports du jour TOUS LES JOURS à ${TIMESTR} (heure locale du Mac)."
+echo "   -> (Génération des designs NON automatique : lance ./run_phase1.sh à la main.)"
 echo "   -> Vérifie que ton Mac est réglé sur l'heure française (Europe/Paris)."
 echo "   -> ⚠️ Le Mac doit être ALLUMÉ + SESSION OUVERTE (verrouillée OK) + NON"
 echo "      ENDORMI à ${TIMESTR}. launchd ne réveille/n'allume PAS le Mac."
