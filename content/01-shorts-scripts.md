@@ -1,104 +1,114 @@
-# 10 SHORTS SCRIPTS — Quiet Capital (English, ElevenLabs-ready)
+# 10 SHORTS SCRIPTS — Quiet Capital (VERSION OPTIMISÉE 2026, 25-30 sec)
 
-> **Mode d'emploi :** colle le bloc "VOICE" de chaque script dans ElevenLabs (voix **Brian** ou **Adam**, stability ~50%, similarity ~75%). Les `[VISUAL]` sont les plans Grok Imagine à générer. Le `[ON-SCREEN]` = texte à incruster dans CapCut. Durée cible : 40–55 sec.
-> **Disclaimer obligatoire** (à mettre en description) : *Education, not financial advice.*
+> **Mise à jour stratégique :** scripts raccourcis à **~25-30 sec** (l'algo Shorts 2026 favorise 20-25s ; au-delà de 45s la rétention chute). **Hook dès la seconde 0** (la décision de swiper se prend en **1 seconde**, plus 3). Chaque script ≈ 65-75 mots.
+> **Mode d'emploi :** colle le bloc **VOICE** dans ElevenLabs (voix **Brian/Adam**, Stability ~50%). `[VISUAL]` = plan Grok (format 9:16). `[ON-SCREEN]` = gros texte incrusté CapCut, affiché DÈS la 1re seconde.
+> **Anti-démonétisation 2026 :** scripts originaux + point de vue = zone sûre. Varie les visuels, ne publie pas 10 vidéos identiques d'affilée. Coche "contenu IA". Description : *Not financial advice.*
 
 ---
 
 ## SHORT 1 — Why Rolex Makes You Wait Years
+**[VISUAL]** Gros plan Rolex qui tourne, golden hour
+**[ON-SCREEN dès 0s]** "ROLEX MAKES YOU WAIT… ON PURPOSE"
+**VOICE (~28s):**
+> Rolex makes billions a year — and *still* makes you wait years to buy one. On purpose. They could make more tomorrow. They don't. Scarcity isn't an accident, it's the whole business model. The waitlist turns a ten-thousand-dollar watch into a twenty-thousand-dollar flex. It's not a watch. It's an asset they make you *earn*.
 
-**[VISUAL]** Gros plan cinématique d'une Rolex qui tourne, golden hour
-**VOICE:**
-> Rolex makes over a billion dollars a year… and they make you wait *years* to buy one. On purpose. Rolex could make more watches tomorrow — they choose not to. Scarcity isn't an accident, it's the entire business model. When you can't have something, you want it more. The waitlist turns a ten-thousand-dollar watch into a twenty-thousand-dollar status symbol on the resale market. So a Rolex isn't just a watch — it's one of the only luxury products that *appreciates* like an asset. The waitlist *is* the marketing. And you pay for the privilege.
-
-**[ON-SCREEN]** "Scarcity = the business model" · **[CTA]** "Follow Quiet Capital."
+**[CTA]** "Follow Quiet Capital."
 
 ---
 
-## SHORT 2 — The Math of Retiring at 40
+## SHORT 2 — The Math to Retire at 40
+**[VISUAL]** Villa, piscine à débordement, lever de soleil
+**[ON-SCREEN dès 0s]** "RETIRE AT 40 — THE REAL NUMBER"
+**VOICE (~27s):**
+> Here's the math to retire at 40 that nobody shows you. One number: twenty-five times your yearly spending. Spend forty grand a year? You need one million invested. Why? You can safely pull four percent a year, forever. And the secret isn't earning more — it's the gap between what you earn and what you spend. Savings rate beats salary.
 
-**[VISUAL]** Villa moderne, piscine à débordement, lever de soleil, calme
-**VOICE:**
-> Here's the math nobody shows you for retiring at 40. There's one number that matters: 25 times your yearly spending. Spend forty thousand a year? You need one million invested. Why 25? Because you can safely pull about 4% a year, forever, and the market refills it. The secret isn't earning more — it's the *gap* between what you earn and what you spend. A person on 60k who saves half retires *decades* before someone on 200k who spends it all. Early retirement isn't about income. It's about your savings rate.
-
-**[ON-SCREEN]** "25 × yearly spending" · **[CTA]** "Follow for the money math."
+**[CTA]** "Follow for the money math."
 
 ---
 
 ## SHORT 3 — Why Old Money Hides Their Wealth
+**[VISUAL]** Homme costume sobre, dos tourné, hall feutré
+**[ON-SCREEN dès 0s]** "NEW MONEY SCREAMS. OLD MONEY WHISPERS."
+**VOICE (~26s):**
+> New money screams. Old money whispers. There's a reason the truly rich wear plain clothes and skip the logos. It's called quiet luxury — and it's a power move. Loud logos say you *want* to be seen as rich. No logos say you already are, and you don't care who notices. Real status is invisible to everyone but the club.
 
-**[VISUAL]** Homme en costume sobre, dos tourné, hall d'hôtel feutré
-**VOICE:**
-> New money screams. Old money whispers. There's a reason the truly wealthy wear plain clothes and drive normal cars. It's called "quiet luxury" — and it's a power move. When you have nothing to prove, you stop performing wealth. Loud logos signal you *want* to be seen as rich. No logos signal you already are — and you don't care if anyone notices. The richest people buy *discretion*, not attention. Real status is invisible to everyone except the people who already know.
-
-**[ON-SCREEN]** "New money screams. Old money whispers." · **[CTA]** "Follow Quiet Capital."
+**[CTA]** "Follow Quiet Capital."
 
 ---
 
 ## SHORT 4 — Is a Patek Philippe Actually an Investment?
+**[VISUAL]** Patek sur marbre, lumière dramatique
+**[ON-SCREEN dès 0s]** "90% OF WATCHES LOSE MONEY"
+**VOICE (~28s):**
+> Is a Patek Philippe actually an investment? Here's the truth nobody admits: ninety percent of luxury watches *lose* money the second you leave the store — just like a car. Only a tiny slice, rare and steel and impossible to get, actually triple. So yes, a watch *can* be an asset. But most are just expensive jewelry with a really good story.
 
-**[VISUAL]** Montre Patek Philippe sur marbre, lumière dramatique, billets flous
-**VOICE:**
-> "You never actually own a Patek Philippe — you merely look after it for the next generation." Great slogan. But is it really an investment? Sometimes — and that's the trap. A handful of models, like the Nautilus, have *tripled* in value. But ninety percent of luxury watches *lose* money the second you walk out the store, just like a car. The winners are rare, steel, and impossible to get at retail. So yes, a Patek *can* be an asset — but only a few. The rest are expensive jewelry that tells you a story so you feel okay about the price.
-
-**[ON-SCREEN]** "90% lose value. 10% triple." · **[CTA]** "Follow for the real numbers."
+**[CTA]** "Follow for the real numbers."
 
 ---
 
 ## SHORT 5 — How the Rich Use Debt to Get Richer
+**[VISUAL]** Gratte-ciels au crépuscule, graphique doré qui monte
+**[ON-SCREEN dès 0s]** "THE RICH LOVE DEBT — HERE'S WHY"
+**VOICE (~28s):**
+> You were taught debt is bad. The rich were taught it's a tool. The move: they never sell their assets — they *borrow* against them. Selling triggers tax. Borrowing doesn't. They spend the loan, the assets keep growing, and the interest is cheaper than the tax. It's called buy, borrow, die — and it's completely legal.
 
-**[VISUAL]** Gratte-ciels, graphique élégant qui monte, ambiance feutrée
-**VOICE:**
-> You were taught debt is bad. The rich were taught debt is a *tool*. Here's the move: they never sell their assets — they *borrow* against them. Stocks, real estate, a business — they take a loan using those as collateral. Why? Because selling triggers tax. Borrowing doesn't. They spend the loan, the assets keep growing, and the loan interest is often cheaper than the tax would've been. It's called "buy, borrow, die" — and it's completely legal. The poor work for money. The rich make money *and* debt work for them.
-
-**[ON-SCREEN]** "Buy. Borrow. Die." · **[CTA]** "Follow Quiet Capital."
+**[CTA]** "Follow Quiet Capital."
 
 ---
 
 ## SHORT 6 — The Real Cost of a Lamborghini
+**[VISUAL]** Lamborghini devant villa, nuit, néons élégants
+**[ON-SCREEN dès 0s]** "A $200K CAR REALLY COSTS $1M"
+**VOICE (~27s):**
+> A Lamborghini costs two hundred grand. But that's not the real cost. Insurance, maintenance, tires, and forty thousand in depreciation in year one alone. Here's the brutal part: that same money invested becomes over a *million* in twenty years. The car isn't the expense. The expense is everything that money could've become.
 
-**[VISUAL]** Lamborghini garée devant villa, nuit, lumières néon élégantes
-**VOICE:**
-> A Lamborghini costs two hundred thousand dollars. But that's not the real cost. Insurance: up to ten grand a year. Maintenance: a single service can run five thousand. Tires: four thousand. Depreciation in year one: up to forty thousand — gone. And here's the brutal part: that two hundred thousand, invested instead, becomes over a million in twenty years. The car isn't the expense. The expense is everything that money *could* have become. That's the real price of fast.
-
-**[ON-SCREEN]** "$200k car = $1M opportunity cost" · **[CTA]** "Follow for the real math."
+**[CTA]** "Follow for the real math."
 
 ---
 
 ## SHORT 7 — Why Your Salary Will Never Make You Rich
-
 **[VISUAL]** Bureau élégant, fenêtre sur skyline, ambiance réflexion
-**VOICE:**
-> Your salary will never make you rich. And it's not about the amount. A salary is taxed *first*, then you spend what's left. The wealthy flip it: their assets earn money, they spend, and they're taxed on what's left — *less*. A high earner can take home more but own nothing. Real wealth isn't a big paycheck — it's owning things that pay *you*. Stocks. Real estate. A business. Until a dollar you don't trade your time for shows up, you don't have wealth. You have a nice-looking salary.
+**[ON-SCREEN dès 0s]** "YOUR SALARY WON'T MAKE YOU RICH"
+**VOICE (~27s):**
+> Your salary will never make you rich — and it's not about the amount. A salary is taxed *first*, then you spend what's left. The wealthy flip it: assets earn, they spend, they're taxed on less. A high earner can take home more and own nothing. Real wealth isn't a paycheck — it's owning things that pay *you*.
 
-**[ON-SCREEN]** "Earn → own things that pay you." · **[CTA]** "Follow Quiet Capital."
+**[CTA]** "Follow Quiet Capital."
 
 ---
 
 ## SHORT 8 — "Quiet Luxury" Explained
+**[VISUAL]** Cachemire beige, montre discrète, esthétique minimaliste
+**[ON-SCREEN dès 0s]** "IF YOU KNOW, YOU KNOW"
+**VOICE (~26s):**
+> Quiet luxury is the biggest status shift in a decade. No logos, no flash — a plain cashmere sweater that costs more than a branded hoodie. Why? Logos are for people who need *strangers* to know they have money. Quiet luxury is for people who only care what *other rich people* think. If you know, you know.
 
-**[VISUAL]** Cachemire beige, montre discrète, café, esthétique minimaliste riche
-**VOICE:**
-> Quiet luxury is the biggest shift in status in a decade. No logos. No flash. A plain cashmere sweater that costs more than a designer hoodie covered in branding. Why? Because logos are for people who need *strangers* to know they have money. Quiet luxury is for people who only care what *other rich people* think. The fabric, the cut, the brand with no visible name — it's a secret handshake. If you know, you know. And if you don't… you were never the audience.
-
-**[ON-SCREEN]** "If you know, you know." · **[CTA]** "Follow Quiet Capital."
+**[CTA]** "Follow Quiet Capital."
 
 ---
 
 ## SHORT 9 — How Much to Live Off Dividends Forever
+**[VISUAL]** Café en terrasse vue mer, matin, calme luxueux
+**[ON-SCREEN dès 0s]** "LIVE OFF DIVIDENDS — THE NUMBER"
+**VOICE (~27s):**
+> Want to live off dividends and never work again? Here's the real number. A solid portfolio pays around four percent a year. So fifty thousand in dividends needs about one-point-two-five million invested. Sounds huge — but reinvest every payment and it snowballs: dividends buy shares, shares pay more dividends. Start now, not big.
 
-**[VISUAL]** Relevé de compte élégant, café terrasse, calme matinal luxueux
-**VOICE:**
-> Want to live off dividends and never work again? Here's the real number. The average solid dividend portfolio pays around 4% a year. So to earn fifty thousand in dividends, you need about one-point-two-five million invested. Want a hundred thousand a year? Two-point-five million. It sounds huge — but you don't need it on day one. Reinvest every dividend, and they compound: the payments buy more shares, which pay more dividends. It snowballs. The goal isn't to get there fast. It's to start *now*.
-
-**[ON-SCREEN]** "$50k/yr = ~$1.25M invested" · **[CTA]** "Follow for the money math."
+**[CTA]** "Follow for the money math."
 
 ---
 
-## SHORT 10 — Why Watches Hold Value Better Than Cars
+## SHORT 10 — Why Watches Beat Cars as Assets
+**[VISUAL]** Montre de luxe à côté d'une supercar, comparaison élégante
+**[ON-SCREEN dès 0s]** "SAME PRICE. OPPOSITE OUTCOME."
+**VOICE (~27s):**
+> A supercar and a luxury watch can cost the same — one's a terrible investment, the other can be great. Drive a new car off the lot, it loses twenty percent instantly, then needs fuel, insurance, repairs. A great watch? Barely any upkeep, fixed supply, and the right ones go *up*. One depreciates while you sleep. The other appreciates on your wrist.
 
-**[VISUAL]** Montre de luxe à côté d'une supercar, comparaison visuelle élégante
-**VOICE:**
-> A supercar and a luxury watch can cost the same. One is a terrible investment. The other can be a great one. Drive a new car off the lot and it loses twenty percent — instantly. It keeps falling, needs fuel, insurance, repairs. A great watch? No fuel, barely any upkeep, and the right models go *up*. Why? A car wears out. A watch is forever, the supply is fixed, and demand only grows. Same money, opposite outcome. One depreciates while you sleep. The other appreciates on your wrist.
+**[CTA]** "Follow Quiet Capital."
 
-**[ON-SCREEN]** "Cars wear out. Watches don't." · **[CTA]** "Follow Quiet Capital."
+---
+
+### 🔑 Rappels format 2026
+- **Hook à la seconde 0** : le texte choc s'affiche AVANT que la voix finisse sa 1re phrase.
+- **Captions tout du long** (auto dans CapCut) — non négociable.
+- **Coupe sec** : pas d'intro, pas de "hey guys". On entre direct dans l'info.
+- **Varie l'ordre de publication** des formats (question / chiffre choc / mythe brisé) pour rester "authentique" aux yeux de l'algo.
+- Un Short qui marche → republie une **variante** (nouveau visuel/accroche) 1-2 semaines plus tard.
