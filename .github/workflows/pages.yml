@@ -1,0 +1,62 @@
+name: Déploiement du site STRC (GitHub Pages)
+
+# Déploie le site interactif et rafraîchit les closing prices STRC :
+#  - à chaque push touchant le site ou la logique,
+#  - automatiquement chaque semaine (lundi 06:00 UTC),
+#  - manuellement via "Run workflow".
+on:
+  push:
+    branches:
+      - main
+      - claude/strc-dca-closing-prices-cpwemf
+    paths:
+      - "docs/**"
+      - "strc_dca.py"
+      - "build_web_data.py"
+      - "data/**"
+      - ".github/workflows/pages.yml"
+  schedule:
+    - cron: "0 6 * * 1"   # lundi 06:00 UTC (les schedules ne tournent que sur la branche par défaut)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Une seule exécution de déploiement à la fois.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Récupérer les closing prices STRC réels et générer data/strc.json
+        run: |
+          python3 build_web_data.py -v || python3 build_web_data.py --no-live -v
+          echo "----- aperçu -----"
+          head -c 400 docs/data/strc.json || true
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

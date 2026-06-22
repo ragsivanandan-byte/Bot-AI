@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STRC DCA — Closing-Price Edition</title>
+  <meta name="description" content="Simulateur de DCA hebdomadaire dans STRC au closing price réel (et non au par 100 $)." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <h1>STRC DCA <span class="accent">· Closing-Price Edition</span></h1>
+      <p class="sub">DCA hebdomadaire déployé dans STRC au <strong>closing price réel</strong>
+        — et non au par 100 $. La perte/gain en capital depuis le lancement est intégrée.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel controls">
+      <div class="field">
+        <label for="weekly">DCA hebdomadaire ($)</label>
+        <input id="weekly" type="number" min="1" step="50" value="1000" />
+      </div>
+      <div class="field">
+        <label for="start">Début</label>
+        <input id="start" type="date" />
+      </div>
+      <div class="field">
+        <label for="end">Fin</label>
+        <input id="end" type="date" />
+      </div>
+      <div class="field check">
+        <label><input id="dividends" type="checkbox" checked /> Dividendes</label>
+        <label><input id="reinvest" type="checkbox" /> Réinvestir (DRIP)</label>
+      </div>
+      <div class="field">
+        <label for="apy">APY de repli (%)</label>
+        <input id="apy" type="number" min="0" step="0.5" value="9" />
+      </div>
+      <button id="reset" class="ghost" type="button">Réinitialiser</button>
+    </section>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="panel">
+      <h2>Mode Par (100 $) <span class="muted">vs</span> Mode Closing (réel)</h2>
+      <div class="tablewrap">
+        <table id="compare">
+          <thead>
+            <tr><th>Métrique</th><th>Mode Par ($100)</th><th>Mode Closing (réel)</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="impact" id="impact"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Valeur du portefeuille</h2>
+      <div id="chart-portfolio" class="chart"></div>
+      <div class="legend" id="legend-portfolio"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Closing price hebdomadaire de STRC</h2>
+      <div id="chart-price" class="chart"></div>
+      <p class="muted small">Ligne pointillée = par 100 $. Les zones grisées correspondent aux semaines estimées (interpolées).</p>
+    </section>
+
+    <section class="panel meta">
+      <h2>Données</h2>
+      <p id="datameta" class="muted small"></p>
+      <p class="muted small">
+        Le navigateur ne pouvant pas interroger Yahoo (CORS), les closing prices sont
+        figés dans <code>data/strc.json</code>, rafraîchi automatiquement par une
+        GitHub Action. Tous les calculs sont refaits côté navigateur.
+      </p>
+    </section>
+  </main>
+
+  <footer class="wrap muted small">
+    <p>Outil pédagogique / d'analyse — pas un conseil en investissement.
+       Reproduction du « STRC Mode » du Bitcoin Intelligence Report avec
+       valorisation au closing réel.</p>
+  </footer>
+
+  <script src="sim.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -97,6 +97,40 @@ par, écart de valeur, perte en capital intégrée).
 Les dividendes des préférentielles sont calculés sur le **par 100 $**,
 indépendamment du prix d'achat.
 
+## Site web en ligne (GitHub Pages)
+
+En plus du terminal, l'outil est disponible comme **site interactif**
+(dossier `docs/`). Le navigateur ne pouvant pas interroger Yahoo (CORS), une
+**GitHub Action** (`.github/workflows/pages.yml`) exécute le script Python,
+récupère les vrais closing prices STRC, écrit `docs/data/strc.json` et déploie
+le site. Tous les calculs sont ensuite refaits **côté navigateur** (Mode Par vs
+Mode Closing, KPIs, tableau, graphiques) — instantané et interactif.
+
+### Activer le site (une seule fois)
+
+1. Poussez la branche sur GitHub (déjà fait).
+2. Dépôt → **Settings → Pages → Build and deployment → Source : « GitHub Actions »**.
+3. L'Action se déclenche au push, chaque lundi, ou via **Run workflow**.
+   > Note : les exécutions programmées (`schedule`) ne tournent que sur la
+   > branche par défaut — fusionnez sur `main` pour le rafraîchissement hebdo
+   > automatique.
+4. L'URL publique sera du type `https://ragsivanandan-byte.github.io/bot-ai/`.
+
+### Prévisualiser en local sur votre Mac
+
+```bash
+python3 build_web_data.py        # génère docs/data/strc.json (données live)
+cd docs && python3 -m http.server 8000
+# puis ouvrez http://localhost:8000
+```
+
+### Tests du site
+
+```bash
+node test_web_parity.mjs   # le JS donne EXACTEMENT les mêmes chiffres que Python
+node test_web_render.mjs   # app.js s'exécute et peuple l'UI sans erreur
+```
+
 ## Avertissement
 
 Outil pédagogique / d'analyse. Les chiffres dépendent des données de marché
