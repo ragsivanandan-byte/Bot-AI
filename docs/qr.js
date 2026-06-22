@@ -6,7 +6,7 @@
   if (!el) return;
   // URL canonique du site (indépendante de l'onglet courant).
   var url = (document.getElementById("qrlink") && document.getElementById("qrlink").href) ||
-            "https://ragsivanandan-byte.github.io/bot-ai/";
+            "https://ragsivanandan-byte.github.io/Bot-AI/";
   try {
     if (typeof qrcode === "function") {
       var qr = qrcode(0, "M");        // type auto, correction d'erreur niveau M

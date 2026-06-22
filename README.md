@@ -125,7 +125,7 @@ Cela met en place :
   l'appareil photo de votre téléphone pour ouvrir l'outil dessus.
 
 > Pas de domaine personnalisé (gratuit) : l'accès se fait via l'URL GitHub Pages
-> `https://ragsivanandan-byte.github.io/bot-ai/`, mémorisée dans le raccourci et
+> `https://ragsivanandan-byte.github.io/Bot-AI/`, mémorisée dans le raccourci et
 > le QR pour ne jamais avoir à la retaper.
 
 ### Activer le site (une seule fois)
@@ -136,7 +136,7 @@ Cela met en place :
    > Note : les exécutions programmées (`schedule`) ne tournent que sur la
    > branche par défaut — fusionnez sur `main` pour le rafraîchissement hebdo
    > automatique.
-4. L'URL publique sera du type `https://ragsivanandan-byte.github.io/bot-ai/`.
+4. L'URL publique sera du type `https://ragsivanandan-byte.github.io/Bot-AI/`.
 
 ### Prévisualiser en local sur votre Mac
 

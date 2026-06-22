@@ -1,7 +1,7 @@
 #!/bin/bash
 # Double-cliquez ce fichier pour ouvrir l'outil STRC dans votre navigateur.
 # (Le .webloc est encore plus propre — celui-ci marche partout.)
-URL="https://ragsivanandan-byte.github.io/bot-ai/"
+URL="https://ragsivanandan-byte.github.io/Bot-AI/"
 echo "Ouverture de l'outil STRC…"
 echo "$URL"
 if command -v open >/dev/null 2>&1; then

@@ -3,7 +3,7 @@
 #   strc            -> ouvre le site interactif dans le navigateur
 #   strc url        -> affiche l'URL
 #   strc term ...   -> lance la version terminal (strc_dca.py), ex. strc term --weekly-amount 1000
-URL="https://ragsivanandan-byte.github.io/bot-ai/"
+URL="https://ragsivanandan-byte.github.io/Bot-AI/"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 case "${1:-open}" in
