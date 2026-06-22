@@ -1,0 +1,26 @@
+#!/bin/bash
+# Commande terminal 'strc'.
+#   strc            -> ouvre le site interactif dans le navigateur
+#   strc url        -> affiche l'URL
+#   strc term ...   -> lance la version terminal (strc_dca.py), ex. strc term --weekly-amount 1000
+URL="https://ragsivanandan-byte.github.io/bot-ai/"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+case "${1:-open}" in
+  open|"")
+    if command -v open >/dev/null 2>&1; then open "$URL"
+    elif command -v xdg-open >/dev/null 2>&1; then xdg-open "$URL"
+    else echo "Ouvrez : $URL"; fi
+    ;;
+  url)
+    echo "$URL"
+    ;;
+  term|cli)
+    shift
+    python3 "$HERE/strc_dca.py" "$@"
+    ;;
+  *)
+    echo "Usage: strc [open | url | term <options strc_dca.py>]"
+    exit 1
+    ;;
+esac

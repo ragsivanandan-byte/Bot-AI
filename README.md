@@ -106,6 +106,28 @@ récupère les vrais closing prices STRC, écrit `docs/data/strc.json` et déplo
 le site. Tous les calculs sont ensuite refaits **côté navigateur** (Mode Par vs
 Mode Closing, KPIs, tableau, graphiques) — instantané et interactif.
 
+### Accès le plus simple (raccourci Mac + QR mobile)
+
+Une fois le site activé (voir ci-dessous), installez les raccourcis :
+
+```bash
+bash mac/install.sh
+```
+
+Cela met en place :
+- **Un raccourci « STRC » sur le Bureau** (`STRC.webloc`, double-clic → ouvre le
+  site dans votre navigateur, sans Terminal). Astuce : glissez-le dans le Dock
+  ou la barre de favoris Safari pour un accès en un clic.
+- **La commande terminal `strc`** :
+  - `strc` → ouvre le site,
+  - `strc term --weekly-amount 1000` → lance la version terminal.
+- **Un QR code « Ouvrir sur mobile »** directement sur le site : scannez-le avec
+  l'appareil photo de votre téléphone pour ouvrir l'outil dessus.
+
+> Pas de domaine personnalisé (gratuit) : l'accès se fait via l'URL GitHub Pages
+> `https://ragsivanandan-byte.github.io/bot-ai/`, mémorisée dans le raccourci et
+> le QR pour ne jamais avoir à la retaper.
+
 ### Activer le site (une seule fois)
 
 1. Poussez la branche sur GitHub (déjà fait).

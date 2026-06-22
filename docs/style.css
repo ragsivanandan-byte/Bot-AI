@@ -121,5 +121,11 @@ td.neg { color: var(--red); }
 .legend .item { display: flex; align-items: center; gap: 7px; }
 .legend .swatch { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
 
+/* Mobile / QR */
+.mobilewrap { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+.qr { background: #fff; padding: 10px; border-radius: 10px; line-height: 0; }
+.qr img { display: block; image-rendering: pixelated; width: 168px; height: 168px; }
+a { color: var(--accent); }
+
 code { background: var(--panel2); padding: 1px 6px; border-radius: 6px; }
 footer { padding: 30px 0; }
