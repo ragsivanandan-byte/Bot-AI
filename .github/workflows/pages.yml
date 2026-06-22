@@ -8,13 +8,6 @@ on:
   push:
     branches:
       - main
-      - claude/strc-dca-closing-prices-cpwemf
-    paths:
-      - "docs/**"
-      - "strc_dca.py"
-      - "build_web_data.py"
-      - "data/**"
-      - ".github/workflows/pages.yml"
   schedule:
     - cron: "0 6 * * 1"   # lundi 06:00 UTC (les schedules ne tournent que sur la branche par défaut)
   workflow_dispatch:
