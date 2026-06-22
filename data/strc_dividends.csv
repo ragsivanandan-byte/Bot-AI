@@ -1,0 +1,25 @@
+# STRC dividende mensuel variable — montant par action (sur le PAR de 100 $).
+# STRC paie un dividende mensuel dont le taux est ajusté pour maintenir le cours
+# proche du par 100 $. Taux initial ~9 % annualisé (août 2025), relevé vers
+# ~11,5–13 % à mesure que le titre est passé sous le par en 2026.
+#
+# ⚠ Montants APPROXIMATIFS (ancrés sur : total 2025 ≈ 4,26 $/action ;
+#   forward yield ~12,98 % en juin 2026). Remplacez-les par les montants déclarés
+#   exacts depuis https://www.strategy.com/strc/dividends si besoin de précision.
+#   L'outil applique le dernier taux mensuel <= semaine, réparti sur ~4,33 sem./mois.
+#   Vous pouvez aussi ignorer les dividendes (--no-dividends) ou imposer un
+#   rendement annualisé fixe (--apy 0.115).
+#
+# ex_date,amount_per_share
+ex_date,amount_per_share
+2025-08-15,0.85
+2025-09-15,0.85
+2025-10-15,0.85
+2025-11-14,0.85
+2025-12-15,0.86
+2026-01-15,0.87
+2026-02-13,0.88
+2026-03-13,0.90
+2026-04-15,0.92
+2026-05-15,0.95
+2026-06-15,0.96

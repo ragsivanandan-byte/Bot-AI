@@ -1,0 +1,22 @@
+# STRC weekly closing prices — SNAPSHOT DE SECOURS (hors-ligne) au 2026-06-22.
+#
+# ⚠ Ce fichier n'est qu'un FALLBACK. Sur votre Mac, lancez l'outil SANS --no-live :
+#   il récupère alors la série hebdo COMPLÈTE et EXACTE depuis Yahoo Finance / Stooq.
+#
+# Ce snapshot ne contient que des points ANCRES :
+#   - "verified" : closing/prix confirmés par des sources publiques (voir colonne source).
+#   - "estimate" : valeur approximative pour illustrer la tendance entre deux ancres.
+# Les semaines absentes sont interpolées par l'outil (signalées « estimated » à l'écran).
+#
+# date,close : date normalisée au vendredi de la semaine par l'outil.
+date,close,source
+2025-07-30,90.00,verified-ipo-issue-price
+2025-08-15,96.95,verified-close
+2025-09-15,96.90,verified-close
+2025-10-15,98.38,verified-close
+2025-11-14,97.76,verified-close
+2026-01-13,100.42,verified-ath
+2026-03-13,98.50,estimate
+2026-05-15,95.80,estimate
+2026-06-12,91.79,verified-close-approx
+2026-06-18,88.59,verified-close
