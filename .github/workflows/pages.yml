@@ -1,29 +1,22 @@
-name: Déploiement du site STRC (GitHub Pages)
+name: Rafraîchir les données STRC
 
-# Déploie le site interactif et rafraîchit les closing prices STRC :
-#  - à chaque push touchant le site ou la logique,
-#  - automatiquement chaque semaine (lundi 06:00 UTC),
-#  - manuellement via "Run workflow".
+# Le site est servi directement par GitHub Pages depuis le dossier /docs de main
+# (Settings → Pages → Deploy from a branch → main → /docs). Ce workflow ne fait
+# QUE régénérer docs/data/strc.json (closing prices) et le commiter s'il change.
 on:
-  push:
-    branches:
-      - main
   schedule:
-    - cron: "0 6 * * 1"   # lundi 06:00 UTC (les schedules ne tournent que sur la branche par défaut)
+    - cron: "0 6 * * 1"   # lundi 06:00 UTC
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# Une seule exécution de déploiement à la fois.
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: strc-data
+  cancel-in-progress: false
 
 jobs:
-  build:
+  refresh:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,26 +25,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Récupérer les closing prices STRC réels et générer data/strc.json
+      - name: Régénérer docs/data/strc.json (live, fallback snapshot)
+        run: python3 build_web_data.py -v || python3 build_web_data.py --no-live -v
+
+      - name: Commiter si les données ont changé
         run: |
-          python3 build_web_data.py -v || python3 build_web_data.py --no-live -v
-          echo "----- aperçu -----"
-          head -c 400 docs/data/strc.json || true
-
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true   # active GitHub Pages automatiquement (dépôt public requis)
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          if ! git diff --quiet -- docs/data/strc.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/data/strc.json
+            git commit -m "Refresh STRC weekly closes [skip ci]"
+            git push
+          else
+            echo "Aucun changement de données STRC."
+          fi
