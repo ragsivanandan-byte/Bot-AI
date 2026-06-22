@@ -98,9 +98,14 @@ def fetch_weekly_closes_yahoo(symbol: str, start: dt.date, end: dt.date,
     )
     raw = _http_get(url)
     data = json.loads(raw)
-    result = data["chart"]["result"][0]
-    stamps = result["timestamp"]
-    closes = result["indicators"]["quote"][0]["close"]
+    chart = data.get("chart") or {}
+    result = chart.get("result")
+    if not result:
+        raise ValueError(f"réponse sans données (error={chart.get('error')})")
+    result = result[0]
+    stamps = result.get("timestamp") or []
+    quote = (result.get("indicators", {}).get("quote") or [{}])[0]
+    closes = quote.get("close") or []
     # Yahoo expose aussi adjclose ; on garde le close brut (prix de marché réel).
     out: Dict[dt.date, float] = {}
     for ts, c in zip(stamps, closes):
@@ -146,7 +151,8 @@ def fetch_weekly_closes(symbol: str, start: dt.date, end: dt.date,
                 return series
             errors.append(f"{name}: série vide")
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError,
-                OSError, KeyError, ValueError, json.JSONDecodeError) as exc:
+                OSError, KeyError, IndexError, TypeError, ValueError,
+                json.JSONDecodeError) as exc:
             errors.append(f"{name}: {type(exc).__name__}: {exc}")
     raise RuntimeError("Échec de récupération live (" + " | ".join(errors) + ")")
 
@@ -514,6 +520,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
 
+    if args.weekly_amount <= 0:
+        print("Erreur : --weekly-amount doit être strictement positif.", file=sys.stderr)
+        return 2
+
     try:
         start = dt.date.fromisoformat(args.start)
         end = dt.date.fromisoformat(args.end)
@@ -521,6 +531,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"Date invalide : {exc}", file=sys.stderr)
         return 2
     start = max(start, STRC_FIRST_TRADE)
+    if end < start:
+        print(f"Erreur : la date de fin ({end}) précède la date de début ({start}).",
+              file=sys.stderr)
+        return 2
 
     use_live = not args.no_live
     raw, live, source_note = get_series("STRC", start, end, use_live, args.verbose)
@@ -530,6 +544,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 1
 
     series, interpolated = build_continuous_series(raw, start, end)
+    if not series:
+        print("Erreur : aucune semaine dans l'intervalle demandé.", file=sys.stderr)
+        return 1
 
     dividends_on = not args.no_dividends
     schedule = load_dividends() if dividends_on else []
