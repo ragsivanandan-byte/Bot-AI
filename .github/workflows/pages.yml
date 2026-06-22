@@ -46,6 +46,8 @@ jobs:
           head -c 400 docs/data/strc.json || true
 
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true   # active GitHub Pages automatiquement (dépôt public requis)
 
       - uses: actions/upload-pages-artifact@v3
         with:
