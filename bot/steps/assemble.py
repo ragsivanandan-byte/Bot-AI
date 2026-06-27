@@ -6,7 +6,11 @@ Pipeline :
   2. Concaténation des clips
   3. Génération de sous-titres (.srt) : hook en 1er, puis le texte voix réparti
   4. Mix audio voix + musique de fond optionnelle (assets/music.mp3)
-  5. Gravure des sous-titres + export MP4 1080x1920
+  5. Gravure des sous-titres (si ton ffmpeg a libass) + export MP4 1080x1920
+
+Si ton ffmpeg n'a pas le filtre 'subtitles' (libass), la vidéo est quand même
+produite SANS sous-titres incrustés, et un fichier .srt est déposé à côté
+(à charger dans CapCut, ou utilise les auto-captions de CapCut en 1 clic).
 
 Prérequis : ffmpeg et ffprobe installés (https://ffmpeg.org/download.html).
 """
@@ -29,6 +33,24 @@ def _require_ffmpeg() -> None:
             )
 
 
+def _run(cmd: list[str]) -> None:
+    """Lance ffmpeg en remontant la VRAIE erreur (dernières lignes de stderr)."""
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        tail = "\n".join((proc.stderr or "").strip().splitlines()[-15:])
+        raise RuntimeError(f"ffmpeg a échoué (code {proc.returncode}) :\n{tail}")
+
+
+def _has_subtitles_filter() -> bool:
+    """Vrai si ffmpeg sait graver des sous-titres (filtre 'subtitles' / libass)."""
+    try:
+        out = subprocess.run(["ffmpeg", "-hide_banner", "-filters"],
+                             capture_output=True, text=True)
+        return bool(re.search(r"\bsubtitles\b", out.stdout))
+    except Exception:
+        return False
+
+
 def _audio_duration(path: Path) -> float:
     out = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -40,16 +62,12 @@ def _audio_duration(path: Path) -> float:
 
 def _ken_burns_clip(img: Path, dur: float, out: Path) -> None:
     frames = max(1, int(dur * FPS))
-    # scale/crop pour remplir 9:16, puis zoom progressif jusqu'à 1.12x.
     vf = (
         f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
         f"zoompan=z='min(zoom+0.0006,1.12)':d={frames}:s={W}x{H}:fps={FPS}"
     )
-    subprocess.run(
-        ["ffmpeg", "-y", "-loop", "1", "-i", str(img), "-t", f"{dur:.3f}",
-         "-vf", vf, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(FPS), str(out)],
-        check=True, capture_output=True,
-    )
+    _run(["ffmpeg", "-y", "-loop", "1", "-i", str(img), "-t", f"{dur:.3f}",
+          "-vf", vf, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(FPS), str(out)])
 
 
 def _split_sentences(text: str) -> list[str]:
@@ -65,7 +83,6 @@ def _srt_time(t: float) -> str:
 
 
 def _build_srt(hook: str, voice: str, total: float, out: Path) -> None:
-    """Hook affiché ~2.2s, puis phrases de la voix réparties sur la durée restante."""
     cues: list[tuple[float, float, str]] = []
     hook_end = min(2.2, total * 0.25)
     if hook:
@@ -84,10 +101,7 @@ def _build_srt(hook: str, voice: str, total: float, out: Path) -> None:
 
     lines = []
     for i, (start, end, txt) in enumerate(cues, 1):
-        lines.append(str(i))
-        lines.append(f"{_srt_time(start)} --> {_srt_time(end)}")
-        lines.append(txt)
-        lines.append("")
+        lines += [str(i), f"{_srt_time(start)} --> {_srt_time(end)}", txt, ""]
     out.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -97,6 +111,7 @@ def assemble_video(
 ) -> Path:
     _require_ffmpeg()
     work_dir.mkdir(parents=True, exist_ok=True)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     total = _audio_duration(voice_mp3)
     per = total / len(images)
 
@@ -111,39 +126,50 @@ def assemble_video(
     concat_list = work_dir / "concat.txt"
     concat_list.write_text("".join(f"file '{c.resolve()}'\n" for c in clips), encoding="utf-8")
     silent = work_dir / "silent.mp4"
-    subprocess.run(
-        ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat_list),
-         "-c", "copy", str(silent)],
-        check=True, capture_output=True,
-    )
+    _run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat_list),
+          "-c", "copy", str(silent)])
 
-    # 3. Sous-titres
+    # 3. Sous-titres (.srt)
     srt = work_dir / "subs.srt"
     _build_srt(hook, voice_text, total, srt)
+    burn = _has_subtitles_filter()
+    srt_escaped = str(srt).replace("\\", "/").replace(":", "\\:")
     style = (
         "FontName=Arial,Fontsize=15,Bold=1,PrimaryColour=&H00FFFFFF,"
         "OutlineColour=&H00000000,BorderStyle=1,Outline=3,Shadow=1,"
         "Alignment=2,MarginV=120"
     )
-    srt_escaped = str(srt).replace("\\", "/").replace(":", "\\:")
+    sub_filter = f"subtitles='{srt_escaped}':force_style='{style}'"
 
-    # 4 + 5. Mix audio + gravure sous-titres -> export
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    if music and music.exists():
-        cmd = [
-            "ffmpeg", "-y", "-i", str(silent), "-i", str(voice_mp3), "-i", str(music),
-            "-filter_complex",
-            f"[0:v]subtitles='{srt_escaped}':force_style='{style}'[v];"
-            f"[2:a]volume=0.10[m];[1:a][m]amix=inputs=2:duration=first:dropout_transition=0[a]",
-            "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-shortest", str(out_path),
-        ]
+    # 4 + 5. Audio (voix + musique) + gravure conditionnelle des sous-titres
+    has_music = bool(music and music.exists())
+    amix = (f"[2:a]volume=0.10[m];[1:a][m]amix=inputs=2:duration=first:dropout_transition=0[a]"
+            if has_music else None)
+
+    cmd = ["ffmpeg", "-y", "-i", str(silent), "-i", str(voice_mp3)]
+    if has_music:
+        cmd += ["-i", str(music)]
+
+    if burn:
+        if has_music:
+            cmd += ["-filter_complex", f"[0:v]{sub_filter}[v];{amix}", "-map", "[v]", "-map", "[a]"]
+        else:
+            cmd += ["-vf", sub_filter, "-map", "0:v", "-map", "1:a"]
+        cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p"]
     else:
-        cmd = [
-            "ffmpeg", "-y", "-i", str(silent), "-i", str(voice_mp3),
-            "-vf", f"subtitles='{srt_escaped}':force_style='{style}'",
-            "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-shortest", str(out_path),
-        ]
-    subprocess.run(cmd, check=True, capture_output=True)
+        # Pas de libass -> on n'incruste pas, mais on garde la vidéo (copie rapide).
+        if has_music:
+            cmd += ["-filter_complex", amix, "-map", "0:v", "-map", "[a]"]
+        else:
+            cmd += ["-map", "0:v", "-map", "1:a"]
+        cmd += ["-c:v", "copy"]
+        # Dépose le .srt à côté du MP4 pour l'importer dans CapCut.
+        sidecar = out_path.with_suffix(".srt")
+        sidecar.write_text(srt.read_text(encoding="utf-8"), encoding="utf-8")
+        print("  ⚠️  ffmpeg sans libass : vidéo générée SANS sous-titres incrustés.")
+        print(f"      → Sous-titres dans : {sidecar.name} (importe-le dans CapCut)")
+        print("      → Ou plus simple : CapCut > Auto-captions (1 clic).")
+
+    cmd += ["-c:a", "aac", "-shortest", str(out_path)]
+    _run(cmd)
     return out_path
