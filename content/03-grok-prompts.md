@@ -1,83 +1,101 @@
-# GROK IMAGINE — Banque de prompts pour les 10 vidéos
+# GROK IMAGINE — Prompts v2 (corrigés : sans marque, sans texte)
 
-> **Réglages conseillés :** format **9:16** pour les Shorts, **16:9** pour le long-form. Ajoute toujours en fin de prompt : `cinematic, ultra realistic, 4k, shallow depth of field, professional color grading`. Génère 5–8 plans par vidéo pour avoir du choix au montage.
-> **Astuce identité visuelle :** garde une palette constante = **or / noir / beige / marbre** (esthétique "quiet luxury"). Ça rend la chaîne reconnaissable.
+> ### ⚙️ Réglages (à faire UNE fois dans Grok Imagine)
+> - **Format** : règle l'aspect ratio sur **9:16** *dans l'app* (plus fiable que de l'écrire dans le prompt).
+> - **Quality mode** activé si dispo.
+> - **Palette de marque constante** : or / noir / beige / marbre → chaîne reconnaissable.
+>
+> ### 🛑 Pourquoi tes 3 images étaient "imparfaites" (cadrans non-Rolex, "Maison Léclerc")
+> Les modèles d'image **inventent du faux texte** (faux logos, fausses enseignes) dès qu'on suggère une marque. Donc **on ne met JAMAIS de marque réelle dans un prompt d'image** :
+> 1. ça produit des logos baveux / faux noms (ce que tu as vu),
+> 2. c'est juridiquement plus risqué (marques déposées).
+>
+> ✅ **Règle d'or** : la **voix** peut dire "Rolex" (commentaire, c'est permis), mais l'**image** montre une **montre de luxe générique et belle**. Personne en Short de 25 s ne vérifie le cadran.
+>
+> ### ➕ Termes à AJOUTER à la fin de chaque prompt (anti-défauts)
+> ```
+> cinematic, ultra realistic, 4k, shallow depth of field, no text, no logo, no watermark, no brand name
+> ```
+> Pour les gros plans de montre, ajoute aussi : `clean minimalist dial, no lettering`.
 
 ---
 
-## 🎨 PROMPTS UNIVERSELS (logo, transitions, fonds)
-- `minimalist luxury logo screen, gold text on black marble background, elegant serif, cinematic lighting`
-- `abstract gold particles floating on dark background, slow motion, luxury, cinematic`
-- `marble texture close-up, gold veins, soft light sweeping across, premium`
+## 🎨 PROMPTS UNIVERSELS (logo de chaîne, transitions, fonds — réutilisables partout)
+- `luxury title screen, plain black marble background with subtle gold veins, empty center, cinematic lighting, no text`
+- `abstract floating gold dust particles on deep black background, slow motion, luxury, cinematic`
+- `polished black marble surface, a single sweep of warm light, premium, minimal`
+
+> 💡 Pour le **logo "Quiet Capital"**, ne demande pas le texte à Grok (il sera moche). Génère un **fond** ci-dessus, puis ajoute le texte "Quiet Capital" toi-même dans CapCut/Canva avec une belle police.
 
 ---
 
 ## VIDÉO 1 — Why Rolex Makes You Wait Years
-- `extreme close-up of a luxury dive watch rotating slowly, golden hour light, water droplets, cinematic`
-- `empty high-end watch boutique, single watch under spotlight in glass case, moody`
-- `elegant queue of well-dressed people outside a luxury store, soft bokeh`
-- `gloved watchmaker hands assembling a mechanical movement, macro, precision`
-- `open safe revealing a row of luxury watches lined up like gold bars, dramatic light`
-- `rising elegant financial graph overlaid on a watch, gold and black, abstract`
+- `extreme macro close-up of a luxury automatic wristwatch, clean minimalist dial, no lettering, golden hour light, water micro-droplets, cinematic, no logo`
+- `empty high-end watch boutique at night, one wristwatch glowing under a single spotlight in a glass case, moody, no text, no brand name`
+- `elegant well-dressed people waiting in a refined queue outside a luxury storefront, soft warm bokeh, blurred façade with no readable text`
+- `gloved watchmaker hands assembling a tiny mechanical movement, macro, precision, warm light, no logo`
+- `an open luxury safe revealing a row of gold and steel wristwatches lined up like bars, dramatic side light, no text`
+- `abstract glowing gold financial line rising over a blurred luxury watch, black background, no text`
 
-## VIDÉO 2 — The Math of Retiring at 40
-- `modern infinity pool villa at sunrise, calm, no people, cinematic wide shot`
-- `person relaxing on a lounge chair overlooking the ocean, back view, peaceful luxury`
-- `elegant minimalist coffee table with notebook and espresso, morning light`
-- `abstract compounding growth chart, gold line rising on dark background`
+## VIDÉO 2 — The Math to Retire at 40
+- `modern infinity pool villa at sunrise, calm water, no people, cinematic wide shot`
+- `back view of a person relaxing on a lounge chair facing the ocean, peaceful wealth, golden morning`
+- `minimalist marble coffee table with an espresso and a leather notebook, soft window light, no text`
+- `abstract glowing gold compounding curve rising on a deep black background, no text, no numbers`
 
 ## VIDÉO 3 — Why Old Money Hides Their Wealth
-- `man in plain tailored suit walking away, back view, luxury hotel lobby, anonymous`
-- `understated cashmere sweater folded on dark wood, no logos, soft light`
-- `classic vintage car parked outside an old estate, muted tones, timeless`
-- `quiet members-only club interior, leather chairs, low warm lighting`
+- `back view of a man in a plain tailored beige suit walking through a quiet luxury hotel lobby, anonymous, no logo`
+- `folded understated cashmere sweater in neutral tones on dark wood, no logo, soft light`
+- `classic vintage car parked outside a stone estate, muted timeless tones, golden hour, no badge`
+- `quiet members-only club interior, leather armchairs, low warm lighting, empty, refined`
 
 ## VIDÉO 4 — Is a Patek Philippe Actually an Investment?
-- `ultra luxury dress watch on black marble, dramatic single light source, macro`
-- `blurred stacks of cash behind a luxury watch in sharp focus, wealth`
-- `auction house setting, gloved hand presenting a watch, spotlight, elegant`
-- `split visual: one watch glowing gold, others fading to grey, concept of winners vs losers`
+- `ultra luxury dress wristwatch on black marble, clean minimalist dial, no lettering, single dramatic light, macro`
+- `blurred stacks of cash behind a sharp-focus luxury wristwatch, wealth, no text`
+- `auction setting, a gloved hand presenting a wristwatch under a spotlight, elegant, no text`
+- `conceptual split: one wristwatch glowing gold, several others fading to grey, winners vs losers, no text`
 
 ## VIDÉO 5 — How the Rich Use Debt to Get Richer
-- `cinematic city skyline of skyscrapers at dusk, financial district, moody`
-- `elegant rising line graph, gold on black, glass office reflection`
-- `luxury office desk, fountain pen signing a document, soft window light`
-- `abstract concept of money flowing in a loop, gold particles, dark background`
+- `cinematic skyline of glass skyscrapers at dusk, financial district, moody gold light`
+- `elegant glowing gold line graph rising, reflected in a glass office window, no text, no numbers`
+- `luxury desk, a fountain pen signing a document, soft window light, no readable text`
+- `abstract concept of gold money flowing in a loop on a dark background, no text`
 
 ## VIDÉO 6 — The Real Cost of a Lamborghini
-- `low angle supercar parked outside a modern villa at night, neon ambient light`
-- `supercar wheel and tire close-up, carbon fiber detail, dramatic lighting`
-- `elegant comparison concept: sports car fading vs rising investment chart, gold tones`
-- `car key on marble counter next to a glass of whiskey, moody luxury`
+- `low angle of a sleek supercar parked outside a modern villa at night, ambient neon reflections, no badge, no logo`
+- `macro of a supercar wheel and carbon fiber detail, dramatic studio light, no logo`
+- `conceptual: a sports car silhouette fading on the left, a glowing rising investment curve on the right, gold tones, no text`
+- `car key on a marble counter beside a glass of whisky, moody luxury, no text`
 
 ## VIDÉO 7 — Why Your Salary Will Never Make You Rich
-- `elegant home office with skyline view through floor-to-ceiling window, contemplative`
-- `single dollar bill transforming into multiple, abstract gold concept`
-- `person looking out over a city at night from a high-rise, back view, thinking`
-- `clean desk with laptop and rising chart on screen, premium minimal`
+- `elegant home office with a floor-to-ceiling window over a city skyline, contemplative, empty chair`
+- `conceptual single glowing gold coin multiplying into many, abstract, black background, no text`
+- `back view of a person looking out over a night city from a high-rise, thinking`
+- `clean minimal desk with a laptop showing an abstract rising gold chart, premium, no readable text`
 
 ## VIDÉO 8 — "Quiet Luxury" Explained
-- `beige cashmere and a discreet watch on linen, minimalist, soft natural light`
-- `elegant café table, espresso, leather bag, no logos, refined aesthetic`
-- `well-dressed person, neutral tones, blurred luxury boutique background`
-- `folded high-end clothing in neutral colors on marble shelf, premium`
+- `beige cashmere fabric and a discreet wristwatch on linen, minimalist, soft natural light, no logo`
+- `elegant café table with espresso and a plain leather bag, refined neutral tones, no logo`
+- `well-dressed person in neutral tones, blurred luxury boutique background with no readable signage`
+- `folded high-end clothing in neutral colors on a marble shelf, premium, no labels`
 
 ## VIDÉO 9 — How Much to Live Off Dividends Forever
-- `elegant brokerage statement on a tablet, terrace with ocean view, morning`
-- `coffee on a balcony overlooking the sea at sunrise, peaceful wealth`
-- `abstract snowball of gold coins growing larger, dark background, motion`
-- `calm minimalist living room with city view, financial freedom mood`
+- `coffee cup on a balcony overlooking the sea at sunrise, peaceful wealth, calm`
+- `a tablet showing an abstract glowing portfolio curve on a terrace table, ocean view, no readable numbers`
+- `abstract snowball of gold coins growing larger, dark background, motion, no text`
+- `calm minimalist living room with a wide city view, financial freedom mood`
 
-## VIDÉO 10 — Why Watches Hold Value Better Than Cars
-- `luxury watch and a supercar side by side, dramatic studio lighting, comparison`
-- `watch on wrist in sharp focus, blurred sports car in background`
-- `split concept: car depreciating vs watch holding value, gold and grey tones`
-- `vintage luxury watch passed between two hands, heirloom concept, warm light`
+## VIDÉO 10 — Why Watches Beat Cars as Assets
+- `a luxury wristwatch and a sleek supercar side by side, dramatic studio lighting, comparison, no logo, no badge`
+- `wristwatch on a wrist in sharp focus, a blurred supercar in the background, no logo`
+- `conceptual split: a car depreciating into grey on the left, a watch holding glowing gold value on the right, no text`
+- `vintage luxury wristwatch passed between two hands, heirloom concept, warm light, clean dial, no lettering`
 
 ---
 
 ## ⚙️ WORKFLOW RAPIDE
-1. Génère tous les plans d'une vidéo **avant** le montage (batch).
-2. Garde un dossier `/visuals/video-XX/` par vidéo.
-3. Au montage CapCut : 1 plan = 4–6 sec, léger zoom lent (effet Ken Burns), transitions fondu.
-4. Réutilise les plans "universels" (logo, marbre, particules) sur **toutes** les vidéos → cohérence de marque + gain de temps.
+1. Règle **9:16** dans Grok une fois pour toutes.
+2. Génère tous les plans d'une vidéo **avant** le montage (batch), garde-en 5-6 par vidéo.
+3. Dépose-les dans `bot/assets/visuals/short<N>/` (noms `1.png`, `2.png`… → ordre respecté).
+4. `./bot/run.sh make <N>`.
+5. Réutilise les plans "universels" (marbre, particules) sur toutes les vidéos → cohérence + gain de temps.

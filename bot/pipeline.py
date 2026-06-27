@@ -115,7 +115,15 @@ def cmd_make(targets: list[str], do_upload: bool) -> None:
     if targets == ["all"]:
         numbers = list(parse_content.load_shorts().keys())
     else:
-        numbers = [int(t) for t in targets]
+        numbers = []
+        for t in targets:
+            if t.isdigit():
+                numbers.append(int(t))
+            else:
+                print(f"  ⚠️  ignoré (pas un numéro de Short) : {t!r}")
+        if not numbers:
+            print("Rien à produire. Exemple : ./bot/run.sh make 1")
+            return
 
     ok, failed = [], []
     for n in numbers:

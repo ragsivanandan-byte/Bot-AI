@@ -110,8 +110,12 @@ def assemble_video(
     work_dir: Path, out_path: Path, music: Path | None = None,
 ) -> Path:
     _require_ffmpeg()
+    if not images:
+        raise RuntimeError("Aucune image à monter (dossier visuals vide).")
     work_dir.mkdir(parents=True, exist_ok=True)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    for old in work_dir.glob("clip*.mp4"):  # purge d'un run précédent
+        old.unlink()
     total = _audio_duration(voice_mp3)
     per = total / len(images)
 

@@ -11,9 +11,15 @@ Retourne la liste des chemins d'images (au moins 1).
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 import requests
+
+
+def _natural_key(p: Path) -> list:
+    """Tri naturel : img2 avant img10 (pas l'ordre lexical img10 < img2)."""
+    return [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", p.name)]
 
 XAI_IMAGE_URL = "https://api.x.ai/v1/images/generations"
 XAI_MODEL = os.getenv("XAI_IMAGE_MODEL", "grok-2-image")  # ou "grok-imagine-image" ($0.02)
@@ -28,7 +34,9 @@ def _load_manual(short_number: int, assets_dir: Path) -> list[Path]:
     if not d.exists():
         return []
     exts = {".png", ".jpg", ".jpeg", ".webp"}
-    return sorted(p for p in d.iterdir() if p.suffix.lower() in exts)
+    imgs = [p for p in d.iterdir()
+            if p.suffix.lower() in exts and not p.name.startswith(".")]  # ignore .DS_Store etc.
+    return sorted(imgs, key=_natural_key)
 
 
 def _generate_xai(prompts: list[str], out_dir: Path) -> list[Path]:
