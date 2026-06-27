@@ -1,8 +1,8 @@
 "use strict";
 // Graphique BTC/EUR depuis 2015 + moyenne mobile 200 semaines, et tableau des
-// périodes sous la 200 WMA. Données réelles chargées EN DIRECT (CoinGecko, prix
-// natif EUR) ; repli sur le fichier committé docs/data/btc_eur.json. Aucun prix
-// n'est codé en dur — 0 hallucination.
+// périodes sous la 200 WMA. Données réelles, sans clé API : fichier committé,
+// puis CryptoCompare (indice EUR) et Kraken XBT/EUR (bourse) en direct. Aucun
+// prix n'est codé en dur — 0 hallucination.
 (function () {
   const PRICE_COLOR = "#f7931a"; // orange = prix BTC
   const WMA_COLOR = "#5aa9ff";   // bleu = 200 WMA
