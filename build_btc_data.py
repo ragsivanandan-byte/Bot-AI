@@ -31,20 +31,50 @@ USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 )
-COINGECKO = ("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
-             "?vs_currency=eur&days=max")
 
 
-def fetch_prices() -> list:
-    """Retourne [[ms, prix_eur], ...] quotidiens depuis CoinGecko."""
-    req = urllib.request.Request(COINGECKO, headers={"User-Agent": USER_AGENT,
-                                                     "accept": "application/json"})
+def _get_json(url: str) -> dict:
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT,
+                                               "accept": "application/json"})
     with urllib.request.urlopen(req, timeout=40) as resp:
-        data = json.loads(resp.read())
-    prices = data.get("prices") or []
-    if not prices:
-        raise RuntimeError("CoinGecko : aucune donnée de prix")
-    return prices
+        return json.loads(resp.read())
+
+
+def _from_cryptocompare() -> list:
+    """[[ms, prix_eur], ...] quotidiens — CryptoCompare CCCAGG (indice EUR), sans clé."""
+    j = _get_json("https://min-api.cryptocompare.com/data/v2/histoday"
+                  "?fsym=BTC&tsym=EUR&allData=true")
+    data = (j.get("Data") or {}).get("Data") or []
+    pts = [[d["time"] * 1000, float(d["close"])] for d in data if d.get("close")]
+    if not pts:
+        raise RuntimeError("CryptoCompare : aucune donnée")
+    return pts
+
+
+def _from_kraken() -> list:
+    """[[ms, prix_eur], ...] hebdomadaires — Kraken XBT/EUR (bourse), sans clé."""
+    j = _get_json("https://api.kraken.com/0/public/OHLC?pair=XBTEUR&interval=10080")
+    if j.get("error"):
+        raise RuntimeError("Kraken : " + ",".join(j["error"]))
+    result = j.get("result") or {}
+    key = next((k for k in result if k != "last"), None)
+    rows = result.get(key) or []
+    pts = [[row[0] * 1000, float(row[4])] for row in rows]
+    if not pts:
+        raise RuntimeError("Kraken : aucune donnée")
+    return pts
+
+
+def fetch_points() -> tuple:
+    """Essaie chaque source sans clé. Retourne (points[[ms,prix]], nom_source)."""
+    errors = []
+    for name, fn in (("CryptoCompare CCCAGG (indice EUR)", _from_cryptocompare),
+                     ("Kraken XBT/EUR (bourse)", _from_kraken)):
+        try:
+            return fn(), name
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{name}: {exc}")
+    raise RuntimeError("Sources BTC/EUR indisponibles — " + " | ".join(errors))
 
 
 def monday_of(ms: float) -> dt.date:
@@ -110,10 +140,10 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=OUT_PATH)
     args = ap.parse_args(argv)
 
-    prices = fetch_prices()
+    prices, src_name = fetch_points()
     weekly = compute_series(resample_weekly(prices), 200)
     payload = {
-        "source": "CoinGecko (BTC/EUR, prix natif en euros)",
+        "source": src_name,
         "currency": "EUR",
         "generated_utc": dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         "start_display": START_DISPLAY,

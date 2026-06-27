@@ -16,29 +16,48 @@
     "€" + Math.round(x).toLocaleString("fr-FR");
   const pct = (x) => (x >= 0 ? "+" : "") + x.toFixed(1) + "%";
 
-  // --- Sources de données (réelles) ---------------------------------------
-  async function fromCoinGecko() {
-    // Sans interval=daily : réservé au plan payant. days=max renvoie déjà du quotidien.
-    const url =
-      "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart" +
-      "?vs_currency=eur&days=max";
-    const r = await fetch(url, { headers: { accept: "application/json" } });
-    if (!r.ok) throw new Error("CoinGecko HTTP " + r.status);
-    const j = await r.json();
-    if (!j.prices || !j.prices.length) throw new Error("CoinGecko: pas de prix");
-    const series = computeSeries(resampleWeekly(j.prices), 200);
-    return { series, source: "CoinGecko · BTC/EUR (prix natif en euros), chargé en direct" };
-  }
-
+  // --- Sources de données (réelles, sans clé API) -------------------------
+  // 1) Fichier committé (le plus fiable, généré par build_btc_data.py / l'Action).
   async function fromCommitted() {
     const r = await fetch("data/btc_eur.json", { cache: "no-store" });
     if (!r.ok) throw new Error("btc_eur.json HTTP " + r.status);
     const j = await r.json();
     if (!j.weekly || !j.weekly.length) throw new Error("btc_eur.json vide");
-    // Le JSON committé contient déjà date/close/wma200.
     return {
       series: j.weekly.map((w) => ({ date: w.date, close: w.close, wma200: w.wma200 })),
       source: (j.source || "fichier local") + " · généré le " + (j.generated_utc || "?"),
+    };
+  }
+
+  // 2) CryptoCompare CCCAGG (indice EUR agrégé) — sans clé, historique long.
+  async function fromCryptoCompare() {
+    const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=EUR&allData=true";
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("CryptoCompare HTTP " + r.status);
+    const j = await r.json();
+    const data = (j.Data && j.Data.Data) || [];
+    if (!data.length) throw new Error("CryptoCompare vide");
+    const pts = data.filter((d) => d.close > 0).map((d) => [d.time * 1000, d.close]);
+    return {
+      series: computeSeries(resampleWeekly(pts), 200),
+      source: "CryptoCompare CCCAGG · BTC/EUR (indice agrégé en euros), chargé en direct",
+    };
+  }
+
+  // 3) Kraken XBT/EUR (bourse réglementée) — sans clé ; ~720 semaines (depuis 2015).
+  async function fromKraken() {
+    const url = "https://api.kraken.com/0/public/OHLC?pair=XBTEUR&interval=10080";
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("Kraken HTTP " + r.status);
+    const j = await r.json();
+    if (j.error && j.error.length) throw new Error("Kraken: " + j.error.join(","));
+    const key = Object.keys(j.result || {}).find((k) => k !== "last");
+    const rows = (key && j.result[key]) || [];
+    if (!rows.length) throw new Error("Kraken vide");
+    const pts = rows.map((row) => [row[0] * 1000, parseFloat(row[4])]);
+    return {
+      series: computeSeries(resampleWeekly(pts), 200),
+      source: "Kraken · XBT/EUR (bourse), chargé en direct",
     };
   }
 
@@ -139,21 +158,25 @@
       .join("");
   }
 
-  // --- Démarrage ----------------------------------------------------------
+  // --- Démarrage : essaie chaque source dans l'ordre ----------------------
   (async function () {
-    status("Chargement des données BTC/EUR en direct (CoinGecko)…");
-    try {
-      const { series, source } = await fromCoinGecko();
-      render(series, source);
-    } catch (e1) {
-      status("Source live indisponible (" + e1.message + ") — repli sur le fichier local…");
+    const attempts = [
+      ["fichier local", fromCommitted],
+      ["CryptoCompare", fromCryptoCompare],
+      ["Kraken", fromKraken],
+    ];
+    const errors = [];
+    for (const [label, fn] of attempts) {
       try {
-        const { series, source } = await fromCommitted();
+        status("Chargement des données BTC/EUR (" + label + ")…");
+        const { series, source } = await fn();
         render(series, source);
-      } catch (e2) {
-        status("Impossible de charger les données BTC/EUR : " + e1.message + " / " + e2.message +
-          ". Lancez « python3 build_btc_data.py » puis poussez pour générer data/btc_eur.json.");
+        return;
+      } catch (e) {
+        errors.push(label + ": " + e.message);
       }
     }
+    status("Impossible de charger les données BTC/EUR (" + errors.join(" · ") +
+      "). Lancez « python3 build_btc_data.py » puis poussez pour générer data/btc_eur.json.");
   })();
 })();
