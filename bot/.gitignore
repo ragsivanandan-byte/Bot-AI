@@ -1,0 +1,15 @@
+# Secrets — ne JAMAIS committer
+.env
+client_secret.json
+.yt_token.json
+
+# Sorties & fichiers de travail
+output/
+.work/
+__pycache__/
+*.pyc
+
+# Visuels générés/déposés (souvent volumineux) — garde l'arborescence vide
+assets/visuals/*
+!assets/visuals/.gitkeep
+assets/music.mp3
