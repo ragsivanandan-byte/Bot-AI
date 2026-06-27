@@ -12,33 +12,32 @@ script  →  voix (ElevenLabs)  →  visuels (Grok Imagine / manuel)  →  monta
 
 ---
 
-## ⚡ Installation (une seule fois)
+## ⚡ Installation un-clic (une seule fois)
 
+**macOS / Linux :**
 ```bash
-# 1. Dépendances Python
-pip install -r bot/requirements.txt
-
-# 2. ffmpeg (le moteur de montage)
-#    macOS :    brew install ffmpeg
-#    Windows :  https://ffmpeg.org/download.html  (ou: winget install ffmpeg)
-#    Linux :    sudo apt install ffmpeg
-
-# 3. Tes clés API
-cp bot/.env.example bot/.env
-#    puis ouvre bot/.env et colle :
-#      - ELEVENLABS_API_KEY   (obligatoire)  -> elevenlabs.io > API Keys
-#      - XAI_API_KEY          (optionnel)    -> console.x.ai  > API Keys
+./bot/setup.sh
 ```
+**Windows (PowerShell) :**
+```powershell
+.\bot\setup.ps1
+```
+
+Le script fait TOUT : environnement Python isolé, dépendances, ffmpeg, fichier `.env`, et il te demande tes clés API à la fin :
+- **ElevenLabs** (obligatoire) → elevenlabs.io > API Keys
+- **xAI Grok** (optionnel) → console.x.ai > API Keys
+
+> Installation manuelle possible si tu préfères : `pip install -r bot/requirements.txt`, installe ffmpeg, puis `cp bot/.env.example bot/.env`.
 
 ---
 
 ## 🚀 Utilisation quotidienne
 
 ```bash
-python bot/pipeline.py list            # voir les 10 Shorts
-python bot/pipeline.py make 1          # produire le Short #1
-python bot/pipeline.py make 1 2 3      # produire plusieurs d'un coup
-python bot/pipeline.py make all        # produire les 10 (batch du mois)
+./bot/run.sh list           # voir les 10 Shorts          (Windows: .\bot\run.ps1 list)
+./bot/run.sh make 1         # produire le Short #1
+./bot/run.sh make 1 2 3     # produire plusieurs d'un coup
+./bot/run.sh make all       # produire les 10 (batch du mois)
 ```
 
 Résultat dans `bot/output/short1/` :

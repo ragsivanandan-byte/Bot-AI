@@ -3,7 +3,8 @@
 client_secret.json
 .yt_token.json
 
-# Sorties & fichiers de travail
+# Environnement Python & sorties
+.venv/
 output/
 .work/
 __pycache__/
