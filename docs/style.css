@@ -42,6 +42,7 @@ main { padding: 24px 0 60px; }
   margin: 18px 0;
 }
 .panel h2 { margin: 0 0 14px; font-size: 16px; }
+.panel h3.subhead { margin: 20px 0 6px; font-size: 15px; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
 

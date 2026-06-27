@@ -17,6 +17,28 @@
   </header>
 
   <main class="wrap">
+    <section class="panel" id="btc-panel">
+      <h2>Bitcoin (EUR) vs Moyenne mobile 200 semaines — depuis 2015</h2>
+      <p id="btc-status" class="muted small">Chargement des données BTC/EUR…</p>
+      <div id="btc-chart" class="chart"></div>
+      <div class="legend" id="btc-legend"></div>
+      <p class="muted small" id="btc-source"></p>
+
+      <h3 class="subhead">Périodes historiques sous la 200 WMA</h3>
+      <p class="muted small">Toutes les semaines où le cours BTC/EUR a clôturé
+        <strong>sous</strong> sa moyenne mobile 200 semaines, regroupées en périodes
+        contiguës. L'écart est négatif (prix sous la moyenne) ; « écart max » = le
+        point le plus bas de la période.</p>
+      <div class="tablewrap">
+        <table id="btc-below">
+          <thead>
+            <tr><th>Début</th><th>Fin</th><th>Durée</th><th>Écart max (date)</th><th>Écart moyen</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="panel controls">
       <div class="field">
         <label for="weekly">DCA hebdomadaire ($)</label>
@@ -97,6 +119,8 @@
        valorisation au closing réel.</p>
   </footer>
 
+  <script src="btc_core.js"></script>
+  <script src="btc.js"></script>
   <script src="sim.js"></script>
   <script src="app.js"></script>
   <!-- Génération du QR code (lib éprouvée via CDN, repli texte si indisponible). -->

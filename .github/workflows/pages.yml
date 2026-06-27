@@ -28,14 +28,17 @@ jobs:
       - name: Régénérer docs/data/strc.json (live, fallback snapshot)
         run: python3 build_web_data.py -v || python3 build_web_data.py --no-live -v
 
+      - name: Régénérer docs/data/btc_eur.json (BTC/EUR + 200 WMA, CoinGecko)
+        run: python3 build_btc_data.py || echo "BTC/EUR ignoré (source indisponible)"
+
       - name: Commiter si les données ont changé
         run: |
-          if ! git diff --quiet -- docs/data/strc.json; then
+          if ! git diff --quiet -- docs/data/; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add docs/data/strc.json
-            git commit -m "Refresh STRC weekly closes [skip ci]"
+            git add docs/data/
+            git commit -m "Refresh STRC + BTC/EUR data [skip ci]"
             git push
           else
-            echo "Aucun changement de données STRC."
+            echo "Aucun changement de données."
           fi

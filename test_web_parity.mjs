@@ -27,13 +27,17 @@ function pyRef(s) {
   if (!s.dividends) args.push("--no-dividends");
   if (s.reinvest) args.push("--reinvest-dividends");
   if (s.start) args.push("--start", s.start);
+  // Épingle la fin sur la dernière semaine du snapshot pour une comparaison
+  // déterministe (sinon Python utilise la date du jour et diverge du JSON figé).
+  args.push("--end", DATA.weekly_closes[DATA.weekly_closes.length - 1].date);
   const out = execFileSync("python3", args, { encoding: "utf-8" });
   return JSON.parse(out);
 }
 
 function jsRun(s) {
   const par = DATA.par;
-  const closes = DATA.weekly_closes.filter((c) => !s.start || c.date >= s.start);
+  const lastDate = DATA.weekly_closes[DATA.weekly_closes.length - 1].date;
+  const closes = DATA.weekly_closes.filter((c) => (!s.start || c.date >= s.start) && c.date <= lastDate);
   const schedule = s.dividends ? DATA.dividends : [];
   const apy = s.dividends ? DATA.default_apy : 0;
   return {
