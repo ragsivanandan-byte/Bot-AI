@@ -21,6 +21,10 @@ from pathlib import Path
 
 W, H, FPS = 1080, 1920, 30
 
+# Position des sous-titres : on ancre le BAS du bloc à 80% de la hauteur
+# (tiers inférieur, au-dessus de l'UI YouTube Shorts, sans masquer le visuel).
+CAPTION_BOTTOM = int(H * 0.80)
+
 # Polices possibles (macOS / Linux) pour les sous-titres PNG.
 _FONT_CANDIDATES = [
     "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
@@ -189,7 +193,7 @@ def _assemble_png_captions(silent: Path, voice_mp3: Path, music: Path | None,
     for i, (s, e, txt) in enumerate(cues):
         png = cap_dir / f"cap{i:02d}.png"
         h = _render_caption_png(txt, png)
-        y = max(20, int(H * 0.64) - h // 2)  # zone de lecture, au-dessus de l'UI Shorts
+        y = max(20, CAPTION_BOTTOM - h)  # bas du bloc ancré dans le tiers inférieur
         inputs += ["-loop", "1", "-i", str(png)]
         placed.append((base + i, y, s, e))
 
