@@ -68,7 +68,9 @@ def test_build_srt() -> None:
     total = 28.0
     with tempfile.TemporaryDirectory() as d:
         srt = Path(d) / "subs.srt"
-        assemble._build_srt("My Hook", "First sentence. Second one. Third here.", total, srt)
+        cues = assemble._build_cues("My Hook", "First sentence. Second one. Third here.", total)
+        check("hook + 3 phrases = 4 cues", len(cues) == 4, f"(={len(cues)})")
+        assemble._write_srt(cues, srt)
         content = srt.read_text(encoding="utf-8")
         check("fichier SRT non vide", len(content) > 0)
         check("hook en MAJUSCULES et en 1er", content.startswith("1\n") and "MY HOOK" in content,

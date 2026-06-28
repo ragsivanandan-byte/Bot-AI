@@ -2,6 +2,9 @@
 requests>=2.31
 python-dotenv>=1.0
 
+# Sous-titres incrustés par le bot (rendu PNG, fonctionne sans libass)
+pillow>=10.0
+
 # Upload YouTube — OPTIONNEL (décommente si tu utilises --upload)
 # google-auth-oauthlib>=1.2
 # google-api-python-client>=2.130
