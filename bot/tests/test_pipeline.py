@@ -40,8 +40,10 @@ def test_parsing() -> None:
         check(f"short {n} complet (voix+visuels)", s.is_complete())
         check(f"short {n} a un hook", bool(s.hook))
         check(f"short {n} a un titre YouTube", bool(s.yt_title))
-        check(f"short {n} voix 200-450 chars (≈25-30s)", 150 <= len(s.voice) <= 480,
-              f"(={len(s.voice)})")
+        # Shorts 1-2 ~20-30s (<=480 chars) ; Shorts 3-10 ~45-60s (600-1000 chars)
+        lo, hi = (150, 480) if n <= 2 else (600, 1000)
+        check(f"short {n} voix dans la bonne fourchette de durée", lo <= len(s.voice) <= hi,
+              f"(={len(s.voice)}, attendu {lo}-{hi})")
         check(f"short {n} a des hashtags", "#" in s.hashtags)
 
 

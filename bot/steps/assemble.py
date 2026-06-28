@@ -15,12 +15,18 @@ Prérequis : ffmpeg + ffprobe. Sous-titres auto : `pip install pillow`.
 from __future__ import annotations
 
 import json
+import math
 import re
 import shutil
 import subprocess
 from pathlib import Path
 
 W, H, FPS = 1080, 1920, 30
+
+# Rythme visuel : durée max d'affichage d'une image. Si la vidéo est plus longue
+# que (nb images x ce max), le bot RECYCLE les images pour garder du dynamisme
+# (utile pour les Shorts 45-60s avec peu d'images).
+MAX_SEC_PER_IMAGE = 6.0
 
 # Position des sous-titres : on ancre le BAS du bloc à 80% de la hauteur
 # (tiers inférieur, au-dessus de l'UI YouTube Shorts, sans masquer le visuel).
@@ -274,11 +280,15 @@ def assemble_video(
     for old in work_dir.glob("clip*.mp4"):
         old.unlink()
     total = _audio_duration(voice_mp3)
-    per = total / len(images)
+    # Nombre de segments visuels : au moins autant que d'images, et assez pour
+    # ne pas dépasser MAX_SEC_PER_IMAGE par plan (recyclage si peu d'images).
+    n_seg = max(len(images), math.ceil(total / MAX_SEC_PER_IMAGE))
+    per = total / n_seg
+    sequence = [images[i % len(images)] for i in range(n_seg)]
 
     # 1. Clips Ken Burns
     clips = []
-    for i, img in enumerate(images):
+    for i, img in enumerate(sequence):
         clip = work_dir / f"clip{i:02d}.mp4"
         _ken_burns_clip(img, per, clip)
         clips.append(clip)

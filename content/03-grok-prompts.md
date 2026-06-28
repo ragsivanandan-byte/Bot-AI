@@ -20,6 +20,19 @@
 
 ---
 
+## 🎬 BANQUE B-ROLL "PASSE-PARTOUT" (pour compléter les Shorts 45-60s → vise 6-8 images)
+Pioche dedans pour remplir n'importe quelle vidéo finance/luxe :
+- `slow aerial over a coastline of luxury villas at golden hour, cinematic, no text`
+- `close-up of a glass of whisky on dark marble, warm backlight, premium, no logo`
+- `private jet cabin interior, cream leather seats, soft window light, empty, no logo`
+- `hand adjusting a tailored suit cuff, macro, neutral tones, no logo`
+- `superyacht deck at sunset, calm sea, no people, cinematic, no badge`
+- `abstract gold liquid swirling on black, slow motion, luxury, no text`
+- `rain on a floor-to-ceiling window overlooking a night city skyline, moody`
+- `stack of books and a fountain pen on a dark wood desk, warm lamp light, no readable text`
+- `marble staircase in a grand quiet mansion, soft daylight, empty, elegant`
+- `close-up of gold coins stacking, dramatic light, black background, no text`
+
 ## 🎨 PROMPTS UNIVERSELS (logo de chaîne, transitions, fonds — réutilisables partout)
 - `luxury title screen, plain black marble background with subtle gold veins, empty center, cinematic lighting, no text`
 - `abstract floating gold dust particles on deep black background, slow motion, luxury, cinematic`
