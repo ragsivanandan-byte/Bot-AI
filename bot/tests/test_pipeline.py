@@ -85,6 +85,27 @@ def test_build_srt() -> None:
         check("timecodes croissants", secs == sorted(secs))
 
 
+# --- 4b. Sous-titres calés sur l'alignement voix ----------------------------
+def test_alignment_cues() -> None:
+    print("\n[4b] Sync sous-titres sur la voix (alignement)")
+    # Alignement synthétique : "Hi there. Bye now." avec des temps croissants
+    text = "Hi there friends. Bye now everyone."
+    chars = list(text)
+    starts = [round(i * 0.1, 3) for i in range(len(chars))]
+    ends = [round((i + 1) * 0.1, 3) for i in range(len(chars))]
+    align = {"characters": chars, "character_start_times_seconds": starts,
+             "character_end_times_seconds": ends}
+    cues = assemble._cues_from_alignment(align, max_chars=20)
+    check("au moins 2 segments", len(cues) >= 2, f"(={len(cues)})")
+    check("starts/ends croissants et cohérents",
+          all(s < e for s, e, _ in cues) and
+          all(cues[i][0] <= cues[i + 1][0] for i in range(len(cues) - 1)))
+    check("1er segment commence à ~0s (calé sur la voix)", cues[0][0] < 0.2,
+          f"(={cues[0][0]})")
+    check("dernier segment finit ~à la fin de la voix", abs(cues[-1][1] - ends[-1]) < 0.2,
+          f"(={cues[-1][1]} vs {ends[-1]})")
+
+
 # --- 5. Tri naturel des images ----------------------------------------------
 def test_natural_sort() -> None:
     print("\n[5] Tri naturel des images")
@@ -106,6 +127,7 @@ if __name__ == "__main__":
     test_sentences()
     test_srt_time()
     test_build_srt()
+    test_alignment_cues()
     test_natural_sort()
     test_filter_detection()
     print(f"\n{'='*40}\nRésultat : {PASS} ✓   {FAIL} ✗\n{'='*40}")

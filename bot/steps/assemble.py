@@ -14,6 +14,7 @@ Prérequis : ffmpeg + ffprobe. Sous-titres auto : `pip install pillow`.
 """
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import subprocess
@@ -116,6 +117,50 @@ def _build_cues(hook: str, voice: str, total: float) -> list[tuple[float, float,
             d = span * (w / wsum)
             cues.append((t, min(total, t + d), s))
             t += d
+    return cues
+
+
+def _load_alignment(voice_mp3: Path) -> dict | None:
+    """Charge l'alignement caractère/temps écrit par voiceover (voice.json)."""
+    p = voice_mp3.with_suffix(".json")
+    if not p.exists():
+        return None
+    try:
+        a = json.loads(p.read_text(encoding="utf-8"))
+        if all(k in a for k in ("characters", "character_start_times_seconds",
+                                "character_end_times_seconds")):
+            return a
+    except Exception:
+        pass
+    return None
+
+
+def _cues_from_alignment(align: dict, max_chars: int = 30) -> list[tuple[float, float, str]]:
+    """Sous-titres calés EXACTEMENT sur la voix : on regroupe les caractères en
+    petits segments (~30 car. / fin de phrase) avec leurs vrais temps."""
+    chars = align["characters"]
+    starts = align["character_start_times_seconds"]
+    ends = align["character_end_times_seconds"]
+    cues: list[tuple[float, float, str]] = []
+    buf, buf_start, last_end = "", None, 0.0
+    for c, s, e in zip(chars, starts, ends):
+        if not buf:
+            buf_start = s
+        buf += c
+        last_end = e
+        stripped = buf.strip()
+        close = False
+        if c in ".!?":
+            close = len(stripped) >= 8
+        elif c == " " and len(stripped) >= max_chars:
+            close = True
+        elif len(stripped) >= max_chars + 14:
+            close = True
+        if close and stripped:
+            cues.append((buf_start, e, stripped))
+            buf, buf_start = "", None
+    if buf.strip():
+        cues.append((buf_start if buf_start is not None else last_end, last_end, buf.strip()))
     return cues
 
 
@@ -245,8 +290,13 @@ def assemble_video(
     _run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat_list),
           "-c", "copy", str(silent)])
 
-    # 3. Sous-titres
-    cues = _build_cues(hook, voice_text, total)
+    # 3. Sous-titres — timing RÉEL via l'alignement ElevenLabs si dispo
+    align = _load_alignment(voice_mp3)
+    cues = _cues_from_alignment(align) if align else []
+    if cues:
+        print(f"  → sous-titres synchronisés sur la voix ({len(cues)} segments)")
+    else:
+        cues = _build_cues(hook, voice_text, total)  # repli : timing estimé
     srt = work_dir / "subs.srt"
     _write_srt(cues, srt)
     has_music = bool(music and music.exists())
