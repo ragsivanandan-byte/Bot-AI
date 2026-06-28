@@ -68,7 +68,13 @@
     return out;
   }
 
-  const api = { mondayOf, resampleWeekly, computeSeries, belowPeriods };
+  // Zoom 1D : ramène l'intervalle [a,b] autour de `center` d'un facteur donné
+  // (< 1 = zoom avant, > 1 = zoom arrière). Sert aux deux axes du graphique.
+  function zoom1D(a, b, center, factor) {
+    return [center - (center - a) * factor, center + (b - center) * factor];
+  }
+
+  const api = { mondayOf, resampleWeekly, computeSeries, belowPeriods, zoom1D };
   global.BTCcore = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

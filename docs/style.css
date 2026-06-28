@@ -116,7 +116,10 @@ td.neg { color: var(--red); }
 .impact .pos { color: var(--green); }
 
 /* Charts */
-.chart { width: 100%; overflow: hidden; }
+.chart { width: 100%; overflow: hidden; cursor: grab; touch-action: none; }
+.chart:active { cursor: grabbing; }
+.btc-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0 2px; }
+button.ghost.mini { padding: 4px 10px; font-size: 13px; }
 .chart svg { width: 100%; height: auto; display: block; }
 .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 13px; color: var(--muted); }
 .legend .item { display: flex; align-items: center; gap: 7px; }

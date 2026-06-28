@@ -21,6 +21,12 @@
       <h2>Bitcoin (EUR) vs Moyenne mobile 200 semaines — depuis 2015</h2>
       <p id="btc-status" class="muted small">Chargement des données BTC/EUR…</p>
       <div id="btc-chart" class="chart"></div>
+      <div class="btc-tools">
+        <button id="btc-zoom-out" class="ghost mini" type="button" title="Dézoomer">−</button>
+        <button id="btc-zoom-in" class="ghost mini" type="button" title="Zoomer">+</button>
+        <button id="btc-reset" class="ghost mini" type="button">Réinitialiser le zoom</button>
+        <span class="muted small">Molette = zoom · molette sur l'axe du bas = temps (X) · sur l'axe de gauche = prix (Y) · glisser = déplacer · double-clic = reset</span>
+      </div>
       <div class="legend" id="btc-legend"></div>
       <p class="muted small" id="btc-source"></p>
 
@@ -119,12 +125,12 @@
        valorisation au closing réel.</p>
   </footer>
 
-  <script src="btc_core.js?v=2"></script>
-  <script src="btc.js?v=2"></script>
-  <script src="sim.js?v=2"></script>
-  <script src="app.js?v=2"></script>
+  <script src="btc_core.js?v=3"></script>
+  <script src="btc.js?v=3"></script>
+  <script src="sim.js?v=3"></script>
+  <script src="app.js?v=3"></script>
   <!-- Génération du QR code (lib éprouvée via CDN, repli texte si indisponible). -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-  <script src="qr.js?v=2"></script>
+  <script src="qr.js?v=3"></script>
 </body>
 </html>

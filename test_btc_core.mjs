@@ -4,7 +4,7 @@
 
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { resampleWeekly, computeSeries, belowPeriods, mondayOf } = require("./docs/btc_core.js");
+const { resampleWeekly, computeSeries, belowPeriods, mondayOf, zoom1D } = require("./docs/btc_core.js");
 
 let fail = 0;
 const ok = (c, m) => { if (!c) { console.log("  ✗ " + m); fail++; } };
@@ -71,5 +71,18 @@ ok(mondayOf(d("2015-01-05")).toISOString().slice(0, 10) === "2015-01-05", "monda
   ok(periods.length === 0, "aucune période quand le prix est toujours >= wma");
 }
 
-console.log(fail === 0 ? "✓ BTC core OK — resample, 200WMA et périodes sous la WMA validés." : `✗ ${fail} échec(s).`);
+// 6) zoom1D : zoom avant/arrière ancré sur un centre
+{
+  // zoom avant (factor 0.5) autour du centre 5 sur [0,10] -> [2.5, 7.5]
+  let [a, b] = zoom1D(0, 10, 5, 0.5);
+  ok(approx(a, 2.5) && approx(b, 7.5), "zoom avant centré (0..10 -> 2.5..7.5)");
+  // ancrage : le centre reste à la même position relative
+  [a, b] = zoom1D(0, 100, 80, 0.5);
+  ok(approx(a, 40) && approx(b, 90), "zoom ancré près du bord (80)");
+  // zoom arrière (factor 2) élargit
+  [a, b] = zoom1D(40, 60, 50, 2);
+  ok(approx(a, 30) && approx(b, 70), "zoom arrière élargit autour du centre");
+}
+
+console.log(fail === 0 ? "✓ BTC core OK — resample, 200WMA, périodes et zoom validés." : `✗ ${fail} échec(s).`);
 process.exit(fail ? 1 : 0);
