@@ -1,14 +1,14 @@
 {
   "symbol": "STRC",
-  "generated_utc": "2026-06-22T16:02:44Z",
+  "generated_utc": "2026-06-29T10:22:14Z",
   "live": false,
   "source": "snapshot local",
   "par": 100.0,
   "ipo_price": 90.0,
   "first_trade": "2025-07-30",
   "default_apy": 0.09,
-  "interpolated_weeks": 37,
-  "weeks": 47,
+  "interpolated_weeks": 38,
+  "weeks": 48,
   "latest_close": 88.59,
   "weekly_closes": [
     {
@@ -245,6 +245,11 @@
       "date": "2026-06-19",
       "close": 88.59,
       "estimated": false
+    },
+    {
+      "date": "2026-06-26",
+      "close": 88.59,
+      "estimated": true
     }
   ],
   "dividends": [
