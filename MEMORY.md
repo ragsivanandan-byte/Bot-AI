@@ -20,6 +20,9 @@
 - **Nom : Quiet Capital** — *money, luxury, and the quiet logic of wealth.*
 - **Marché : ANGLAIS (US/UK)** — choix assumé (RPM bien plus élevé qu'en FR).
 - Faceless. Voix off IA (ElevenLabs "Brian"). Visuels IA (Grok Imagine).
+- **Grok / SuperGrok = partenaire stratégique** : (1) génère les visuels, (2) fournit des
+  **insights de demande prouvée** via son accès temps réel à X/web. Prompt prêt : `content/11`.
+  Workflow : Grok sort les tendances → on les colle à Claude → Claude écrit les scripts.
 - Handle : `@QuietCapital-q1m` (le nom "Quiet Capital" prime).
 - Niche : **finance + luxe/montres** (angle "le luxe vu par un cerveau finance").
 - Compte Google perso (Ragavan) — invisible pour le public.
@@ -53,7 +56,7 @@ Pipeline : **script → voix (ElevenLabs) → visuels (Grok/manuel) → montage 
 ## 6. Fichiers clés du repo
 - `MEMORY.md` (ce fichier) · `ROADMAP.md` (journal + plan 30j)
 - `youtube-niche-analysis-2026.md` · `launch-kit-quiet-capital.md`
-- `content/01` scripts Shorts · `02/05/06/07` long-forms · `03` prompts Grok · `04` calendrier · `08` métadonnées Shorts · `09` miniatures · **`10` growth playbook (visibilité)**
+- `content/01` scripts Shorts · `02/05/06/07` long-forms · `03` prompts Grok · `04` calendrier · `08` métadonnées Shorts · `09` miniatures · **`10` growth playbook (visibilité)** · **`11` prompt Grok (insights demande prouvée)**
 - `bot/` : pipeline + steps + tests + setup/run
 
 ## 7. Branche git
