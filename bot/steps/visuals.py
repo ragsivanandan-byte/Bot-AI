@@ -36,7 +36,9 @@ def _load_manual(folder_key: str, assets_dir: Path) -> list[Path]:
     exts = {".png", ".jpg", ".jpeg", ".webp"}
     imgs = [p for p in d.iterdir()
             if p.suffix.lower() in exts and not p.name.startswith(".")]  # ignore .DS_Store etc.
-    return sorted(imgs, key=_natural_key)
+    # Tri par DATE de téléchargement (= ordre où tu les as générées) -> aucun
+    # besoin de renommer. En cas d'égalité, tri naturel du nom (1 avant 10).
+    return sorted(imgs, key=lambda p: (p.stat().st_mtime, _natural_key(p)))
 
 
 def _generate_xai(prompts: list[str], out_dir: Path) -> list[Path]:
