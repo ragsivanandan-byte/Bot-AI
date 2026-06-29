@@ -67,6 +67,36 @@
 
 ---
 
+## SHORT 11 — Looking rich keeps you poor
+**Titre :** Why Looking Rich Keeps You Poor 💸
+**Description :**
+> Every dollar spent looking wealthy is a dollar that never becomes wealth. The quiet math of status spending. Not financial advice.
+**Hashtags :** #money #stealthwealth #investing #QuietCapital #Shorts
+
+## SHORT 12 — $5 a day becomes $1M
+**Titre :** $5 a Day Becomes $1 Million 📈
+**Description :**
+> The math is almost unfair: $5/day invested becomes over $1M. Here's how compound interest does it. Not financial advice.
+**Hashtags :** #money #investing #compoundinterest #QuietCapital #Shorts
+
+## SHORT 13 — Lifestyle creep
+**Titre :** You Got a Raise… and Got Poorer
+**Description :**
+> Lifestyle creep is the silent killer of wealth. Why earning more rarely makes you richer — and what the wealthy do instead. Not financial advice.
+**Hashtags :** #money #personalfinance #lifestylecreep #QuietCapital #Shorts
+
+## SHORT 14 — The Rolex dealer game
+**Titre :** The Rolex Waitlist Is a Myth ⌚
+**Description :**
+> How the wealthy actually get allocated the rare watches — it's not about waiting in line. The quiet game of access. Not financial advice.
+**Hashtags :** #rolex #luxurywatches #money #QuietCapital #Shorts
+
+## SHORT 15 — Index funds boring wins
+**Titre :** The Boring Investment That Beats Everyone
+**Description :**
+> The vast majority of paid professionals fail to beat a simple index fund. Why boring quietly wins. Not financial advice.
+**Hashtags :** #investing #indexfunds #money #QuietCapital #Shorts
+
 ### 🔑 Règles SEO Shorts
 - Le **hook visuel des 1,5 premières secondes** compte plus que le titre. Mets le texte choc à l'écran *immédiatement*.
 - Réutilise les mêmes hashtags de marque (#QuietCapital) → YouTube regroupe ton contenu.

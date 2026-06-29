@@ -106,6 +106,46 @@ Pioche dedans pour remplir n'importe quelle vidéo finance/luxe :
 
 ---
 
+## VIDÉO 11 — Why Looking Rich Keeps You Poor
+- `cinematic close-up of a simple high-quality wool coat sleeve and a subtle cufflink on dark marble, shallow depth of field, gold and beige tones, no logo, no text`
+- `minimalist elegant interior: a quality leather briefcase and a generic watch on a marble console, soft natural light, shallow depth of field, no logo`
+- `faceless back view of a tailored dark suit, premium fabric texture, neutral luxury setting, cinematic, no logo`
+- `flashy ostentatious item fading into shadow vs a subtle quality neutral piece in soft light, conceptual contrast, marble, no text`
+- `folded cashmere and wool items neatly stacked beside a generic watch, beige and gold lighting, marble, 4k, no logo`
+- `wide cinematic shot of a sparse high-end dressing area, neutral tones, one quiet quality accessory, shallow depth of field`
+
+## VIDÉO 12 — $5 a Day Becomes $1 Million
+- `small stack of gold coins growing into a much larger stack on dark marble, soft gold lighting, shallow depth of field, no text`
+- `elegant ascending arrangement of subtle gold bars on marble with a generic watch nearby, cinematic, no text, no numbers`
+- `a single gold coin beside a small growing sapling on marble, symbolic growth, shallow depth of field, beige and gold`
+- `faceless elegant hands placing coins into a quality leather box, cinematic, shallow depth of field, warm light`
+- `wide minimalist shot: a small pile of coins on one side of a marble desk, a much larger pile on the other, dramatic light`
+- `abstract glowing gold compounding curve rising on a deep black background, cinematic, no text, no numbers`
+
+## VIDÉO 13 — You Got a Raise… and Got Poorer
+- `cinematic comparison: a modest elegant desk setup vs a slightly upgraded version with a better generic watch and pen, marble, no logo`
+- `elegant hand placing a higher-end generic accessory into a drawer already full of quality pieces, soft light, shallow DOF`
+- `faceless suited figure walking past a new generic luxury car toward a modest one, minimalist street, cinematic, no badge`
+- `quality neutral clothing and accessories accumulating on a designer chair, conceptual lifestyle creep, shallow depth of field`
+- `split frame: small calm savings stack vs a pile of upscale purchases, marble, gold and black tones, no text`
+- `wide cinematic shot of an over-furnished luxury interior vs a serene minimalist one, conceptual, soft light`
+
+## VIDÉO 14 — The Rolex Waitlist Is a Myth
+- `cinematic generic luxury watch resting in an elegant dark leather watch roll on marble, soft gold lighting, shallow DOF, no logo`
+- `faceless suited torso opening a safe revealing a few generic luxury watches, cinematic, understated luxury, 4k, no logo`
+- `close-up of a generic watch on a stack of private-client style documents, warm gold accents, marble, shallow DOF, no readable text`
+- `dark wood and marble private club interior with a generic luxury watch on a side table, cinematic, no text`
+- `elegant hands placing a generic watch into a velvet-lined box, soft focused lighting, shallow depth of field, gold and black`
+- `minimalist modern safe interior with two or three generic watches and subtle cash bundles, cinematic, shallow DOF`
+
+## VIDÉO 15 — The Boring Investment That Beats Everyone
+- `cinematic ascending row of subtle gold bars on marble, calm steady growth, shallow depth of field, no text`
+- `elegant leather ledger showing a steady rising line beside a generic watch, minimalist desk, no readable numbers`
+- `wide minimalist calm desk with a quality pen, generic watch, and subtle diversified wealth markers, soft light`
+- `close-up of many small coins spread broadly on dark marble representing the whole market, shallow depth of field, no text`
+- `faceless elegant hands making a single calm investment gesture, cinematic, warm light`
+- `abstract calm: one high-quality neutral object beside a broad growing stack of gold elements, gold light, no text`
+
 ## ⚙️ WORKFLOW RAPIDE
 1. Règle **9:16** dans Grok une fois pour toutes.
 2. Génère tous les plans d'une vidéo **avant** le montage (batch), garde-en 5-6 par vidéo.

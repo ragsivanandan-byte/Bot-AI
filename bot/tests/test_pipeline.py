@@ -35,7 +35,7 @@ def check(name: str, cond: bool, detail: str = "") -> None:
 def test_parsing() -> None:
     print("\n[1] Parsing du contenu")
     shorts = parse_content.load_shorts()
-    check("10 shorts parsés", len(shorts) == 10, f"(trouvé {len(shorts)})")
+    check("15 shorts parsés", len(shorts) == 15, f"(trouvé {len(shorts)})")
     for n, s in shorts.items():
         check(f"short {n} complet (voix+visuels)", s.is_complete())
         check(f"short {n} a un hook", bool(s.hook))

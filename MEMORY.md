@@ -84,4 +84,10 @@ Pipeline : **script → voix (ElevenLabs) → visuels (Grok/manuel) → montage 
 (chiffres si fournis : vues, abos, rétention, meilleur Short), puis `git add -A && commit && push`.
 
 ### Journal
-- 2026-06-29 — Mise en place complète (chaîne, bot, 6 Shorts, mémoire, growth playbook).
+- 2026-06-29 — Mise en place complète (chaîne, bot, 6 Shorts produits, mémoire, growth playbook).
+- 2026-06-29 — Projet Grok créé (instructions `content/12` + prompt recherche `content/11`).
+  Grok a sorti 15 sujets à demande prouvée (convergents avec notre recherche : stealth wealth,
+  dépréciation montres, intérêts composés). **5 nouveaux Shorts scriptés (#11-15)** — angles
+  neufs non redondants : looking-rich-keeps-you-poor, $5/jour→1M, lifestyle creep, Rolex dealer
+  game, index funds. Intégrés (scripts+prompts+métadonnées). Librairie = **15 Shorts**. 109 tests OK.
+  ⚠️ Chiffres précis cités par Grok non vérifiés (thèmes corroborés) — on garde les angles HIGH.
