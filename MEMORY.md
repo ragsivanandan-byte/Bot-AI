@@ -56,7 +56,7 @@ Pipeline : **script → voix (ElevenLabs) → visuels (Grok/manuel) → montage 
 ## 6. Fichiers clés du repo
 - `MEMORY.md` (ce fichier) · `ROADMAP.md` (journal + plan 30j)
 - `youtube-niche-analysis-2026.md` · `launch-kit-quiet-capital.md`
-- `content/01` scripts Shorts · `02/05/06/07` long-forms · `03` prompts Grok · `04` calendrier · `08` métadonnées Shorts · `09` miniatures · **`10` growth playbook (visibilité)** · **`11` prompt Grok (insights demande prouvée)**
+- `content/01` scripts Shorts · `02/05/06/07` long-forms · `03` prompts Grok · `04` calendrier · `08` métadonnées Shorts · `09` miniatures · **`10` growth playbook (visibilité)** · **`11` prompt Grok (insights demande prouvée)** · **`12` instructions du projet Grok**
 - `bot/` : pipeline + steps + tests + setup/run
 
 ## 7. Branche git
