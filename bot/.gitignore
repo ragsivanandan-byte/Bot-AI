@@ -1,7 +1,8 @@
-# Secrets — ne JAMAIS committer
+# Secrets / perso — ne JAMAIS committer
 .env
 client_secret.json
 .yt_token.json
+links.txt
 
 # Environnement Python & sorties
 .venv/

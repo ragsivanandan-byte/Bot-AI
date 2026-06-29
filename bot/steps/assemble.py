@@ -1,16 +1,10 @@
 """
-Étape MONTAGE — assemble la vidéo finale 9:16 avec ffmpeg.
+Étape MONTAGE — assemble la vidéo finale avec ffmpeg (Shorts 9:16 OU long-form 16:9).
 
-Sous-titres (3 niveaux automatiques, dans l'ordre de préférence) :
-  1. ffmpeg avec libass        -> gravure native du .srt (idéal)
-  2. ffmpeg + Pillow (PIL)     -> le bot rend les sous-titres en PNG et les
-                                  incruste (marche même SANS libass) ✅ ton Mac
-  3. aucun des deux            -> vidéo sans sous-titres + fichier .srt à côté
+Sous-titres (Shorts) : 3 niveaux automatiques — libass > Pillow (PNG) > .srt à côté.
+Long-form : sous-titres désactivés par défaut (YouTube auto-captions + son activé).
 
-Pipeline : images -> clips Ken Burns -> concat -> audio (voix + musique) +
-sous-titres -> MP4 1080x1920.
-
-Prérequis : ffmpeg + ffprobe. Sous-titres auto : `pip install pillow`.
+Prérequis : ffmpeg + ffprobe. Sous-titres PNG : `pip install pillow`.
 """
 from __future__ import annotations
 
@@ -21,18 +15,11 @@ import shutil
 import subprocess
 from pathlib import Path
 
+# Dimensions par défaut (Shorts vertical). Le long-form passe 1920x1080.
 W, H, FPS = 1080, 1920, 30
+MAX_SEC_PER_IMAGE = 6.0          # Shorts : rythme rapide
+MAX_SEC_PER_IMAGE_LONG = 12.0    # Long-form : plans plus posés
 
-# Rythme visuel : durée max d'affichage d'une image. Si la vidéo est plus longue
-# que (nb images x ce max), le bot RECYCLE les images pour garder du dynamisme
-# (utile pour les Shorts 45-60s avec peu d'images).
-MAX_SEC_PER_IMAGE = 6.0
-
-# Position des sous-titres : on ancre le BAS du bloc à 80% de la hauteur
-# (tiers inférieur, au-dessus de l'UI YouTube Shorts, sans masquer le visuel).
-CAPTION_BOTTOM = int(H * 0.80)
-
-# Polices possibles (macOS / Linux) pour les sous-titres PNG.
 _FONT_CANDIDATES = [
     "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
     "/System/Library/Fonts/Supplemental/Arial.ttf",
@@ -85,11 +72,11 @@ def _audio_duration(path: Path) -> float:
     return float(out.stdout.strip())
 
 
-def _ken_burns_clip(img: Path, dur: float, out: Path) -> None:
+def _ken_burns_clip(img: Path, dur: float, out: Path, w: int, h: int) -> None:
     frames = max(1, int(dur * FPS))
     vf = (
-        f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
-        f"zoompan=z='min(zoom+0.0006,1.12)':d={frames}:s={W}x{H}:fps={FPS}"
+        f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},"
+        f"zoompan=z='min(zoom+0.0006,1.12)':d={frames}:s={w}x{h}:fps={FPS}"
     )
     _run(["ffmpeg", "-y", "-loop", "1", "-i", str(img), "-t", f"{dur:.3f}",
           "-vf", vf, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(FPS), str(out)])
@@ -108,7 +95,6 @@ def _srt_time(t: float) -> str:
 
 
 def _build_cues(hook: str, voice: str, total: float) -> list[tuple[float, float, str]]:
-    """Hook ~2.2s, puis chaque phrase répartie au prorata de sa longueur."""
     cues: list[tuple[float, float, str]] = []
     hook_end = min(2.2, total * 0.25)
     if hook:
@@ -127,7 +113,6 @@ def _build_cues(hook: str, voice: str, total: float) -> list[tuple[float, float,
 
 
 def _load_alignment(voice_mp3: Path) -> dict | None:
-    """Charge l'alignement caractère/temps écrit par voiceover (voice.json)."""
     p = voice_mp3.with_suffix(".json")
     if not p.exists():
         return None
@@ -142,8 +127,6 @@ def _load_alignment(voice_mp3: Path) -> dict | None:
 
 
 def _cues_from_alignment(align: dict, max_chars: int = 30) -> list[tuple[float, float, str]]:
-    """Sous-titres calés EXACTEMENT sur la voix : on regroupe les caractères en
-    petits segments (~30 car. / fin de phrase) avec leurs vrais temps."""
     chars = align["characters"]
     starts = align["character_start_times_seconds"]
     ends = align["character_end_times_seconds"]
@@ -177,7 +160,6 @@ def _write_srt(cues: list[tuple[float, float, str]], out: Path) -> None:
     out.write_text("\n".join(lines), encoding="utf-8")
 
 
-# --- Sous-titres en PNG (chemin sans libass) --------------------------------
 def _load_font(size: int):
     from PIL import ImageFont
     for p in _FONT_CANDIDATES:
@@ -203,22 +185,20 @@ def _wrap(draw, text: str, font, max_w: int) -> list[str]:
     return lines
 
 
-def _render_caption_png(text: str, out_path: Path) -> int:
-    """Rend un sous-titre centré (blanc, gros contour noir) sur fond transparent.
-    Retourne la hauteur du PNG."""
+def _render_caption_png(text: str, out_path: Path, w: int) -> int:
     from PIL import Image, ImageDraw
-    font = _load_font(60)
-    pad, stroke, max_w = 24, 8, W - 160
+    font = _load_font(max(40, int(w / 18)))
+    pad, stroke, max_w = 24, 8, w - 160
     probe = ImageDraw.Draw(Image.new("RGBA", (10, 10)))
     lines = _wrap(probe, text, font, max_w)
     asc, desc = font.getmetrics()
     line_h = asc + desc + 14
     h = line_h * len(lines) + pad * 2
-    img = Image.new("RGBA", (W, h), (0, 0, 0, 0))
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     y = pad
     for ln in lines:
-        x = (W - draw.textlength(ln, font=font)) // 2
+        x = (w - draw.textlength(ln, font=font)) // 2
         draw.text((x, y), ln, font=font, fill=(255, 255, 255, 255),
                   stroke_width=stroke, stroke_fill=(0, 0, 0, 255))
         y += line_h
@@ -226,28 +206,25 @@ def _render_caption_png(text: str, out_path: Path) -> int:
     return h
 
 
-def _assemble_png_captions(silent: Path, voice_mp3: Path, music: Path | None,
-                           cues: list, work_dir: Path, out_path: Path) -> None:
+def _assemble_png_captions(silent, voice_mp3, music, cues, work_dir, out_path,
+                           w, h, caption_bottom) -> None:
     cap_dir = work_dir / "caps"
     cap_dir.mkdir(exist_ok=True)
     for old in cap_dir.glob("*.png"):
         old.unlink()
-
     has_music = bool(music and music.exists())
     inputs = ["-i", str(silent), "-i", str(voice_mp3)]
     base = 2
     if has_music:
         inputs += ["-i", str(music)]
         base = 3
-
-    placed = []  # (input_index, y, start, end)
+    placed = []
     for i, (s, e, txt) in enumerate(cues):
         png = cap_dir / f"cap{i:02d}.png"
-        h = _render_caption_png(txt, png)
-        y = max(20, CAPTION_BOTTOM - h)  # bas du bloc ancré dans le tiers inférieur
+        ph = _render_caption_png(txt, png, w)
+        y = max(20, caption_bottom - ph)
         inputs += ["-loop", "1", "-i", str(png)]
         placed.append((base + i, y, s, e))
-
     parts, cur = [], "0:v"
     for idx, y, s, e in placed:
         nxt = f"v{idx}"
@@ -260,7 +237,6 @@ def _assemble_png_captions(silent: Path, voice_mp3: Path, music: Path | None,
         amap = "[a]"
     else:
         amap = "1:a"
-
     map_v = f"[{cur}]" if placed else "0:v"
     cmd = ["ffmpeg", "-y"] + inputs + ["-filter_complex", ";".join(parts),
            "-map", map_v, "-map", amap, "-c:v", "libx264", "-pix_fmt", "yuv420p",
@@ -268,21 +244,38 @@ def _assemble_png_captions(silent: Path, voice_mp3: Path, music: Path | None,
     _run(cmd)
 
 
+def _mux_audio_only(silent, voice_mp3, music, out_path) -> None:
+    """Vidéo + audio (voix + musique) SANS sous-titres (copie vidéo rapide)."""
+    has_music = bool(music and music.exists())
+    cmd = ["ffmpeg", "-y", "-i", str(silent), "-i", str(voice_mp3)]
+    if has_music:
+        cmd += ["-i", str(music), "-filter_complex",
+                "[2:a]volume=0.10[m];[1:a][m]amix=inputs=2:duration=first:dropout_transition=0[a]",
+                "-map", "0:v", "-map", "[a]"]
+    else:
+        cmd += ["-map", "0:v", "-map", "1:a"]
+    cmd += ["-c:v", "copy", "-c:a", "aac", "-shortest", str(out_path)]
+    _run(cmd)
+
+
 def assemble_video(
     images: list[Path], voice_mp3: Path, hook: str, voice_text: str,
     work_dir: Path, out_path: Path, music: Path | None = None,
+    *, vertical: bool = True, captions: bool = True, max_sec_per_image: float | None = None,
 ) -> Path:
     _require_ffmpeg()
     if not images:
         raise RuntimeError("Aucune image à monter (dossier visuals vide).")
+    w, h = (W, H) if vertical else (H, W)          # 1080x1920 ou 1920x1080
+    max_sec = max_sec_per_image or (MAX_SEC_PER_IMAGE if vertical else MAX_SEC_PER_IMAGE_LONG)
+    caption_bottom = int(h * 0.80)
     work_dir.mkdir(parents=True, exist_ok=True)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     for old in work_dir.glob("clip*.mp4"):
         old.unlink()
+
     total = _audio_duration(voice_mp3)
-    # Nombre de segments visuels : au moins autant que d'images, et assez pour
-    # ne pas dépasser MAX_SEC_PER_IMAGE par plan (recyclage si peu d'images).
-    n_seg = max(len(images), math.ceil(total / MAX_SEC_PER_IMAGE))
+    n_seg = max(len(images), math.ceil(total / max_sec))
     per = total / n_seg
     sequence = [images[i % len(images)] for i in range(n_seg)]
 
@@ -290,7 +283,7 @@ def assemble_video(
     clips = []
     for i, img in enumerate(sequence):
         clip = work_dir / f"clip{i:02d}.mp4"
-        _ken_burns_clip(img, per, clip)
+        _ken_burns_clip(img, per, clip, w, h)
         clips.append(clip)
 
     # 2. Concat
@@ -300,18 +293,22 @@ def assemble_video(
     _run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat_list),
           "-c", "copy", str(silent)])
 
-    # 3. Sous-titres — timing RÉEL via l'alignement ElevenLabs si dispo
+    # 3. Sans sous-titres demandé (ex : long-form) -> simple mux
+    if not captions:
+        _mux_audio_only(silent, voice_mp3, music, out_path)
+        print("  ✅ Vidéo assemblée (sans sous-titres incrustés).")
+        return out_path
+
+    # 4. Sous-titres — timing réel via alignement ElevenLabs si dispo
     align = _load_alignment(voice_mp3)
     cues = _cues_from_alignment(align) if align else []
     if cues:
         print(f"  → sous-titres synchronisés sur la voix ({len(cues)} segments)")
     else:
-        cues = _build_cues(hook, voice_text, total)  # repli : timing estimé
+        cues = _build_cues(hook, voice_text, total)
     srt = work_dir / "subs.srt"
     _write_srt(cues, srt)
-    has_music = bool(music and music.exists())
 
-    # Chemin 1 : libass (gravure native du .srt)
     if _has_subtitles_filter():
         srt_escaped = str(srt).replace("\\", "/").replace(":", "\\:")
         style = ("FontName=Arial,Fontsize=15,Bold=1,PrimaryColour=&H00FFFFFF,"
@@ -319,7 +316,7 @@ def assemble_video(
                  "Alignment=2,MarginV=300")
         sub = f"subtitles='{srt_escaped}':force_style='{style}'"
         cmd = ["ffmpeg", "-y", "-i", str(silent), "-i", str(voice_mp3)]
-        if has_music:
+        if music and music.exists():
             cmd += ["-i", str(music), "-filter_complex",
                     f"[0:v]{sub}[v];[2:a]volume=0.10[m];[1:a][m]amix=inputs=2:"
                     "duration=first:dropout_transition=0[a]", "-map", "[v]", "-map", "[a]"]
@@ -330,22 +327,13 @@ def assemble_video(
         print("  ✅ Sous-titres incrustés (libass).")
         return out_path
 
-    # Chemin 2 : Pillow (le bot rend les sous-titres en PNG, sans libass)
     if _pillow_available():
-        _assemble_png_captions(silent, voice_mp3, music, cues, work_dir, out_path)
+        _assemble_png_captions(silent, voice_mp3, music, cues, work_dir, out_path,
+                               w, h, caption_bottom)
         print("  ✅ Sous-titres incrustés par le bot (PNG).")
         return out_path
 
-    # Chemin 3 : ni libass ni Pillow -> vidéo sans sous-titres + .srt
-    cmd = ["ffmpeg", "-y", "-i", str(silent), "-i", str(voice_mp3)]
-    if has_music:
-        cmd += ["-i", str(music), "-filter_complex",
-                "[2:a]volume=0.10[m];[1:a][m]amix=inputs=2:duration=first:dropout_transition=0[a]",
-                "-map", "0:v", "-map", "[a]"]
-    else:
-        cmd += ["-map", "0:v", "-map", "1:a"]
-    cmd += ["-c:v", "copy", "-c:a", "aac", "-shortest", str(out_path)]
-    _run(cmd)
+    _mux_audio_only(silent, voice_mp3, music, out_path)
     sidecar = out_path.with_suffix(".srt")
     sidecar.write_text(srt.read_text(encoding="utf-8"), encoding="utf-8")
     print("  ⚠️  Sous-titres non incrustés (installe Pillow : pip install pillow).")

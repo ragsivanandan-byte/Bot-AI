@@ -25,12 +25,12 @@ XAI_IMAGE_URL = "https://api.x.ai/v1/images/generations"
 XAI_MODEL = os.getenv("XAI_IMAGE_MODEL", "grok-2-image")  # ou "grok-imagine-image" ($0.02)
 
 
-def _manual_dir(short_number: int, assets_dir: Path) -> Path:
-    return assets_dir / "visuals" / f"short{short_number}"
+def _manual_dir(folder_key: str, assets_dir: Path) -> Path:
+    return assets_dir / "visuals" / folder_key
 
 
-def _load_manual(short_number: int, assets_dir: Path) -> list[Path]:
-    d = _manual_dir(short_number, assets_dir)
+def _load_manual(folder_key: str, assets_dir: Path) -> list[Path]:
+    d = _manual_dir(folder_key, assets_dir)
     if not d.exists():
         return []
     exts = {".png", ".jpg", ".jpeg", ".webp"}
@@ -67,20 +67,21 @@ def _generate_xai(prompts: list[str], out_dir: Path) -> list[Path]:
     return paths
 
 
-def get_visuals(short_number: int, prompts: list[str], work_dir: Path, assets_dir: Path) -> list[Path]:
-    """Mode manuel prioritaire (gratuit) ; sinon API xAI si clé dispo."""
-    manual = _load_manual(short_number, assets_dir)
+def get_visuals(folder_key: str, prompts: list[str], work_dir: Path, assets_dir: Path) -> list[Path]:
+    """Mode manuel prioritaire (gratuit) ; sinon API xAI si clé dispo.
+    folder_key = 'short3', 'long1', etc. -> bot/assets/visuals/<folder_key>/"""
+    manual = _load_manual(folder_key, assets_dir)
     if manual:
         print(f"  → {len(manual)} image(s) trouvée(s) dans le dossier manuel")
         return manual
 
-    if os.getenv("XAI_API_KEY"):
+    if os.getenv("XAI_API_KEY") and prompts:
         print(f"  → Génération de {len(prompts)} image(s) via l'API xAI…")
         return _generate_xai(prompts, work_dir / "visuals")
 
     raise RuntimeError(
-        f"Aucun visuel pour le Short #{short_number}.\n"
+        f"Aucun visuel pour '{folder_key}'.\n"
         f"   Option A : ajoute XAI_API_KEY dans bot/.env (génération auto).\n"
-        f"   Option B : dépose tes images Grok dans "
-        f"{_manual_dir(short_number, assets_dir)}/"
+        f"   Option B : dépose tes images dans "
+        f"{_manual_dir(folder_key, assets_dir)}/"
     )

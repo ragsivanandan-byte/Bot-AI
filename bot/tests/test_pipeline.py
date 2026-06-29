@@ -15,7 +15,7 @@ from pathlib import Path
 BOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BOT_DIR))
 
-from steps import parse_content, assemble, visuals  # noqa: E402
+from steps import parse_content, parse_longform, assemble, visuals  # noqa: E402
 
 PASS = 0
 FAIL = 0
@@ -45,6 +45,19 @@ def test_parsing() -> None:
         check(f"short {n} voix dans la bonne fourchette de durée", lo <= len(s.voice) <= hi,
               f"(={len(s.voice)}, attendu {lo}-{hi})")
         check(f"short {n} a des hashtags", "#" in s.hashtags)
+
+
+# --- 1b. Parsing des scripts long-form --------------------------------------
+def test_longform_parsing() -> None:
+    print("\n[1b] Parsing long-form (16:9 — le revenu)")
+    longs = parse_longform.load_all()
+    check("4 long-forms parsés", len(longs) == 4, f"(={len(longs)})")
+    for n, lf in longs.items():
+        check(f"long {n} complet (voix+titre)", lf.is_complete())
+        check(f"long {n} voix substantielle (3-7 min)", 4000 <= len(lf.voice) <= 7000,
+              f"(={len(lf.voice)})")
+        check(f"long {n} a une description + tags", bool(lf.yt_description and lf.tags))
+        check(f"long {n} voix sans markdown (* ou `)", "*" not in lf.voice and "`" not in lf.voice)
 
 
 # --- 2. Découpe en phrases --------------------------------------------------
@@ -126,6 +139,7 @@ def test_filter_detection() -> None:
 
 if __name__ == "__main__":
     test_parsing()
+    test_longform_parsing()
     test_sentences()
     test_srt_time()
     test_build_srt()

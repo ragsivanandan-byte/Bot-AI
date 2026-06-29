@@ -34,11 +34,25 @@ Le script fait TOUT : environnement Python isolé, dépendances, ffmpeg, fichier
 ## 🚀 Utilisation quotidienne
 
 ```bash
-./bot/run.sh list           # voir les 10 Shorts          (Windows: .\bot\run.ps1 list)
-./bot/run.sh make 1         # produire le Short #1
+./bot/run.sh list           # voir Shorts + long-form     (Windows: .\bot\run.ps1 list)
+./bot/run.sh make 1         # produire le Short #1 (9:16)
 ./bot/run.sh make 1 2 3     # produire plusieurs d'un coup
-./bot/run.sh make all       # produire les 10 (batch du mois)
+./bot/run.sh make all       # produire les 10 Shorts
+
+# LONG-FORM (16:9) — le moteur de revenu (RPM finance 100× les Shorts)
+./bot/run.sh make-long 1    # produire le long-form #1 (8 min)
+./bot/run.sh make-long all  # produire les 4 long-forms
 ```
+
+**Long-form :** dépose 15-25 images dans `bot/assets/visuals/long<N>/` (le bot recycle si moins).
+Sortie 16:9 dans `bot/output/long<N>/`. Sous-titres via YouTube auto-captions (son activé).
+
+## 💸 Monétisation auto (liens d'affiliation)
+```bash
+cp bot/links.txt.example bot/links.txt   # puis mets TES liens dedans
+```
+Le contenu de `links.txt` est ajouté automatiquement à la description de **chaque** vidéo
+(Shorts + long-form). C'est un de tes leviers de revenu directs.
 
 Résultat dans `bot/output/short1/` :
 - `short1.mp4` — la vidéo 9:16 finie (voix + visuels + sous-titres + zoom)
