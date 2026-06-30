@@ -15,6 +15,7 @@
 | Date | Shorts publiés | Abonnés | Vues (30 j) | Meilleur Short | Notes |
 |------|----------------|---------|-------------|----------------|-------|
 | 2026-06-29 | 2 | — | — | — | Lancement, Shorts #1 & #2 en ligne |
+| 2026-06-30 | 3 | ~0 | 19 cumul (15/4/0) | #1 Rolex (15) | Démarrage à froid, vues normales pour chaîne neuve. #3 = 1:00 (format long OK) |
 |  |  |  |  |  |  |
 
 ## ✅ Checklist mensuelle (fin juillet)
