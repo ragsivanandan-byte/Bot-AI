@@ -69,23 +69,28 @@ def send_teams(webhook_url: str, payload: dict) -> None:
     resp.raise_for_status()
 
 
-def _client_pill(c: Change) -> str:
-    """Small inline badge showing whether the new employer is a FactSet client.
+_MAIL_CHECK = ('<svg width="12" height="12" viewBox="0 0 20 20" fill="none" '
+               'xmlns="http://www.w3.org/2000/svg" style="vertical-align:-2px;">'
+               '<path d="M4 10.5l4 4L16 6" stroke="#ffffff" stroke-width="2.4" '
+               'stroke-linecap="round" stroke-linejoin="round"/></svg>')
+_MAIL_CROSS = ('<svg width="12" height="12" viewBox="0 0 20 20" fill="none" '
+               'xmlns="http://www.w3.org/2000/svg" style="vertical-align:-2px;">'
+               '<path d="M5 5l10 10M15 5L5 15" stroke="#ffffff" stroke-width="2.4" '
+               'stroke-linecap="round" stroke-linejoin="round"/></svg>')
 
-    Only shown for company_change alerts and only when we ran the lookup
-    (new_employer_is_client is not None).
-    """
+
+def _outcome_badge(c: Change) -> str:
+    """Solid-color pill with SVG icon showing the outcome of an alert."""
     if c.change_type != CHANGE_TYPE_COMPANY or c.new_employer_is_client is None:
         return ""
     if c.new_employer_is_client:
-        text = "FactSet client &middot; seat may transfer"
-        bg, fg = "#e6f4ea", "#137333"
+        icon, text, bg = _MAIL_CHECK, "SEAT MAY TRANSFER", "#0d7f42"
     else:
-        text = "Not a FactSet client &middot; likely churn"
-        bg, fg = "#fdecea", "#b3261e"
-    return (f'<span style="display:inline-block;background:{bg};color:{fg};'
-            'padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;'
-            f'margin-left:8px;">{text}</span>')
+        icon, text, bg = _MAIL_CROSS, "LIKELY CHURN", "#c62828"
+    return (f'<span style="display:inline-block;background:{bg};color:#ffffff;'
+            'padding:5px 11px 5px 9px;border-radius:999px;font-size:11px;font-weight:700;'
+            f'letter-spacing:.5px;text-transform:uppercase;margin-left:10px;">'
+            f'{icon}&nbsp;{text}</span>')
 
 
 def _render_email_html(changes: list[Change]) -> str:
@@ -149,16 +154,29 @@ def _email_company_row(c: Change) -> str:
     new = html.escape(c.new_company or "-")
     title = html.escape(c.new_title or "-")
     url = html.escape(c.linkedin_url or "#")
+    if c.new_employer_is_client:
+        stripe, bg = "#0d7f42", "#ecfdf3"
+        account_line = (
+            f'<div style="margin-top:6px;font-size:12px;color:#0d7f42;font-weight:600;">'
+            f'FactSet client account&nbsp;: {html.escape(c.new_employer_account_id or "-")}'
+            '</div>')
+    elif c.new_employer_is_client == 0:
+        stripe, bg = "#c62828", "#fef2f2"
+        account_line = (
+            f'<div style="margin-top:6px;font-size:12px;color:#c62828;font-weight:600;">'
+            f'{new} is not on the FactSet client roster</div>')
+    else:
+        stripe, bg = "#94a3b8", "#f8fafc"
+        account_line = ""
     return f"""
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #f3c3bf;background:#fff8f7;border-radius:8px;margin-bottom:14px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-left:8px solid {stripe};background:{bg};border-radius:8px;margin-bottom:14px;">
           <tr><td style="padding:16px 18px;">
-            <div style="font-size:15px;font-weight:600;color:#0f2645;">{name}{_client_pill(c)}</div>
-            <div style="margin-top:10px;font-size:13px;color:#3c4257;">
-              <span style="display:inline-block;background:#fdecea;color:#b3261e;padding:3px 8px;border-radius:4px;font-size:12px;">Previous</span>&nbsp;{prev}
-              &nbsp;&rarr;&nbsp;
-              <span style="display:inline-block;background:#e6f4ea;color:#137333;padding:3px 8px;border-radius:4px;font-size:12px;">New</span>&nbsp;<strong>{new}</strong>
+            <div style="font-size:15px;font-weight:600;color:#0f172a;">{name}{_outcome_badge(c)}</div>
+            <div style="margin-top:10px;font-size:13px;color:#1e293b;">
+              <span style="color:#64748b;">{prev}</span>&nbsp;&rarr;&nbsp;<strong>{new}</strong>
             </div>
-            <div style="margin-top:8px;font-size:13px;color:#697386;">New title: {title}</div>
+            <div style="margin-top:6px;font-size:12.5px;color:#475569;">New title: {title}</div>
+            {account_line}
             <div style="margin-top:12px;">
               <a href="{url}" style="font-size:12px;color:#0a5cff;text-decoration:none;">Open LinkedIn profile &rarr;</a>
             </div>
@@ -172,16 +190,18 @@ def _email_role_row(c: Change) -> str:
     prev_title = html.escape(c.previous_title or "-")
     new_title = html.escape(c.new_title or "-")
     url = html.escape(c.linkedin_url or "#")
+    badge = (f'<span style="display:inline-block;background:#1a56db;color:#ffffff;'
+             'padding:5px 11px;border-radius:999px;font-size:11px;font-weight:700;'
+             'letter-spacing:.5px;text-transform:uppercase;margin-left:10px;">'
+             'RELATIONSHIP OPPORTUNITY</span>')
     return f"""
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #c9d8f5;background:#f4f8ff;border-radius:8px;margin-bottom:14px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-left:8px solid #1a56db;background:#eff6ff;border-radius:8px;margin-bottom:14px;">
           <tr><td style="padding:16px 18px;">
-            <div style="font-size:15px;font-weight:600;color:#0f2645;">{name}</div>
-            <div style="margin-top:10px;font-size:13px;color:#3c4257;">
-              <span style="display:inline-block;background:#e6e9ef;color:#3c4257;padding:3px 8px;border-radius:4px;font-size:12px;">Previous title</span>&nbsp;{prev_title}
-              &nbsp;&rarr;&nbsp;
-              <span style="display:inline-block;background:#e8f0fe;color:#0b57d0;padding:3px 8px;border-radius:4px;font-size:12px;">New title</span>&nbsp;<strong>{new_title}</strong>
+            <div style="font-size:15px;font-weight:600;color:#0f172a;">{name}{badge}</div>
+            <div style="margin-top:10px;font-size:13px;color:#1e293b;">
+              <span style="color:#64748b;">{prev_title}</span>&nbsp;&rarr;&nbsp;<strong>{new_title}</strong>
             </div>
-            <div style="margin-top:8px;font-size:13px;color:#697386;">Still at: {company}</div>
+            <div style="margin-top:6px;font-size:12.5px;color:#475569;">Still at: {company}</div>
             <div style="margin-top:12px;">
               <a href="{url}" style="font-size:12px;color:#0a5cff;text-decoration:none;">Open LinkedIn profile &rarr;</a>
             </div>
@@ -274,28 +294,30 @@ def _teams_section_html(c: Change) -> str:
     name = html.escape(c.full_name)
     url = html.escape(c.linkedin_url or "#")
     if c.change_type == CHANGE_TYPE_ROLE:
-        tag = ('<span style="background:#e8f0fe;color:#0b57d0;padding:2px 7px;border-radius:999px;'
+        stripe = "#1a56db"
+        tag = ('<span style="background:#e8f0fe;color:#1a56db;padding:2px 7px;border-radius:999px;'
                'font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;'
                'margin-right:6px;">Internal mobility</span>')
-        line = (f'{html.escape(c.previous_title or "-")} &rarr; '
+        line = (f'<span style="color:#616770;">{html.escape(c.previous_title or "-")}</span> &rarr; '
                 f'<strong style="color:#252424;">{html.escape(c.new_title or "-")}</strong>')
         detail = f'Still at: {html.escape(c.new_company or "-")}'
     else:
+        stripe = "#0d7f42" if c.new_employer_is_client else ("#c62828" if c.new_employer_is_client == 0 else "#94a3b8")
         tag = ('<span style="background:#fdecea;color:#b3261e;padding:2px 7px;border-radius:999px;'
                'font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;'
                'margin-right:6px;">Employer change</span>')
-        line = (f'{html.escape(c.previous_company or "-")} &rarr; '
+        line = (f'<span style="color:#616770;">{html.escape(c.previous_company or "-")}</span> &rarr; '
                 f'<strong style="color:#252424;">{html.escape(c.new_company or "-")}</strong>')
         detail = f'New title: {html.escape(c.new_title or "-")}'
     return f"""
-        <div style="border-top:1px solid #edebe9;padding:14px 0;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:32px;height:32px;border-radius:50%;background:#0f2645;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;">
+        <div style="border-top:1px solid #edebe9;padding:14px 0 14px 14px;margin-left:-4px;border-left:4px solid {stripe};">
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:#0f2645;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;">
               {html.escape(_initials(c.full_name))}
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;">{tag}{name}{_client_pill(c)}</div>
-              <div style="font-size:12px;color:#616770;margin-top:2px;">{line}</div>
+              <div style="font-size:14px;font-weight:600;">{tag}{name}{_outcome_badge(c)}</div>
+              <div style="font-size:12px;color:#616770;margin-top:4px;">{line}</div>
             </div>
           </div>
           <div style="font-size:12px;color:#616770;margin:8px 0 0 42px;">{detail}</div>

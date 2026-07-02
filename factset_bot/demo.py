@@ -13,6 +13,7 @@ from .client_directory import ClientDirectory
 from .dashboard import DashboardLinks, render_dashboard
 from .mock_client import MockProxycurlClient
 from .salesforce_ingest import load_csv
+from .showcase import render_showcase
 from .storage import CHANGE_TYPE_COMPANY, CHANGE_TYPE_ROLE, Storage
 
 
@@ -67,20 +68,29 @@ def run_demo(csv_path: Path, out_dir: Path, roster_path: Path,
     render_dashboard(users, pending, links, dashboard_path, generated_at)
 
     storage.mark_all_pending_notified()
+
+    showcase_path = render_showcase(
+        dashboard_html_path=dashboard_path,
+        email_html_path=alerts_out.email_html_path,
+        teams_html_path=alerts_out.teams_preview_html_path,
+        out_path=out_dir / "showcase.html",
+        generated_at=generated_at,
+    )
     print(f"      -> Dashboard:       {dashboard_path}")
     print(f"      -> Email preview:   {alerts_out.email_html_path}")
     print(f"      -> Teams preview:   {alerts_out.teams_preview_html_path}")
+    print(f"      -> Showcase (all):  {showcase_path}")
 
     print()
     _banner("DEMO COMPLETE", pending, users)
 
     if open_browser:
         try:
-            webbrowser.open(dashboard_path.resolve().as_uri())
+            webbrowser.open(showcase_path.resolve().as_uri())
         except Exception:
             pass
 
-    return dashboard_path
+    return showcase_path
 
 
 def _step(tag: str, msg: str) -> None:

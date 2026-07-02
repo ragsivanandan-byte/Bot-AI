@@ -73,20 +73,34 @@ section.card {{ background:var(--card); border:1px solid var(--border); border-r
 section.card h2 {{ margin:0 0 4px 0; font-size:17px; }}
 section.card .hint {{ color:var(--muted); font-size:13px; margin-bottom:16px; }}
 .alerts {{ display:grid; grid-template-columns:1fr; gap:14px; }}
-.alert-item {{ border:1px solid #f3c3bf; background:#fff8f7; border-radius:10px;
-               padding:14px 16px; display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center; }}
-.alert-item.role {{ border-color:#c9d8f5; background:#f4f8ff; }}
-.alert-item .name {{ font-weight:600; font-size:15px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }}
-.alert-item .move {{ font-size:13px; margin-top:6px; }}
-.alert-item .title {{ font-size:12px; color:var(--muted); margin-top:4px; }}
-.tag {{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:10px;
-        font-weight:600; letter-spacing:.5px; text-transform:uppercase; }}
-.tag.company {{ background:var(--danger-bg); color:var(--danger); }}
-.tag.role {{ background:var(--info-bg); color:var(--info); }}
-.client-pill {{ display:inline-block; padding:3px 9px; border-radius:999px; font-size:11px;
-                font-weight:600; }}
-.client-pill.ok {{ background:var(--ok-bg); color:var(--ok); }}
-.client-pill.no {{ background:var(--danger-bg); color:var(--danger); }}
+.alert-item {{ border-radius:10px; overflow:hidden;
+               display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center;
+               padding:16px 20px 16px 18px;
+               border-left:8px solid #cbd5e1;
+               background:#f8fafc; }}
+.alert-item.outcome-transfer {{ background:#ecfdf3; border-left-color:#0d7f42; }}
+.alert-item.outcome-churn    {{ background:#fef2f2; border-left-color:#c62828; }}
+.alert-item.outcome-internal {{ background:#eff6ff; border-left-color:#1a56db; }}
+.alert-item .header {{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }}
+.alert-item .name {{ font-weight:600; font-size:15.5px; }}
+.alert-item .move {{ font-size:13.5px; margin-top:8px; color:#1e293b; }}
+.alert-item .move strong {{ color:#0f172a; }}
+.alert-item .title {{ font-size:12.5px; color:#475569; margin-top:5px; }}
+.alert-item .account {{ font-size:11.5px; color:#475569; margin-top:5px;
+                        font-family:'SF Mono','Cascadia Code','Roboto Mono',ui-monospace,monospace;
+                        letter-spacing:-0.2px; }}
+.tag {{ display:inline-block; padding:3px 9px; border-radius:999px; font-size:10.5px;
+        font-weight:600; letter-spacing:.6px; text-transform:uppercase; }}
+.tag.company {{ background:#fdecea; color:#b3261e; }}
+.tag.role {{ background:#e8f0fe; color:#1a56db; }}
+.outcome-badge {{ display:inline-flex; align-items:center; gap:6px;
+                  padding:6px 12px 6px 10px; border-radius:999px;
+                  font-size:11.5px; font-weight:700; letter-spacing:.5px;
+                  text-transform:uppercase; color:#ffffff; }}
+.outcome-badge.transfer {{ background:#0d7f42; }}
+.outcome-badge.churn    {{ background:#c62828; }}
+.outcome-badge.internal {{ background:#1a56db; }}
+.outcome-badge svg {{ width:14px; height:14px; }}
 .badge {{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px;
           font-weight:500; }}
 .badge.prev {{ background:var(--danger-bg); color:var(--danger); }}
@@ -197,20 +211,44 @@ footer {{ text-align:center; color:var(--muted); font-size:12px; margin-top:20px
 </body></html>"""
 
 
+_SVG_CHECK = ('<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" '
+              'aria-hidden="true"><path d="M4 10.5l4 4L16 6" stroke="currentColor" '
+              'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+_SVG_CROSS = ('<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" '
+              'aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" '
+              'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+_SVG_ARROW = ('<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" '
+              'aria-hidden="true"><path d="M6 10h9m-3-3l3 3-3 3" stroke="currentColor" '
+              'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+
+
+def _outcome_class(c: Change) -> str:
+    if c.change_type == CHANGE_TYPE_ROLE:
+        return "outcome-internal"
+    if c.new_employer_is_client:
+        return "outcome-transfer"
+    if c.new_employer_is_client == 0:
+        return "outcome-churn"
+    return ""
+
+
+def _outcome_badge(c: Change) -> str:
+    if c.change_type == CHANGE_TYPE_ROLE:
+        return (f'<span class="outcome-badge internal">{_SVG_ARROW}'
+                'Relationship opportunity</span>')
+    if c.new_employer_is_client:
+        return (f'<span class="outcome-badge transfer">{_SVG_CHECK}'
+                'Seat may transfer</span>')
+    if c.new_employer_is_client == 0:
+        return (f'<span class="outcome-badge churn">{_SVG_CROSS}'
+                'Likely churn</span>')
+    return ""
+
+
 def _alert_card(c: Change) -> str:
     if c.change_type == CHANGE_TYPE_ROLE:
         return _role_alert_card(c)
     return _company_alert_card(c)
-
-
-def _client_pill(c: Change) -> str:
-    """Green/red badge showing whether the new employer is a FactSet client."""
-    if c.new_employer_is_client is None:
-        return ""
-    if c.new_employer_is_client:
-        acct = f" &middot; {html.escape(c.new_employer_account_id)}" if c.new_employer_account_id else ""
-        return f'<span class="client-pill ok">FactSet client &middot; seat may transfer{acct}</span>'
-    return '<span class="client-pill no">Not a FactSet client &middot; likely churn</span>'
 
 
 def _company_alert_card(c: Change) -> str:
@@ -219,22 +257,33 @@ def _company_alert_card(c: Change) -> str:
     new = html.escape(c.new_company or "-")
     title = html.escape(c.new_title or "-")
     url = html.escape(c.linkedin_url or "#")
+    outcome_cls = _outcome_class(c)
+    badge = _outcome_badge(c)
+    if c.new_employer_is_client:
+        client_line = (
+            f'<div class="account">Salesforce account: {html.escape(c.new_employer_account_id or "-")} '
+            f'&middot; {new} is an existing FactSet client</div>'
+        )
+    elif c.new_employer_is_client == 0:
+        client_line = (
+            f'<div class="account">{new} is NOT on the FactSet client roster &mdash; '
+            'seat likely lost</div>'
+        )
+    else:
+        client_line = ""
     return f"""
-      <div class="alert-item">
+      <div class="alert-item {outcome_cls}">
         <div>
-          <div class="name">
+          <div class="header">
             <span class="tag company">Employer change</span>
-            {name}
-            {_client_pill(c)}
+            <span class="name">{name}</span>
+            {badge}
           </div>
-          <div class="move">
-            <span class="badge prev">Previous</span>&nbsp;{prev}
-            <span class="arrow">&rarr;</span>
-            <span class="badge next">New</span>&nbsp;<strong>{new}</strong>
-          </div>
+          <div class="move">{prev} &rarr; <strong>{new}</strong></div>
           <div class="title">New title:&nbsp;{title}</div>
+          {client_line}
         </div>
-        <div><a class="linkbtn" href="{url}" target="_blank">Open LinkedIn</a></div>
+        <a class="linkbtn" href="{url}" target="_blank">Open LinkedIn</a>
       </div>"""
 
 
@@ -245,20 +294,17 @@ def _role_alert_card(c: Change) -> str:
     new_title = html.escape(c.new_title or "-")
     url = html.escape(c.linkedin_url or "#")
     return f"""
-      <div class="alert-item role">
+      <div class="alert-item outcome-internal">
         <div>
-          <div class="name">
+          <div class="header">
             <span class="tag role">Internal mobility</span>
-            {name}
+            <span class="name">{name}</span>
+            {_outcome_badge(c)}
           </div>
-          <div class="move">
-            <span class="badge rolefrom">Previous title</span>&nbsp;{prev_title}
-            <span class="arrow">&rarr;</span>
-            <span class="badge roleto">New title</span>&nbsp;<strong>{new_title}</strong>
-          </div>
+          <div class="move">{prev_title} &rarr; <strong>{new_title}</strong></div>
           <div class="title">Still at:&nbsp;{company}</div>
         </div>
-        <div><a class="linkbtn" href="{url}" target="_blank">Open LinkedIn</a></div>
+        <a class="linkbtn" href="{url}" target="_blank">Open LinkedIn</a>
       </div>"""
 
 
