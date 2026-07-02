@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 
+from .client_directory import ClientDirectory
 from .linkedin_client import ProxycurlClient, ProxycurlError
 from .normalize import normalize_company
 from .storage import CHANGE_TYPE_COMPANY, CHANGE_TYPE_ROLE, Storage, User
@@ -11,12 +12,18 @@ log = logging.getLogger(__name__)
 
 
 def check_all(storage: Storage, client: ProxycurlClient,
+              directory: ClientDirectory | None = None,
               limit: int | None = None) -> tuple[int, int, int]:
     """Fetch each matched user's LinkedIn profile and record any change.
 
-    Two change types are detected, in order of priority:
-      1. company_change - the observed employer differs from the last one.
-      2. role_change    - same employer, but the job title has changed.
+    Two change types are detected, weighted equally:
+      - company_change: the observed employer differs from the last one.
+      - role_change:    same employer, but the job title has changed.
+
+    When a company_change is detected and a ClientDirectory is supplied, the
+    new employer is looked up so downstream alerts can flag whether the
+    person is joining an existing FactSet client (seat may transfer) or a
+    non-client firm (likely churn).
 
     Returns (checked, company_changes, role_changes).
     """
@@ -40,6 +47,7 @@ def check_all(storage: Storage, client: ProxycurlClient,
         new_title = profile.current_title
 
         if _is_company_change(user, new_company):
+            client_record = directory.lookup(new_company) if directory else None
             storage.record_change(
                 salesforce_id=user.salesforce_id,
                 change_type=CHANGE_TYPE_COMPANY,
@@ -48,10 +56,13 @@ def check_all(storage: Storage, client: ProxycurlClient,
                 previous_title=user.current_title,
                 new_title=new_title,
                 linkedin_url=user.linkedin_url,
+                new_employer_is_client=(client_record is not None) if directory else None,
+                new_employer_account_id=client_record.account_id if client_record else None,
             )
             company_changes += 1
-            log.info("Company change for %s: %s -> %s",
-                     user.full_name, user.current_company, new_company)
+            log.info("Company change for %s: %s -> %s (new employer is FactSet client: %s)",
+                     user.full_name, user.current_company, new_company,
+                     "yes" if client_record else "no" if directory else "unknown")
         elif _is_role_change(user, new_company, new_title):
             storage.record_change(
                 salesforce_id=user.salesforce_id,

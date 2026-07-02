@@ -4,8 +4,14 @@ Implements the same interface as :class:`ProxycurlClient` but returns
 canned responses. Once :meth:`advance_week` is called, three users appear
 at a new company and two get promoted inside their existing company —
 so the weekly-check step in the demo always yields exactly five alerts
-(3 employer changes + 2 internal moves) drawn from the SMB / SMB Growth
-portfolio in data/factset_users_demo.csv.
+(3 employer changes + 2 internal moves) drawn from
+data/factset_users_demo.csv.
+
+Destination choices are tuned so the client-directory lookup produces a
+mixed story: two departures land at FactSet clients (Amundi, Pictet
+Wealth Management — seat may transfer) and one lands at a non-client
+firm (Portzamparc Gestion — real churn). That contrast is what makes
+the "new employer FactSet client?" flag visible during the demo.
 """
 from __future__ import annotations
 
@@ -27,22 +33,23 @@ class _ScriptedPromotion:
     new_title: str
 
 
-# Three scripted employer changes that fire on advance_week(). Two hit SMB
-# Growth accounts (higher-stakes retention story) and one hits an SMB account.
+# Three scripted employer changes that fire on advance_week(). Destinations
+# are picked so the client-directory lookup returns a mix: two clients
+# (seat may transfer) and one non-client (real churn).
 SCRIPTED_CHANGES: dict[str, _ScriptedChange] = {
-    # SMB → tier-1 poach: the seat is likely lost.
+    # Destination = Amundi, on the roster → seat may transfer.
     "Sophie Laurent": _ScriptedChange(
         from_company="Sanso Investment Solutions",
         to_company="Amundi",
         new_title="Head of ESG Client Solutions",
     ),
-    # SMB Growth → competitor SMB Growth: still our territory but different account.
+    # Destination = Portzamparc Gestion, NOT on the roster → likely churn.
     "Marc Dubois": _ScriptedChange(
         from_company="Sycomore Asset Management",
-        to_company="Carmignac",
+        to_company="Portzamparc Gestion",
         new_title="Senior Portfolio Manager, Global Equities",
     ),
-    # SMB Growth → tier-1 poach: high-stakes churn.
+    # Destination = Pictet Wealth Management, on the roster → seat may transfer.
     "Elena Rossi": _ScriptedChange(
         from_company="Silex",
         to_company="Pictet Wealth Management",

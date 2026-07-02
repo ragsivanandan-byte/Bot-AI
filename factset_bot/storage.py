@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS users (
     full_name          TEXT NOT NULL,
     email              TEXT,
     salesforce_company TEXT NOT NULL,
-    segment            TEXT NOT NULL DEFAULT 'SMB',
     linkedin_url       TEXT,
     current_company    TEXT,
     current_title      TEXT,
@@ -25,16 +24,18 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS changes (
-    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-    salesforce_id      TEXT NOT NULL,
-    detected_at        TEXT NOT NULL,
-    change_type        TEXT NOT NULL DEFAULT 'company_change',
-    previous_company   TEXT,
-    new_company        TEXT,
-    previous_title     TEXT,
-    new_title          TEXT,
-    linkedin_url       TEXT,
-    notified           INTEGER NOT NULL DEFAULT 0,
+    id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+    salesforce_id               TEXT NOT NULL,
+    detected_at                 TEXT NOT NULL,
+    change_type                 TEXT NOT NULL DEFAULT 'company_change',
+    previous_company            TEXT,
+    new_company                 TEXT,
+    previous_title              TEXT,
+    new_title                   TEXT,
+    linkedin_url                TEXT,
+    new_employer_is_client      INTEGER,
+    new_employer_account_id     TEXT,
+    notified                    INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY(salesforce_id) REFERENCES users(salesforce_id)
 );
 
@@ -43,18 +44,12 @@ CREATE INDEX IF NOT EXISTS idx_users_linkedin ON users(linkedin_url);
 """
 
 
-SEGMENT_SMB = "SMB"
-SEGMENT_SMB_GROWTH = "SMB Growth"
-KNOWN_SEGMENTS = (SEGMENT_SMB, SEGMENT_SMB_GROWTH)
-
-
 @dataclass
 class User:
     salesforce_id: str
     full_name: str
     email: str | None
     salesforce_company: str
-    segment: str = SEGMENT_SMB
     linkedin_url: str | None = None
     current_company: str | None = None
     current_title: str | None = None
@@ -71,7 +66,6 @@ CHANGE_TYPE_ROLE = "role_change"
 class Change:
     salesforce_id: str
     full_name: str
-    segment: str
     detected_at: str
     change_type: str
     previous_company: str | None
@@ -79,6 +73,8 @@ class Change:
     previous_title: str | None
     new_title: str | None
     linkedin_url: str | None
+    new_employer_is_client: int | None  # SQLite bool: 1 / 0 / None (unknown, role changes)
+    new_employer_account_id: str | None
 
 
 def now_iso() -> str:
@@ -103,20 +99,19 @@ class Storage:
             conn.close()
 
     def upsert_user_from_csv(self, salesforce_id: str, full_name: str, email: str | None,
-                             salesforce_company: str, segment: str = SEGMENT_SMB) -> None:
+                             salesforce_company: str) -> None:
         """Insert a Salesforce-sourced user, preserving any prior LinkedIn match."""
         with self._conn() as c:
             c.execute(
                 """
-                INSERT INTO users (salesforce_id, full_name, email, salesforce_company, segment)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO users (salesforce_id, full_name, email, salesforce_company)
+                VALUES (?, ?, ?, ?)
                 ON CONFLICT(salesforce_id) DO UPDATE SET
                     full_name = excluded.full_name,
                     email = excluded.email,
-                    salesforce_company = excluded.salesforce_company,
-                    segment = excluded.segment
+                    salesforce_company = excluded.salesforce_company
                 """,
-                (salesforce_id, full_name, email, salesforce_company, segment),
+                (salesforce_id, full_name, email, salesforce_company),
             )
 
     def set_linkedin_match(self, salesforce_id: str, linkedin_url: str | None,
@@ -148,17 +143,22 @@ class Storage:
     def record_change(self, salesforce_id: str, change_type: str,
                       previous_company: str | None, new_company: str | None,
                       previous_title: str | None, new_title: str | None,
-                      linkedin_url: str | None) -> int:
+                      linkedin_url: str | None,
+                      new_employer_is_client: bool | None = None,
+                      new_employer_account_id: str | None = None) -> int:
+        client_flag = None if new_employer_is_client is None else int(new_employer_is_client)
         with self._conn() as c:
             cur = c.execute(
                 """
                 INSERT INTO changes (salesforce_id, detected_at, change_type,
                                      previous_company, new_company,
-                                     previous_title, new_title, linkedin_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                     previous_title, new_title, linkedin_url,
+                                     new_employer_is_client, new_employer_account_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (salesforce_id, now_iso(), change_type,
-                 previous_company, new_company, previous_title, new_title, linkedin_url),
+                 previous_company, new_company, previous_title, new_title, linkedin_url,
+                 client_flag, new_employer_account_id),
             )
             return cur.lastrowid
 
@@ -182,20 +182,19 @@ class Storage:
             return [User(**dict(r)) for r in rows]
 
     def get_pending_changes(self) -> list[Change]:
+        """Return pending changes, most recent first — both change types weighted equally."""
         with self._conn() as c:
             rows = c.execute(
                 """
-                SELECT ch.salesforce_id, u.full_name, u.segment,
+                SELECT ch.salesforce_id, u.full_name,
                        ch.detected_at, ch.change_type,
                        ch.previous_company, ch.new_company,
-                       ch.previous_title, ch.new_title, ch.linkedin_url
+                       ch.previous_title, ch.new_title, ch.linkedin_url,
+                       ch.new_employer_is_client, ch.new_employer_account_id
                 FROM changes ch
                 JOIN users u ON u.salesforce_id = ch.salesforce_id
                 WHERE ch.notified = 0
-                ORDER BY
-                  CASE u.segment WHEN 'SMB Growth' THEN 0 ELSE 1 END,
-                  CASE ch.change_type WHEN 'company_change' THEN 0 ELSE 1 END,
-                  ch.detected_at DESC
+                ORDER BY ch.detected_at DESC, u.full_name
                 """
             ).fetchall()
             return [Change(**dict(r)) for r in rows]

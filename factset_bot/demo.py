@@ -9,14 +9,15 @@ from pathlib import Path
 
 from . import alerts as alerts_module
 from . import matcher, monitor
+from .client_directory import ClientDirectory
 from .dashboard import DashboardLinks, render_dashboard
 from .mock_client import MockProxycurlClient
 from .salesforce_ingest import load_csv
 from .storage import CHANGE_TYPE_COMPANY, CHANGE_TYPE_ROLE, Storage
 
 
-def run_demo(csv_path: Path, out_dir: Path, open_browser: bool = True,
-             pause: float = 0.6) -> Path:
+def run_demo(csv_path: Path, out_dir: Path, roster_path: Path,
+             open_browser: bool = True, pause: float = 0.6) -> Path:
     """Run the whole pipeline against fake data and return the dashboard path."""
     out_dir.mkdir(parents=True, exist_ok=True)
     db_path = out_dir / "demo_state.db"
@@ -24,29 +25,34 @@ def run_demo(csv_path: Path, out_dir: Path, open_browser: bool = True,
         db_path.unlink()  # fresh run every demo
     storage = Storage(db_path)
     client = MockProxycurlClient()
+    directory = ClientDirectory.from_csv(roster_path)
 
-    _step("1/5", "Ingesting FactSet users from Salesforce export")
+    _step("1/6", "Ingesting FactSet users from Salesforce export")
     seen, ingested = load_csv(csv_path, storage)
     print(f"      -> {seen} rows read, {ingested} users ingested.")
     time.sleep(pause)
 
-    _step("2/5", "Matching Salesforce names + companies to LinkedIn profiles")
+    _step("2/6", "Loading FactSet client roster (Salesforce Account lookup)")
+    print(f"      -> {len(directory)} FactSet client accounts indexed.")
+    time.sleep(pause)
+
+    _step("3/6", "Matching Salesforce names + companies to LinkedIn profiles")
     attempted, matched = matcher.match_all_unresolved(storage, client)
     print(f"      -> {matched}/{attempted} LinkedIn profiles resolved (mock Proxycurl).")
     time.sleep(pause)
 
-    _step("3/5", "Simulating one week elapsed (mock clock advances)")
+    _step("4/6", "Simulating one week elapsed (mock clock advances)")
     client.advance_week()
     print("      -> Week +1. LinkedIn profiles are re-queried...")
     time.sleep(pause)
 
-    _step("4/5", "Detecting HR movements (employer change and internal mobility)")
-    checked, company_changes, role_changes = monitor.check_all(storage, client)
+    _step("5/6", "Detecting HR movements (employer change and internal mobility)")
+    checked, company_changes, role_changes = monitor.check_all(storage, client, directory)
     print(f"      -> {checked} profiles checked, {company_changes} employer change(s), "
           f"{role_changes} internal move(s).")
     time.sleep(pause)
 
-    _step("5/5", "Rendering alerts (email + Teams) and dashboard")
+    _step("6/6", "Rendering alerts (email + Teams) and dashboard")
     pending = storage.get_pending_changes()
     alerts_out = alerts_module.render_demo_alerts(pending, out_dir)
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -84,17 +90,23 @@ def _step(tag: str, msg: str) -> None:
 def _banner(title: str, changes, users) -> None:
     company = [c for c in changes if c.change_type == CHANGE_TYPE_COMPANY]
     role = [c for c in changes if c.change_type == CHANGE_TYPE_ROLE]
-    print("=" * 72)
+    print("=" * 78)
     print(f"  {title}")
-    print("=" * 72)
+    print("=" * 78)
     print(f"  FactSet users monitored     : {len(users)}")
     print(f"  Employer changes            : {len(company)}")
     for c in company:
-        print(f"    * {c.full_name}: {c.previous_company} -> {c.new_company}")
+        if c.new_employer_is_client:
+            tag = f"[FactSet client, {c.new_employer_account_id or 'no-account-id'} - seat may transfer]"
+        elif c.new_employer_is_client == 0:
+            tag = "[Not a FactSet client - likely churn]"
+        else:
+            tag = "[client status unknown]"
+        print(f"    * {c.full_name}: {c.previous_company} -> {c.new_company} {tag}")
     print(f"  Internal mobility           : {len(role)}")
     for c in role:
         print(f"    * {c.full_name} @ {c.new_company}: {c.previous_title} -> {c.new_title}")
-    print("=" * 72)
+    print("=" * 78)
     print()
     print("Open dashboard.html in a browser for the manager-facing view.")
     sys.stdout.flush()

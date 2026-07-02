@@ -18,6 +18,8 @@ def main(argv: list[str] | None = None) -> int:
     demo_p = sub.add_parser("demo", help="Run the offline sales demo end-to-end.")
     demo_p.add_argument("--csv", type=Path, default=Path("data/factset_users_demo.csv"),
                         help="Path to the demo Salesforce CSV export.")
+    demo_p.add_argument("--roster", type=Path, default=Path("data/factset_client_roster.csv"),
+                        help="Path to the FactSet client-account roster CSV.")
     demo_p.add_argument("--out", type=Path, default=Path("demo_output"),
                         help="Directory where dashboard + previews are written.")
     demo_p.add_argument("--no-open", action="store_true",
@@ -32,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
         run_demo(
             csv_path=args.csv,
             out_dir=args.out,
+            roster_path=args.roster,
             open_browser=not args.no_open,
             pause=0.0 if args.fast else 0.6,
         )

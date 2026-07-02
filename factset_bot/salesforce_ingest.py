@@ -4,7 +4,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from .storage import SEGMENT_SMB, SEGMENT_SMB_GROWTH, Storage
+from .storage import Storage
 
 
 REQUIRED_COLUMNS = {"salesforce_id", "full_name", "company"}
@@ -23,21 +23,9 @@ def _normalize_headers(headers: list[str]) -> dict[str, str]:
             mapping[raw] = "company"
         elif key in ("email_address",):
             mapping[raw] = "email"
-        elif key in ("segment", "tier", "customer_tier", "account_tier"):
-            mapping[raw] = "segment"
         else:
             mapping[raw] = key
     return mapping
-
-
-def _canonicalize_segment(raw: str | None) -> str:
-    """Fold vendor-provided segment strings into our canonical values."""
-    if not raw:
-        return SEGMENT_SMB
-    key = raw.strip().lower()
-    if key in ("smb growth", "smb-growth", "smb_growth", "growth", "smbg"):
-        return SEGMENT_SMB_GROWTH
-    return SEGMENT_SMB
 
 
 def load_csv(csv_path: Path, storage: Storage) -> tuple[int, int]:
@@ -67,9 +55,8 @@ def load_csv(csv_path: Path, storage: Storage) -> tuple[int, int]:
             name = canonical_row.get("full_name", "")
             company = canonical_row.get("company", "")
             email = canonical_row.get("email") or None
-            segment = _canonicalize_segment(canonical_row.get("segment"))
             if not sf_id or not name or not company:
                 continue
-            storage.upsert_user_from_csv(sf_id, name, email, company, segment)
+            storage.upsert_user_from_csv(sf_id, name, email, company)
             ingested += 1
     return seen, ingested
