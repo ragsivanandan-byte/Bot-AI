@@ -1,21 +1,21 @@
-salesforce_id,full_name,email,company
-0031x000ABCDE001,Sophie Laurent,sophie.laurent@amundi.com,Amundi
-0031x000ABCDE002,Marc Dubois,marc.dubois@blackrock.com,BlackRock France
-0031x000ABCDE003,Elena Rossi,elena.rossi@ubs.com,UBS Wealth Management
-0031x000ABCDE004,Thomas Bernard,thomas.bernard@axa-im.com,AXA Investment Managers
-0031x000ABCDE005,Camille Moreau,camille.moreau@lombardodier.com,Lombard Odier
-0031x000ABCDE006,Julien Petit,julien.petit@rothschildandco.com,Rothschild & Co
-0031x000ABCDE007,Alice Fournier,alice.fournier@bnpparibas.com,BNP Paribas
-0031x000ABCDE008,Nicolas Girard,nicolas.girard@societegenerale.com,Societe Generale
-0031x000ABCDE009,Laura Martinez,laura.martinez@santander.com,Santander Asset Management
-0031x000ABCDE010,Paolo Ricci,paolo.ricci@intesasanpaolo.com,Intesa Sanpaolo
-0031x000ABCDE011,Marta Silva,marta.silva@millenniumbcp.pt,Millennium BCP
-0031x000ABCDE012,David Chen,david.chen@hsbc.com,HSBC Global Asset Management
-0031x000ABCDE013,Emma Wagner,emma.wagner@allianzgi.com,Allianz Global Investors
-0031x000ABCDE014,Lucas Fischer,lucas.fischer@dws.com,DWS Group
-0031x000ABCDE015,Isabelle Lefevre,isabelle.lefevre@carmignac.com,Carmignac
-0031x000ABCDE016,Antoine Roux,antoine.roux@lyxor.com,Lyxor Asset Management
-0031x000ABCDE017,Chloe Vidal,chloe.vidal@edram.com,Edmond de Rothschild AM
-0031x000ABCDE018,Mathieu Blanc,mathieu.blanc@natixis.com,Natixis Investment Managers
-0031x000ABCDE019,Sarah Klein,sarah.klein@dbam.com,Deutsche Bank Asset Management
-0031x000ABCDE020,Raphael Costa,raphael.costa@bpi.pt,Banco BPI
+salesforce_id,full_name,email,company,segment
+0031x000ABCDE001,Sophie Laurent,sophie.laurent@sanso-is.com,Sanso Investment Solutions,SMB
+0031x000ABCDE002,Marc Dubois,marc.dubois@sycomore-am.com,Sycomore Asset Management,SMB Growth
+0031x000ABCDE003,Elena Rossi,elena.rossi@silex.com,Silex,SMB Growth
+0031x000ABCDE004,Thomas Bernard,thomas.bernard@palatine-am.com,Palatine Asset Management,SMB
+0031x000ABCDE005,Camille Moreau,camille.moreau@mansartis.com,Mansartis,SMB
+0031x000ABCDE006,Julien Petit,julien.petit@meeschaert.com,Meeschaert Amilton AM,SMB
+0031x000ABCDE007,Alice Fournier,alice.fournier@talence-gestion.com,Talence Gestion,SMB
+0031x000ABCDE008,Nicolas Girard,nicolas.girard@tiepolo.com,Financiere Tiepolo,SMB
+0031x000ABCDE009,Laura Martinez,laura.martinez@arbevel.com,Financiere Arbevel,SMB
+0031x000ABCDE010,Paolo Ricci,paolo.ricci@ecofi.fr,Ecofi Investissements,SMB
+0031x000ABCDE011,Marta Silva,marta.silva@pergam.com,Pergam Finance,SMB
+0031x000ABCDE012,David Chen,david.chen@auris-gestion.com,Auris Gestion,SMB
+0031x000ABCDE013,Emma Wagner,emma.wagner@gemway.com,Gemway Assets,SMB
+0031x000ABCDE014,Lucas Fischer,lucas.fischer@zadig-am.com,Zadig Asset Management,SMB
+0031x000ABCDE015,Isabelle Lefevre,isabelle.lefevre@erasmus.fr,Erasmus Gestion,SMB
+0031x000ABCDE016,Antoine Roux,antoine.roux@twentyfirstcapital.com,Twenty First Capital,SMB
+0031x000ABCDE017,Chloe Vidal,chloe.vidal@imgp.com,iM Global Partner,SMB Growth
+0031x000ABCDE018,Mathieu Blanc,mathieu.blanc@yomoni.com,Yomoni,SMB Growth
+0031x000ABCDE019,Sarah Klein,sarah.klein@kirao.com,Kirao AM,SMB Growth
+0031x000ABCDE020,Raphael Costa,raphael.costa@nalo.com,Nalo,SMB Growth

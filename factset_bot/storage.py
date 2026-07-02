@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name          TEXT NOT NULL,
     email              TEXT,
     salesforce_company TEXT NOT NULL,
+    segment            TEXT NOT NULL DEFAULT 'SMB',
     linkedin_url       TEXT,
     current_company    TEXT,
     current_title      TEXT,
@@ -42,12 +43,18 @@ CREATE INDEX IF NOT EXISTS idx_users_linkedin ON users(linkedin_url);
 """
 
 
+SEGMENT_SMB = "SMB"
+SEGMENT_SMB_GROWTH = "SMB Growth"
+KNOWN_SEGMENTS = (SEGMENT_SMB, SEGMENT_SMB_GROWTH)
+
+
 @dataclass
 class User:
     salesforce_id: str
     full_name: str
     email: str | None
     salesforce_company: str
+    segment: str = SEGMENT_SMB
     linkedin_url: str | None = None
     current_company: str | None = None
     current_title: str | None = None
@@ -64,6 +71,7 @@ CHANGE_TYPE_ROLE = "role_change"
 class Change:
     salesforce_id: str
     full_name: str
+    segment: str
     detected_at: str
     change_type: str
     previous_company: str | None
@@ -95,19 +103,20 @@ class Storage:
             conn.close()
 
     def upsert_user_from_csv(self, salesforce_id: str, full_name: str, email: str | None,
-                             salesforce_company: str) -> None:
+                             salesforce_company: str, segment: str = SEGMENT_SMB) -> None:
         """Insert a Salesforce-sourced user, preserving any prior LinkedIn match."""
         with self._conn() as c:
             c.execute(
                 """
-                INSERT INTO users (salesforce_id, full_name, email, salesforce_company)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO users (salesforce_id, full_name, email, salesforce_company, segment)
+                VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(salesforce_id) DO UPDATE SET
                     full_name = excluded.full_name,
                     email = excluded.email,
-                    salesforce_company = excluded.salesforce_company
+                    salesforce_company = excluded.salesforce_company,
+                    segment = excluded.segment
                 """,
-                (salesforce_id, full_name, email, salesforce_company),
+                (salesforce_id, full_name, email, salesforce_company, segment),
             )
 
     def set_linkedin_match(self, salesforce_id: str, linkedin_url: str | None,
@@ -176,13 +185,15 @@ class Storage:
         with self._conn() as c:
             rows = c.execute(
                 """
-                SELECT ch.salesforce_id, u.full_name, ch.detected_at, ch.change_type,
+                SELECT ch.salesforce_id, u.full_name, u.segment,
+                       ch.detected_at, ch.change_type,
                        ch.previous_company, ch.new_company,
                        ch.previous_title, ch.new_title, ch.linkedin_url
                 FROM changes ch
                 JOIN users u ON u.salesforce_id = ch.salesforce_id
                 WHERE ch.notified = 0
                 ORDER BY
+                  CASE u.segment WHEN 'SMB Growth' THEN 0 ELSE 1 END,
                   CASE ch.change_type WHEN 'company_change' THEN 0 ELSE 1 END,
                   ch.detected_at DESC
                 """

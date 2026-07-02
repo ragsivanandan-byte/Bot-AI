@@ -5,7 +5,13 @@ import html
 from dataclasses import dataclass
 from pathlib import Path
 
-from .storage import CHANGE_TYPE_COMPANY, CHANGE_TYPE_ROLE, Change, User
+from .storage import (
+    CHANGE_TYPE_COMPANY,
+    CHANGE_TYPE_ROLE,
+    SEGMENT_SMB_GROWTH,
+    Change,
+    User,
+)
 
 
 @dataclass
@@ -26,11 +32,22 @@ def render_dashboard(users: list[User], changes: list[Change], links: DashboardL
     return out_path
 
 
+def _segment_split(items, attr: str = "segment") -> tuple[int, int]:
+    """Return (SMB Growth count, SMB count) for a list of Users or Changes."""
+    growth = sum(1 for i in items if getattr(i, attr) == SEGMENT_SMB_GROWTH)
+    return growth, len(items) - growth
+
+
 def _template(users, changes, changed_ids, links, generated_at) -> str:
-    kpi_total = len(users)
-    kpi_matched = sum(1 for u in users if u.linkedin_url)
-    kpi_company = sum(1 for c in changes if c.change_type == CHANGE_TYPE_COMPANY)
-    kpi_role = sum(1 for c in changes if c.change_type == CHANGE_TYPE_ROLE)
+    total_users = len(users)
+    growth_users, smb_users = _segment_split(users)
+    matched = sum(1 for u in users if u.linkedin_url)
+
+    company_changes = [c for c in changes if c.change_type == CHANGE_TYPE_COMPANY]
+    role_changes = [c for c in changes if c.change_type == CHANGE_TYPE_ROLE]
+    growth_company, smb_company = _segment_split(company_changes)
+    growth_role, smb_role = _segment_split(role_changes)
+
     alerts_html = "".join(_alert_card(c) for c in changes) or """
         <div class="empty">No movement detected this week.</div>"""
     rows_html = "".join(_user_row(u, changed_ids.get(u.salesforce_id)) for u in users)
@@ -46,6 +63,8 @@ def _template(users, changes, changed_ids, links, generated_at) -> str:
   --border:#e3e8ee; --brand:#0f2645; --accent:#0a5cff;
   --danger:#b3261e; --danger-bg:#fdecea; --ok:#137333; --ok-bg:#e6f4ea;
   --info:#0b57d0; --info-bg:#e8f0fe;
+  --growth:#8a5a00; --growth-bg:#fff4d6;
+  --smb:#3c4257; --smb-bg:#eef1f4;
 }}
 * {{ box-sizing:border-box; }}
 body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
@@ -60,6 +79,8 @@ main {{ max-width:1160px; margin:0 auto; padding:24px 32px 60px 32px; }}
         padding:18px 20px; }}
 .kpi .label {{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }}
 .kpi .value {{ font-size:32px; font-weight:600; margin-top:6px; }}
+.kpi .split {{ font-size:12px; color:var(--muted); margin-top:6px; }}
+.kpi .split strong {{ color:var(--ink); }}
 .kpi.alert .value {{ color:var(--danger); }}
 .kpi.info .value {{ color:var(--info); }}
 .kpi.ok .value {{ color:var(--ok); }}
@@ -71,13 +92,17 @@ section.card .hint {{ color:var(--muted); font-size:13px; margin-bottom:16px; }}
 .alert-item {{ border:1px solid #f3c3bf; background:#fff8f7; border-radius:10px;
                padding:14px 16px; display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center; }}
 .alert-item.role {{ border-color:#c9d8f5; background:#f4f8ff; }}
-.alert-item .name {{ font-weight:600; font-size:15px; display:flex; align-items:center; gap:8px; }}
+.alert-item .name {{ font-weight:600; font-size:15px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }}
 .alert-item .move {{ font-size:13px; margin-top:6px; }}
 .alert-item .title {{ font-size:12px; color:var(--muted); margin-top:4px; }}
 .tag {{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:10px;
         font-weight:600; letter-spacing:.5px; text-transform:uppercase; }}
 .tag.company {{ background:var(--danger-bg); color:var(--danger); }}
 .tag.role {{ background:var(--info-bg); color:var(--info); }}
+.seg {{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:10px;
+        font-weight:600; letter-spacing:.5px; text-transform:uppercase; }}
+.seg.growth {{ background:var(--growth-bg); color:var(--growth); }}
+.seg.smb {{ background:var(--smb-bg); color:var(--smb); }}
 .badge {{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px;
           font-weight:500; }}
 .badge.prev {{ background:var(--danger-bg); color:var(--danger); }}
@@ -105,6 +130,8 @@ td.status .status-badge {{ display:inline-block; padding:2px 8px; border-radius:
 .legend .dot {{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }}
 .legend .dot.company {{ background:var(--danger); }}
 .legend .dot.role {{ background:var(--info); }}
+.legend .dot.growth {{ background:var(--growth); }}
+.legend .dot.smb {{ background:var(--smb); }}
 footer {{ text-align:center; color:var(--muted); font-size:12px; margin-top:20px; }}
 .tag-demo {{ display:inline-block; background:#fff4d6; color:#8a5a00; padding:2px 8px;
              border-radius:999px; font-size:11px; margin-left:8px; vertical-align:middle; }}
@@ -114,24 +141,42 @@ footer {{ text-align:center; color:var(--muted); font-size:12px; margin-top:20px
 <body>
   <header>
     <div class="brand">FactSet Client Watch <span class="tag-demo">Demo mode</span></div>
-    <h1>Weekly alerts - user movements</h1>
-    <div class="sub">Simulated run on {generated_at} &middot; portfolio of {kpi_total} FactSet users</div>
+    <h1>Weekly alerts - SMB &amp; SMB Growth portfolio</h1>
+    <div class="sub">Simulated run on {generated_at} &middot; {total_users} FactSet users monitored ({growth_users} SMB Growth, {smb_users} SMB)</div>
   </header>
   <main>
     <div class="kpis">
-      <div class="kpi"><div class="label">Users monitored</div><div class="value">{kpi_total}</div></div>
-      <div class="kpi ok"><div class="label">LinkedIn profiles resolved</div><div class="value">{kpi_matched}</div></div>
-      <div class="kpi alert"><div class="label">Employer changes</div><div class="value">{kpi_company}</div></div>
-      <div class="kpi info"><div class="label">Internal mobility</div><div class="value">{kpi_role}</div></div>
+      <div class="kpi">
+        <div class="label">Users monitored</div>
+        <div class="value">{total_users}</div>
+        <div class="split"><strong>{growth_users}</strong> SMB Growth &middot; <strong>{smb_users}</strong> SMB</div>
+      </div>
+      <div class="kpi ok">
+        <div class="label">LinkedIn profiles resolved</div>
+        <div class="value">{matched}</div>
+        <div class="split">{matched}/{total_users} matched</div>
+      </div>
+      <div class="kpi alert">
+        <div class="label">Employer changes</div>
+        <div class="value">{len(company_changes)}</div>
+        <div class="split"><strong>{growth_company}</strong> SMB Growth &middot; <strong>{smb_company}</strong> SMB</div>
+      </div>
+      <div class="kpi info">
+        <div class="label">Internal mobility</div>
+        <div class="value">{len(role_changes)}</div>
+        <div class="split"><strong>{growth_role}</strong> SMB Growth &middot; <strong>{smb_role}</strong> SMB</div>
+      </div>
     </div>
 
     <section class="card">
       <h2>Active alerts</h2>
-      <div class="hint">Each row is a movement detected on a LinkedIn profile since the last check.</div>
+      <div class="hint">Each row is a movement detected on a LinkedIn profile since the last check. SMB Growth alerts are surfaced first.</div>
       <div class="alerts">{alerts_html}</div>
       <div class="legend">
         <span><span class="dot company"></span>Employer change - retention risk</span>
         <span><span class="dot role"></span>Internal mobility - relationship opportunity</span>
+        <span><span class="dot growth"></span>SMB Growth account</span>
+        <span><span class="dot smb"></span>SMB account</span>
       </div>
       <div class="actions">
         <a class="linkbtn" href="{html.escape(links.email_preview_href)}" target="_blank">View email digest</a>
@@ -142,10 +187,10 @@ footer {{ text-align:center; color:var(--muted); font-size:12px; margin-top:20px
 
     <section class="card">
       <h2>FactSet portfolio</h2>
-      <div class="hint">All {kpi_total} monitored users, with their current LinkedIn company, title, and status for the week.</div>
+      <div class="hint">All {total_users} monitored users, with segment, current LinkedIn company &amp; title, and status for the week.</div>
       <table>
         <thead><tr>
-          <th>Name</th><th>Salesforce company</th><th>LinkedIn company</th>
+          <th>Name</th><th>Segment</th><th>Salesforce company</th><th>LinkedIn company</th>
           <th>LinkedIn title</th><th>Profile</th><th class="status">Status</th>
         </tr></thead>
         <tbody>{rows_html}</tbody>
@@ -166,6 +211,11 @@ def _alert_card(c: Change) -> str:
     return _company_alert_card(c)
 
 
+def _segment_tag(segment: str) -> str:
+    cls = "growth" if segment == SEGMENT_SMB_GROWTH else "smb"
+    return f'<span class="seg {cls}">{html.escape(segment)}</span>'
+
+
 def _company_alert_card(c: Change) -> str:
     name = html.escape(c.full_name)
     prev = html.escape(c.previous_company or "-")
@@ -175,7 +225,11 @@ def _company_alert_card(c: Change) -> str:
     return f"""
       <div class="alert-item">
         <div>
-          <div class="name"><span class="tag company">Employer change</span> {name}</div>
+          <div class="name">
+            <span class="tag company">Employer change</span>
+            {_segment_tag(c.segment)}
+            {name}
+          </div>
           <div class="move">
             <span class="badge prev">Previous</span>&nbsp;{prev}
             <span class="arrow">&rarr;</span>
@@ -196,7 +250,11 @@ def _role_alert_card(c: Change) -> str:
     return f"""
       <div class="alert-item role">
         <div>
-          <div class="name"><span class="tag role">Internal mobility</span> {name}</div>
+          <div class="name">
+            <span class="tag role">Internal mobility</span>
+            {_segment_tag(c.segment)}
+            {name}
+          </div>
           <div class="move">
             <span class="badge rolefrom">Previous title</span>&nbsp;{prev_title}
             <span class="arrow">&rarr;</span>
@@ -230,6 +288,7 @@ def _user_row(u: User, change_type: str | None) -> str:
     return f"""
         <tr class="{cls}">
           <td><strong>{name}</strong></td>
+          <td>{_segment_tag(u.segment)}</td>
           <td>{sf_company}</td>
           <td>{li_company}</td>
           <td>{li_title}</td>

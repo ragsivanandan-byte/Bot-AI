@@ -4,7 +4,8 @@ Implements the same interface as :class:`ProxycurlClient` but returns
 canned responses. Once :meth:`advance_week` is called, three users appear
 at a new company and two get promoted inside their existing company —
 so the weekly-check step in the demo always yields exactly five alerts
-(3 employer changes + 2 internal moves).
+(3 employer changes + 2 internal moves) drawn from the SMB / SMB Growth
+portfolio in data/factset_users_demo.csv.
 """
 from __future__ import annotations
 
@@ -26,60 +27,65 @@ class _ScriptedPromotion:
     new_title: str
 
 
-# Three scripted employer changes that fire on `advance_week()`. Keys match
-# names in data/factset_users_demo.csv.
+# Three scripted employer changes that fire on advance_week(). Two hit SMB
+# Growth accounts (higher-stakes retention story) and one hits an SMB account.
 SCRIPTED_CHANGES: dict[str, _ScriptedChange] = {
+    # SMB → tier-1 poach: the seat is likely lost.
     "Sophie Laurent": _ScriptedChange(
-        from_company="Amundi",
-        to_company="BNP Paribas Asset Management",
+        from_company="Sanso Investment Solutions",
+        to_company="Amundi",
         new_title="Head of ESG Client Solutions",
     ),
+    # SMB Growth → competitor SMB Growth: still our territory but different account.
     "Marc Dubois": _ScriptedChange(
-        from_company="BlackRock France",
+        from_company="Sycomore Asset Management",
         to_company="Carmignac",
         new_title="Senior Portfolio Manager, Global Equities",
     ),
+    # SMB Growth → tier-1 poach: high-stakes churn.
     "Elena Rossi": _ScriptedChange(
-        from_company="UBS Wealth Management",
-        to_company="Julius Baer",
+        from_company="Silex",
+        to_company="Pictet Wealth Management",
         new_title="Executive Director, Private Wealth",
     ),
 }
 
 
-# Two scripted intra-company promotions/mobilities.
+# Two scripted intra-company promotions — one SMB, one SMB Growth — so the
+# demo shows relationship-opportunity signal in both segments.
 SCRIPTED_PROMOTIONS: dict[str, _ScriptedPromotion] = {
     "Julien Petit": _ScriptedPromotion(
-        company="Rothschild & Co",
-        new_title="Vice President, Investment Banking",
+        company="Meeschaert Amilton AM",
+        new_title="Head of Private Markets",
     ),
     "Chloe Vidal": _ScriptedPromotion(
-        company="Edmond de Rothschild AM",
+        company="iM Global Partner",
         new_title="Global Head of ESG Strategy",
     ),
 }
 
 
+# Baseline titles paired with the CSV portfolio.
 TITLE_BY_NAME: dict[str, str] = {
     "Sophie Laurent": "ESG Client Portfolio Manager",
     "Marc Dubois": "Portfolio Manager, Global Equities",
     "Elena Rossi": "Director, Private Wealth",
     "Thomas Bernard": "Senior Quantitative Analyst",
     "Camille Moreau": "Head of Multi-Asset Solutions",
-    "Julien Petit": "Investment Banking Associate",
+    "Julien Petit": "Senior Investment Manager",
     "Alice Fournier": "Fixed Income Strategist",
-    "Nicolas Girard": "VP, Equity Research",
-    "Laura Martinez": "Emerging Markets Analyst",
+    "Nicolas Girard": "Head of Equity Research",
+    "Laura Martinez": "Small & Mid Cap Analyst",
     "Paolo Ricci": "Head of Institutional Sales",
     "Marta Silva": "Wealth Advisor",
-    "David Chen": "Head of Passive Solutions APAC",
-    "Emma Wagner": "Multi-Asset Portfolio Manager",
-    "Lucas Fischer": "ETF Product Specialist",
-    "Isabelle Lefevre": "Emerging Markets Fund Manager",
-    "Antoine Roux": "Index Product Manager",
+    "David Chen": "Head of Portfolio Management",
+    "Emma Wagner": "Emerging Markets Portfolio Manager",
+    "Lucas Fischer": "Alternative Investments Manager",
+    "Isabelle Lefevre": "Head of Client Solutions",
+    "Antoine Roux": "Head of Investment Research",
     "Chloe Vidal": "Head of ESG Research",
-    "Mathieu Blanc": "Head of Private Markets Sales",
-    "Sarah Klein": "Senior Fund Manager, Global Bonds",
+    "Mathieu Blanc": "Head of Product",
+    "Sarah Klein": "Senior Fund Manager, Small Caps",
     "Raphael Costa": "Head of Investment Solutions",
 }
 
@@ -127,26 +133,27 @@ def _name_from_url(url: str) -> str:
     return " ".join(part.capitalize() for part in slug.split("-"))
 
 
-# Populated from the demo CSV so mock stays in sync with fixture data.
+# Mirror of the CSV company assignments. Must stay in sync with
+# data/factset_users_demo.csv — the fetch_profile path relies on it.
 _INITIAL_COMPANY: dict[str, str] = {
-    "Sophie Laurent": "Amundi",
-    "Marc Dubois": "BlackRock France",
-    "Elena Rossi": "UBS Wealth Management",
-    "Thomas Bernard": "AXA Investment Managers",
-    "Camille Moreau": "Lombard Odier",
-    "Julien Petit": "Rothschild & Co",
-    "Alice Fournier": "BNP Paribas",
-    "Nicolas Girard": "Societe Generale",
-    "Laura Martinez": "Santander Asset Management",
-    "Paolo Ricci": "Intesa Sanpaolo",
-    "Marta Silva": "Millennium BCP",
-    "David Chen": "HSBC Global Asset Management",
-    "Emma Wagner": "Allianz Global Investors",
-    "Lucas Fischer": "DWS Group",
-    "Isabelle Lefevre": "Carmignac",
-    "Antoine Roux": "Lyxor Asset Management",
-    "Chloe Vidal": "Edmond de Rothschild AM",
-    "Mathieu Blanc": "Natixis Investment Managers",
-    "Sarah Klein": "Deutsche Bank Asset Management",
-    "Raphael Costa": "Banco BPI",
+    "Sophie Laurent": "Sanso Investment Solutions",
+    "Marc Dubois": "Sycomore Asset Management",
+    "Elena Rossi": "Silex",
+    "Thomas Bernard": "Palatine Asset Management",
+    "Camille Moreau": "Mansartis",
+    "Julien Petit": "Meeschaert Amilton AM",
+    "Alice Fournier": "Talence Gestion",
+    "Nicolas Girard": "Financiere Tiepolo",
+    "Laura Martinez": "Financiere Arbevel",
+    "Paolo Ricci": "Ecofi Investissements",
+    "Marta Silva": "Pergam Finance",
+    "David Chen": "Auris Gestion",
+    "Emma Wagner": "Gemway Assets",
+    "Lucas Fischer": "Zadig Asset Management",
+    "Isabelle Lefevre": "Erasmus Gestion",
+    "Antoine Roux": "Twenty First Capital",
+    "Chloe Vidal": "iM Global Partner",
+    "Mathieu Blanc": "Yomoni",
+    "Sarah Klein": "Kirao AM",
+    "Raphael Costa": "Nalo",
 }

@@ -10,7 +10,18 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from typing import Iterable
 
-from .storage import CHANGE_TYPE_COMPANY, CHANGE_TYPE_ROLE, Change
+from .storage import CHANGE_TYPE_COMPANY, CHANGE_TYPE_ROLE, SEGMENT_SMB_GROWTH, Change
+
+
+def _segment_pill(segment: str) -> str:
+    """Small inline segment badge, styled for HTML email + Teams preview."""
+    if segment == SEGMENT_SMB_GROWTH:
+        bg, fg = "#fff4d6", "#8a5a00"
+    else:
+        bg, fg = "#eef1f4", "#3c4257"
+    return (f'<span style="display:inline-block;background:{bg};color:{fg};'
+            'padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;'
+            f'text-transform:uppercase;letter-spacing:.5px;margin-left:6px;">{segment}</span>')
 
 
 @dataclass
@@ -102,8 +113,8 @@ def _render_email_html(changes: list[Change]) -> str:
       <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
         <tr><td style="background:#0f2645;padding:24px 28px;color:#ffffff;">
           <div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;">FactSet Client Watch</div>
-          <div style="font-size:22px;font-weight:600;margin-top:6px;">Weekly alerts - user movements</div>
-          <div style="font-size:14px;opacity:0.8;margin-top:4px;">{total} movement(s) detected on your FactSet users this week</div>
+          <div style="font-size:22px;font-weight:600;margin-top:6px;">Weekly alerts - SMB &amp; SMB Growth portfolio</div>
+          <div style="font-size:14px;opacity:0.8;margin-top:4px;">{total} movement(s) detected across your FactSet SMB / SMB Growth accounts this week</div>
         </td></tr>
         <tr><td style="padding:24px 28px;">
           <p style="margin:0 0 20px 0;font-size:14px;line-height:1.55;color:#3c4257;">
@@ -132,7 +143,7 @@ def _email_company_row(c: Change) -> str:
     return f"""
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #f3c3bf;background:#fff8f7;border-radius:8px;margin-bottom:14px;">
           <tr><td style="padding:16px 18px;">
-            <div style="font-size:15px;font-weight:600;color:#0f2645;">{name}</div>
+            <div style="font-size:15px;font-weight:600;color:#0f2645;">{name}{_segment_pill(c.segment)}</div>
             <div style="margin-top:10px;font-size:13px;color:#3c4257;">
               <span style="display:inline-block;background:#fdecea;color:#b3261e;padding:3px 8px;border-radius:4px;font-size:12px;">Previous</span>&nbsp;{prev}
               &nbsp;&rarr;&nbsp;
@@ -155,7 +166,7 @@ def _email_role_row(c: Change) -> str:
     return f"""
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #c9d8f5;background:#f4f8ff;border-radius:8px;margin-bottom:14px;">
           <tr><td style="padding:16px 18px;">
-            <div style="font-size:15px;font-weight:600;color:#0f2645;">{name}</div>
+            <div style="font-size:15px;font-weight:600;color:#0f2645;">{name}{_segment_pill(c.segment)}</div>
             <div style="margin-top:10px;font-size:13px;color:#3c4257;">
               <span style="display:inline-block;background:#e6e9ef;color:#3c4257;padding:3px 8px;border-radius:4px;font-size:12px;">Previous title</span>&nbsp;{prev_title}
               &nbsp;&rarr;&nbsp;
@@ -179,16 +190,17 @@ def _render_teams_card(changes: list[Change]) -> dict:
     """Build a MessageCard-compatible payload for a Teams incoming webhook."""
     sections = []
     for c in changes:
+        common_facts = [{"name": "Segment", "value": c.segment}]
         if c.change_type == CHANGE_TYPE_ROLE:
             subtitle = f"Internal mobility @ {c.new_company or '?'}"
-            facts = [
+            facts = common_facts + [
                 {"name": "Previous title", "value": c.previous_title or "-"},
                 {"name": "New title", "value": c.new_title or "-"},
                 {"name": "Detected on", "value": c.detected_at},
             ]
         else:
             subtitle = f"{c.previous_company or '?'} -> {c.new_company or '?'}"
-            facts = [
+            facts = common_facts + [
                 {"name": "New title", "value": c.new_title or "-"},
                 {"name": "Detected on", "value": c.detected_at},
             ]
@@ -205,6 +217,7 @@ def _render_teams_card(changes: list[Change]) -> dict:
 
     company_n = sum(1 for c in changes if c.change_type == CHANGE_TYPE_COMPANY)
     role_n = sum(1 for c in changes if c.change_type == CHANGE_TYPE_ROLE)
+    growth_n = sum(1 for c in changes if c.segment == SEGMENT_SMB_GROWTH)
     return {
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
@@ -212,7 +225,7 @@ def _render_teams_card(changes: list[Change]) -> dict:
         "summary": f"FactSet Client Watch - {len(changes)} movement(s)",
         "title": "FactSet Client Watch - weekly alerts",
         "text": (f"{company_n} employer change(s) and {role_n} internal move(s) "
-                 "detected on your FactSet users this week."),
+                 f"across your SMB / SMB Growth portfolio ({growth_n} on SMB Growth accounts)."),
         "sections": sections,
     }
 
@@ -229,7 +242,7 @@ def _render_teams_preview_html(changes: list[Change]) -> str:
     <div style="background:#ffffff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.12);overflow:hidden;">
       <div style="background:#0f2645;color:#ffffff;padding:14px 18px;">
         <div style="font-size:11px;letter-spacing:1.2px;text-transform:uppercase;opacity:0.75;">Connector &middot; FactSet Client Watch</div>
-        <div style="font-size:16px;font-weight:600;margin-top:4px;">Weekly alerts - user movements</div>
+        <div style="font-size:16px;font-weight:600;margin-top:4px;">Weekly alerts - SMB &amp; SMB Growth portfolio</div>
       </div>
       <div style="padding:8px 18px 18px 18px;">
         {cards}
@@ -264,7 +277,7 @@ def _teams_section_html(c: Change) -> str:
               {html.escape(_initials(c.full_name))}
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;">{tag}{name}</div>
+              <div style="font-size:14px;font-weight:600;">{tag}{name}{_segment_pill(c.segment)}</div>
               <div style="font-size:12px;color:#616770;margin-top:2px;">{line}</div>
             </div>
           </div>
