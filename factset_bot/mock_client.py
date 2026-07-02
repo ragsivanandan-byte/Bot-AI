@@ -19,8 +19,14 @@ class _ScriptedChange:
     new_title: str
 
 
-# Three scripted job changes that fire on `advance_week()`. Keys match names
-# in data/factset_users_demo.csv.
+@dataclass
+class _ScriptedPromotion:
+    company: str
+    new_title: str
+
+
+# Three scripted employer changes that fire on `advance_week()`. Keys match
+# names in data/factset_users_demo.csv.
 SCRIPTED_CHANGES: dict[str, _ScriptedChange] = {
     "Sophie Laurent": _ScriptedChange(
         from_company="Amundi",
@@ -36,6 +42,19 @@ SCRIPTED_CHANGES: dict[str, _ScriptedChange] = {
         from_company="UBS Wealth Management",
         to_company="Julius Baer",
         new_title="Executive Director, Private Wealth",
+    ),
+}
+
+
+# Two scripted intra-company promotions/mobilities.
+SCRIPTED_PROMOTIONS: dict[str, _ScriptedPromotion] = {
+    "Julien Petit": _ScriptedPromotion(
+        company="Rothschild & Co",
+        new_title="Vice President, Investment Banking",
+    ),
+    "Chloe Vidal": _ScriptedPromotion(
+        company="Edmond de Rothschild AM",
+        new_title="Global Head of ESG Strategy",
     ),
 }
 
@@ -95,11 +114,14 @@ class MockProxycurlClient:
         )
 
     def _resolve_current_role(self, full_name: str) -> tuple[str | None, str | None]:
-        scripted = SCRIPTED_CHANGES.get(full_name)
-        if scripted and self.week >= 2:
-            return scripted.to_company, scripted.new_title
-        if scripted:
-            return scripted.from_company, TITLE_BY_NAME.get(full_name)
+        change = SCRIPTED_CHANGES.get(full_name)
+        if change and self.week >= 2:
+            return change.to_company, change.new_title
+        if change:
+            return change.from_company, TITLE_BY_NAME.get(full_name)
+        promo = SCRIPTED_PROMOTIONS.get(full_name)
+        if promo and self.week >= 2:
+            return promo.company, promo.new_title
         return _INITIAL_COMPANY.get(full_name), TITLE_BY_NAME.get(full_name)
 
 

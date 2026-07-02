@@ -12,7 +12,7 @@ from . import matcher, monitor
 from .dashboard import DashboardLinks, render_dashboard
 from .mock_client import MockProxycurlClient
 from .salesforce_ingest import load_csv
-from .storage import Storage
+from .storage import CHANGE_TYPE_COMPANY, CHANGE_TYPE_ROLE, Storage
 
 
 def run_demo(csv_path: Path, out_dir: Path, open_browser: bool = True,
@@ -40,9 +40,10 @@ def run_demo(csv_path: Path, out_dir: Path, open_browser: bool = True,
     print("      -> Semaine +1. Les profils LinkedIn sont a nouveau interroges...")
     time.sleep(pause)
 
-    _step("4/5", "Detection des changements d'employeur")
-    checked, changes_found = monitor.check_all(storage, client)
-    print(f"      -> {checked} profils verifies, {changes_found} changement(s) detecte(s).")
+    _step("4/5", "Detection des mouvements RH (changement de societe et mobilite interne)")
+    checked, company_changes, role_changes = monitor.check_all(storage, client)
+    print(f"      -> {checked} profils verifies, {company_changes} changement(s) de societe, "
+          f"{role_changes} mobilite(s) interne(s).")
     time.sleep(pause)
 
     _step("5/5", "Generation des alertes (email + Teams) et du dashboard")
@@ -82,14 +83,19 @@ def _step(tag: str, msg: str) -> None:
 
 
 def _banner(title: str, changes, users) -> None:
-    print("=" * 68)
+    company = [c for c in changes if c.change_type == CHANGE_TYPE_COMPANY]
+    role = [c for c in changes if c.change_type == CHANGE_TYPE_ROLE]
+    print("=" * 72)
     print(f"  {title}")
-    print("=" * 68)
-    print(f"  Utilisateurs FactSet suivis : {len(users)}")
-    print(f"  Alertes generees            : {len(changes)}")
-    for c in changes:
+    print("=" * 72)
+    print(f"  Utilisateurs FactSet suivis    : {len(users)}")
+    print(f"  Changements de societe         : {len(company)}")
+    for c in company:
         print(f"    * {c.full_name}: {c.previous_company} -> {c.new_company}")
-    print("=" * 68)
+    print(f"  Mobilites internes             : {len(role)}")
+    for c in role:
+        print(f"    * {c.full_name} @ {c.new_company}: {c.previous_title} -> {c.new_title}")
+    print("=" * 72)
     print()
     print("Ouvre dashboard.html dans un navigateur pour la vue manager.")
     sys.stdout.flush()

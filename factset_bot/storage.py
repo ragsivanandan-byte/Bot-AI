@@ -27,8 +27,10 @@ CREATE TABLE IF NOT EXISTS changes (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
     salesforce_id      TEXT NOT NULL,
     detected_at        TEXT NOT NULL,
+    change_type        TEXT NOT NULL DEFAULT 'company_change',
     previous_company   TEXT,
     new_company        TEXT,
+    previous_title     TEXT,
     new_title          TEXT,
     linkedin_url       TEXT,
     notified           INTEGER NOT NULL DEFAULT 0,
@@ -54,13 +56,19 @@ class User:
     last_checked_at: str | None = None
 
 
+CHANGE_TYPE_COMPANY = "company_change"
+CHANGE_TYPE_ROLE = "role_change"
+
+
 @dataclass
 class Change:
     salesforce_id: str
     full_name: str
     detected_at: str
+    change_type: str
     previous_company: str | None
     new_company: str | None
+    previous_title: str | None
     new_title: str | None
     linkedin_url: str | None
 
@@ -128,17 +136,20 @@ class Storage:
                 (current_company, current_title, now_iso(), salesforce_id),
             )
 
-    def record_change(self, salesforce_id: str, previous_company: str | None,
-                      new_company: str | None, new_title: str | None,
+    def record_change(self, salesforce_id: str, change_type: str,
+                      previous_company: str | None, new_company: str | None,
+                      previous_title: str | None, new_title: str | None,
                       linkedin_url: str | None) -> int:
         with self._conn() as c:
             cur = c.execute(
                 """
-                INSERT INTO changes (salesforce_id, detected_at, previous_company,
-                                     new_company, new_title, linkedin_url)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO changes (salesforce_id, detected_at, change_type,
+                                     previous_company, new_company,
+                                     previous_title, new_title, linkedin_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (salesforce_id, now_iso(), previous_company, new_company, new_title, linkedin_url),
+                (salesforce_id, now_iso(), change_type,
+                 previous_company, new_company, previous_title, new_title, linkedin_url),
             )
             return cur.lastrowid
 
@@ -165,12 +176,15 @@ class Storage:
         with self._conn() as c:
             rows = c.execute(
                 """
-                SELECT ch.salesforce_id, u.full_name, ch.detected_at,
-                       ch.previous_company, ch.new_company, ch.new_title, ch.linkedin_url
+                SELECT ch.salesforce_id, u.full_name, ch.detected_at, ch.change_type,
+                       ch.previous_company, ch.new_company,
+                       ch.previous_title, ch.new_title, ch.linkedin_url
                 FROM changes ch
                 JOIN users u ON u.salesforce_id = ch.salesforce_id
                 WHERE ch.notified = 0
-                ORDER BY ch.detected_at DESC
+                ORDER BY
+                  CASE ch.change_type WHEN 'company_change' THEN 0 ELSE 1 END,
+                  ch.detected_at DESC
                 """
             ).fetchall()
             return [Change(**dict(r)) for r in rows]
