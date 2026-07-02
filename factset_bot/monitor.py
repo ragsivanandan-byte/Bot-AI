@@ -52,7 +52,7 @@ def check_all(storage: Storage, client: ProxycurlClient,
             company_changes += 1
             log.info("Company change for %s: %s -> %s",
                      user.full_name, user.current_company, new_company)
-        elif _is_role_change(user, new_title):
+        elif _is_role_change(user, new_company, new_title):
             storage.record_change(
                 salesforce_id=user.salesforce_id,
                 change_type=CHANGE_TYPE_ROLE,
@@ -66,7 +66,13 @@ def check_all(storage: Storage, client: ProxycurlClient,
             log.info("Role change for %s @ %s: %s -> %s",
                      user.full_name, new_company, user.current_title, new_title)
 
-        storage.record_check(user.salesforce_id, new_company, new_title)
+        # Only persist fields we actually observed. An empty LinkedIn response
+        # must not erase our previously-known baseline — otherwise the next
+        # weekly run would fall back to the Salesforce company and re-fire a
+        # phantom "employer change" alert.
+        persisted_company = new_company or user.current_company
+        persisted_title = new_title or user.current_title
+        storage.record_check(user.salesforce_id, persisted_company, persisted_title)
     return checked, company_changes, role_changes
 
 
@@ -78,13 +84,16 @@ def _is_company_change(user: User, new_company: str | None) -> bool:
     return normalize_company(new_company) != normalize_company(baseline)
 
 
-def _is_role_change(user: User, new_title: str | None) -> bool:
-    """True when title differs from the last stored title (same employer implied by caller).
+def _is_role_change(user: User, new_company: str | None, new_title: str | None) -> bool:
+    """True when the title has changed at the same known employer.
 
-    Skipped on the very first check when we have no baseline title to compare
-    against, so we do not flood the sales manager with 'new title detected'
-    for every user the first week the bot runs.
+    Skipped when the previously-stored title is empty (first check) or when
+    the observed company is unknown / disagrees with our baseline — a role
+    change is only meaningful in the context of a stable known employer.
     """
-    if not new_title or not user.current_title:
+    if not new_title or not user.current_title or not new_company:
+        return False
+    baseline_company = user.current_company or user.salesforce_company
+    if normalize_company(new_company) != normalize_company(baseline_company):
         return False
     return new_title.strip().casefold() != user.current_title.strip().casefold()

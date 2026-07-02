@@ -47,13 +47,26 @@ class ProxycurlClient:
         return {"Authorization": f"Bearer {self.api_key}"}
 
     def _get(self, path: str, params: dict[str, Any]) -> dict[str, Any]:
+        import requests  # lazy so demo mode does not need requests installed
         url = f"{self.base_url}{path}"
         backoff = 2.0
         for attempt in range(1, self.max_retries + 1):
-            resp = self.session.get(url, headers=self._headers(), params=params,
-                                    timeout=self.timeout)
+            try:
+                resp = self.session.get(url, headers=self._headers(), params=params,
+                                        timeout=self.timeout)
+            except requests.RequestException as exc:
+                log.warning("Proxycurl %s network error: %s (attempt %d/%d)",
+                            path, exc, attempt, self.max_retries)
+                if attempt == self.max_retries:
+                    raise ProxycurlError(f"Proxycurl {path} network failure: {exc}") from exc
+                time.sleep(backoff)
+                backoff *= 2
+                continue
+
             if resp.status_code == 200:
                 return resp.json()
+            if resp.status_code == 404:
+                return {}
             if resp.status_code in (429, 500, 502, 503, 504):
                 log.warning("Proxycurl %s -> HTTP %s (attempt %d/%d)",
                             path, resp.status_code, attempt, self.max_retries)
@@ -62,8 +75,6 @@ class ProxycurlClient:
                 time.sleep(backoff)
                 backoff *= 2
                 continue
-            if resp.status_code == 404:
-                return {}
             raise ProxycurlError(
                 f"Proxycurl {path} failed HTTP {resp.status_code}: {resp.text[:200]}"
             )
@@ -100,13 +111,12 @@ class ProxycurlClient:
 
 
 def _parse_profile(data: dict[str, Any], linkedin_url: str) -> ProfileResult:
-    experiences = data.get("experiences") or [] if isinstance(data, dict) else []
+    experiences: list[dict[str, Any]] = []
+    if isinstance(data, dict):
+        experiences = data.get("experiences") or []
     current = _pick_current_experience(experiences)
-    company = None
-    title = None
-    if current:
-        company = current.get("company")
-        title = current.get("title")
+    company = current.get("company") if current else None
+    title = current.get("title") if current else None
     return ProfileResult(current_company=company, current_title=title,
                          linkedin_url=linkedin_url, raw=data or {})
 
@@ -122,7 +132,7 @@ def _pick_current_experience(experiences: list[dict[str, Any]]) -> dict[str, Any
         return None
     current = [e for e in experiences if e.get("ends_at") in (None, {})]
     pool = current or experiences
-    return max(pool, key=lambda e: _year(e.get("starts_at")), default=pool[0])
+    return max(pool, key=lambda e: _year(e.get("starts_at")))
 
 
 def _year(date_dict: Any) -> int:

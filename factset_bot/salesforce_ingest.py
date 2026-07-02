@@ -8,7 +8,6 @@ from .storage import Storage
 
 
 REQUIRED_COLUMNS = {"salesforce_id", "full_name", "company"}
-OPTIONAL_COLUMNS = {"email"}
 
 
 def _normalize_headers(headers: list[str]) -> dict[str, str]:

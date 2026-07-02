@@ -32,14 +32,14 @@ def _template(users, changes, changed_ids, links, generated_at) -> str:
     kpi_company = sum(1 for c in changes if c.change_type == CHANGE_TYPE_COMPANY)
     kpi_role = sum(1 for c in changes if c.change_type == CHANGE_TYPE_ROLE)
     alerts_html = "".join(_alert_card(c) for c in changes) or """
-        <div class="empty">Aucun changement d&eacute;tect&eacute; cette semaine.</div>"""
+        <div class="empty">No movement detected this week.</div>"""
     rows_html = "".join(_user_row(u, changed_ids.get(u.salesforce_id)) for u in users)
 
     return f"""<!doctype html>
-<html lang="fr"><head>
+<html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FactSet Client Watch - Dashboard d&eacute;mo</title>
+<title>FactSet Client Watch - Demo dashboard</title>
 <style>
 :root {{
   --bg:#f4f5f7; --card:#ffffff; --ink:#1a1f36; --muted:#697386;
@@ -113,48 +113,48 @@ footer {{ text-align:center; color:var(--muted); font-size:12px; margin-top:20px
 </head>
 <body>
   <header>
-    <div class="brand">FactSet Client Watch <span class="tag-demo">Mode d&eacute;monstration</span></div>
-    <h1>Alertes hebdomadaires - mouvements RH</h1>
-    <div class="sub">Ex&eacute;cution simul&eacute;e du {generated_at} &middot; portefeuille de {kpi_total} utilisateurs FactSet</div>
+    <div class="brand">FactSet Client Watch <span class="tag-demo">Demo mode</span></div>
+    <h1>Weekly alerts - user movements</h1>
+    <div class="sub">Simulated run on {generated_at} &middot; portfolio of {kpi_total} FactSet users</div>
   </header>
   <main>
     <div class="kpis">
-      <div class="kpi"><div class="label">Utilisateurs suivis</div><div class="value">{kpi_total}</div></div>
-      <div class="kpi ok"><div class="label">Profils LinkedIn r&eacute;solus</div><div class="value">{kpi_matched}</div></div>
-      <div class="kpi alert"><div class="label">Changements de soci&eacute;t&eacute;</div><div class="value">{kpi_company}</div></div>
-      <div class="kpi info"><div class="label">Mobilit&eacute;s internes</div><div class="value">{kpi_role}</div></div>
+      <div class="kpi"><div class="label">Users monitored</div><div class="value">{kpi_total}</div></div>
+      <div class="kpi ok"><div class="label">LinkedIn profiles resolved</div><div class="value">{kpi_matched}</div></div>
+      <div class="kpi alert"><div class="label">Employer changes</div><div class="value">{kpi_company}</div></div>
+      <div class="kpi info"><div class="label">Internal mobility</div><div class="value">{kpi_role}</div></div>
     </div>
 
     <section class="card">
-      <h2>Alertes actives</h2>
-      <div class="hint">Chaque ligne correspond &agrave; un mouvement d&eacute;tect&eacute; sur le profil LinkedIn depuis la derni&egrave;re v&eacute;rification.</div>
+      <h2>Active alerts</h2>
+      <div class="hint">Each row is a movement detected on a LinkedIn profile since the last check.</div>
       <div class="alerts">{alerts_html}</div>
       <div class="legend">
-        <span><span class="dot company"></span>Changement de soci&eacute;t&eacute; - risque r&eacute;tention</span>
-        <span><span class="dot role"></span>Mobilit&eacute; interne - opportunit&eacute; relationnelle</span>
+        <span><span class="dot company"></span>Employer change - retention risk</span>
+        <span><span class="dot role"></span>Internal mobility - relationship opportunity</span>
       </div>
       <div class="actions">
-        <a class="linkbtn" href="{html.escape(links.email_preview_href)}" target="_blank">Voir l'email envoy&eacute;</a>
-        <a class="linkbtn secondary" href="{html.escape(links.teams_preview_href)}" target="_blank">Voir la carte Teams</a>
-        <a class="linkbtn secondary" href="{html.escape(links.teams_payload_href)}" target="_blank">Payload JSON Teams</a>
+        <a class="linkbtn" href="{html.escape(links.email_preview_href)}" target="_blank">View email digest</a>
+        <a class="linkbtn secondary" href="{html.escape(links.teams_preview_href)}" target="_blank">View Teams card</a>
+        <a class="linkbtn secondary" href="{html.escape(links.teams_payload_href)}" target="_blank">Teams JSON payload</a>
       </div>
     </section>
 
     <section class="card">
-      <h2>Portefeuille FactSet</h2>
-      <div class="hint">Les {kpi_total} utilisateurs suivis, avec leur soci&eacute;t&eacute; LinkedIn actuelle, poste et statut de la semaine.</div>
+      <h2>FactSet portfolio</h2>
+      <div class="hint">All {kpi_total} monitored users, with their current LinkedIn company, title, and status for the week.</div>
       <table>
         <thead><tr>
-          <th>Nom</th><th>Soci&eacute;t&eacute; Salesforce</th><th>Soci&eacute;t&eacute; LinkedIn</th>
-          <th>Poste LinkedIn</th><th>Profil</th><th class="status">Statut</th>
+          <th>Name</th><th>Salesforce company</th><th>LinkedIn company</th>
+          <th>LinkedIn title</th><th>Profile</th><th class="status">Status</th>
         </tr></thead>
         <tbody>{rows_html}</tbody>
       </table>
     </section>
 
     <footer>
-      Toutes les donn&eacute;es de cette page sont fictives, g&eacute;n&eacute;r&eacute;es pour la d&eacute;monstration.
-      En production, les utilisateurs proviennent de Salesforce et les profils sont interrog&eacute;s via l'API LinkedIn (Proxycurl).
+      All data on this page is fictional, generated for demonstration purposes.
+      In production, users come from Salesforce and profiles are queried via the LinkedIn API (Proxycurl).
     </footer>
   </main>
 </body></html>"""
@@ -175,15 +175,15 @@ def _company_alert_card(c: Change) -> str:
     return f"""
       <div class="alert-item">
         <div>
-          <div class="name"><span class="tag company">Changement de soci&eacute;t&eacute;</span> {name}</div>
+          <div class="name"><span class="tag company">Employer change</span> {name}</div>
           <div class="move">
-            <span class="badge prev">Ancien</span>&nbsp;{prev}
+            <span class="badge prev">Previous</span>&nbsp;{prev}
             <span class="arrow">&rarr;</span>
-            <span class="badge next">Nouveau</span>&nbsp;<strong>{new}</strong>
+            <span class="badge next">New</span>&nbsp;<strong>{new}</strong>
           </div>
-          <div class="title">Nouveau poste&nbsp;: {title}</div>
+          <div class="title">New title:&nbsp;{title}</div>
         </div>
-        <div><a class="linkbtn" href="{url}" target="_blank">Ouvrir LinkedIn</a></div>
+        <div><a class="linkbtn" href="{url}" target="_blank">Open LinkedIn</a></div>
       </div>"""
 
 
@@ -196,15 +196,15 @@ def _role_alert_card(c: Change) -> str:
     return f"""
       <div class="alert-item role">
         <div>
-          <div class="name"><span class="tag role">Mobilit&eacute; interne</span> {name}</div>
+          <div class="name"><span class="tag role">Internal mobility</span> {name}</div>
           <div class="move">
-            <span class="badge rolefrom">Ancien poste</span>&nbsp;{prev_title}
+            <span class="badge rolefrom">Previous title</span>&nbsp;{prev_title}
             <span class="arrow">&rarr;</span>
-            <span class="badge roleto">Nouveau poste</span>&nbsp;<strong>{new_title}</strong>
+            <span class="badge roleto">New title</span>&nbsp;<strong>{new_title}</strong>
           </div>
-          <div class="title">Toujours chez&nbsp;: {company}</div>
+          <div class="title">Still at:&nbsp;{company}</div>
         </div>
-        <div><a class="linkbtn" href="{url}" target="_blank">Ouvrir LinkedIn</a></div>
+        <div><a class="linkbtn" href="{url}" target="_blank">Open LinkedIn</a></div>
       </div>"""
 
 
@@ -216,14 +216,14 @@ def _user_row(u: User, change_type: str | None) -> str:
     li_url = html.escape(u.linkedin_url or "")
     profile_cell = (
         f'<a class="li" href="{li_url}" target="_blank">linkedin.com/in/...</a>'
-        if li_url else '<span class="small">Non r&eacute;solu</span>'
+        if li_url else '<span class="small">Not resolved</span>'
     )
     if change_type == CHANGE_TYPE_COMPANY:
         cls = "company_change"
-        status = "Chang&eacute; de soci&eacute;t&eacute;"
+        status = "Changed employer"
     elif change_type == CHANGE_TYPE_ROLE:
         cls = "role_change"
-        status = "Mobilit&eacute; interne"
+        status = "Internal mobility"
     else:
         cls = ""
         status = "Stable"

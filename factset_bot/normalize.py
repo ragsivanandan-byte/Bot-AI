@@ -4,11 +4,13 @@ from __future__ import annotations
 import re
 import unicodedata
 
+# Suffixes are compared AFTER `.` and `,` have been stripped by normalize_company,
+# so entries here are also dot-free.
 _SUFFIXES = (
-    " inc", " inc.", " llc", " llc.", " ltd", " ltd.", " limited",
-    " corp", " corp.", " corporation", " co", " co.", " company",
-    " sa", " s.a.", " s.a", " sas", " sarl", " gmbh", " ag", " plc",
-    " s.p.a.", " spa", " nv", " bv", " oy", " ab", " kk",
+    " inc", " llc", " ltd", " limited",
+    " corp", " corporation", " co", " company",
+    " sa", " sas", " sarl", " gmbh", " ag", " plc",
+    " spa", " nv", " bv", " oy", " ab", " kk",
     " group", " holdings", " holding",
 )
 

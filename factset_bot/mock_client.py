@@ -1,13 +1,14 @@
 """Deterministic mock LinkedIn client for the sales demo.
 
 Implements the same interface as :class:`ProxycurlClient` but returns
-canned responses. Three users are pre-scripted to appear at a NEW company
-once :meth:`advance_week` is called, so the weekly-check step in the demo
-always yields exactly three alerts.
+canned responses. Once :meth:`advance_week` is called, three users appear
+at a new company and two get promoted inside their existing company —
+so the weekly-check step in the demo always yields exactly five alerts
+(3 employer changes + 2 internal moves).
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .linkedin_client import LookupResult, ProfileResult
 
@@ -88,8 +89,6 @@ class MockProxycurlClient:
     """Drop-in stand-in for :class:`ProxycurlClient` used by the demo."""
 
     week: int = 1
-    _profile_calls: list[str] = field(default_factory=list)
-    _lookup_calls: list[tuple[str, str, str]] = field(default_factory=list)
 
     def advance_week(self) -> None:
         """Move the simulated clock forward so scripted job changes appear."""
@@ -97,13 +96,11 @@ class MockProxycurlClient:
 
     def lookup_person(self, first_name: str, last_name: str, company_name: str,
                       company_domain: str | None = None) -> LookupResult:
-        self._lookup_calls.append((first_name, last_name, company_name))
         slug = f"{first_name}-{last_name}".lower().replace(" ", "-")
         url = f"https://www.linkedin.com/in/{slug}-factset-demo"
         return LookupResult(linkedin_url=url, confidence=0.97, raw={"mock": True})
 
     def fetch_profile(self, linkedin_url: str) -> ProfileResult:
-        self._profile_calls.append(linkedin_url)
         full_name = _name_from_url(linkedin_url)
         current_company, current_title = self._resolve_current_role(full_name)
         return ProfileResult(

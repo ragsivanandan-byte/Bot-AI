@@ -25,28 +25,28 @@ def run_demo(csv_path: Path, out_dir: Path, open_browser: bool = True,
     storage = Storage(db_path)
     client = MockProxycurlClient()
 
-    _step("1/5", "Ingestion des utilisateurs FactSet depuis l'export Salesforce")
+    _step("1/5", "Ingesting FactSet users from Salesforce export")
     seen, ingested = load_csv(csv_path, storage)
-    print(f"      -> {seen} lignes lues, {ingested} utilisateurs ingeres.")
+    print(f"      -> {seen} rows read, {ingested} users ingested.")
     time.sleep(pause)
 
-    _step("2/5", "Rapprochement des noms + societes avec les profils LinkedIn")
+    _step("2/5", "Matching Salesforce names + companies to LinkedIn profiles")
     attempted, matched = matcher.match_all_unresolved(storage, client)
-    print(f"      -> {matched}/{attempted} profils LinkedIn resolus (mock Proxycurl).")
+    print(f"      -> {matched}/{attempted} LinkedIn profiles resolved (mock Proxycurl).")
     time.sleep(pause)
 
-    _step("3/5", "Simulation d'une semaine ecoulee (le mock avance dans le temps)")
+    _step("3/5", "Simulating one week elapsed (mock clock advances)")
     client.advance_week()
-    print("      -> Semaine +1. Les profils LinkedIn sont a nouveau interroges...")
+    print("      -> Week +1. LinkedIn profiles are re-queried...")
     time.sleep(pause)
 
-    _step("4/5", "Detection des mouvements RH (changement de societe et mobilite interne)")
+    _step("4/5", "Detecting HR movements (employer change and internal mobility)")
     checked, company_changes, role_changes = monitor.check_all(storage, client)
-    print(f"      -> {checked} profils verifies, {company_changes} changement(s) de societe, "
-          f"{role_changes} mobilite(s) interne(s).")
+    print(f"      -> {checked} profiles checked, {company_changes} employer change(s), "
+          f"{role_changes} internal move(s).")
     time.sleep(pause)
 
-    _step("5/5", "Generation des alertes (email + Teams) et du dashboard")
+    _step("5/5", "Rendering alerts (email + Teams) and dashboard")
     pending = storage.get_pending_changes()
     alerts_out = alerts_module.render_demo_alerts(pending, out_dir)
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -60,14 +60,13 @@ def run_demo(csv_path: Path, out_dir: Path, open_browser: bool = True,
     users = storage.get_all_users()
     render_dashboard(users, pending, links, dashboard_path, generated_at)
 
-    ids = storage.get_pending_change_ids()
-    storage.mark_changes_notified(ids)
-    print(f"      -> Dashboard: {dashboard_path}")
-    print(f"      -> Email preview: {alerts_out.email_html_path}")
-    print(f"      -> Teams preview: {alerts_out.teams_preview_html_path}")
+    storage.mark_all_pending_notified()
+    print(f"      -> Dashboard:       {dashboard_path}")
+    print(f"      -> Email preview:   {alerts_out.email_html_path}")
+    print(f"      -> Teams preview:   {alerts_out.teams_preview_html_path}")
 
     print()
-    _banner("DEMO TERMINEE", pending, users)
+    _banner("DEMO COMPLETE", pending, users)
 
     if open_browser:
         try:
@@ -88,14 +87,14 @@ def _banner(title: str, changes, users) -> None:
     print("=" * 72)
     print(f"  {title}")
     print("=" * 72)
-    print(f"  Utilisateurs FactSet suivis    : {len(users)}")
-    print(f"  Changements de societe         : {len(company)}")
+    print(f"  FactSet users monitored     : {len(users)}")
+    print(f"  Employer changes            : {len(company)}")
     for c in company:
         print(f"    * {c.full_name}: {c.previous_company} -> {c.new_company}")
-    print(f"  Mobilites internes             : {len(role)}")
+    print(f"  Internal mobility           : {len(role)}")
     for c in role:
         print(f"    * {c.full_name} @ {c.new_company}: {c.previous_title} -> {c.new_title}")
     print("=" * 72)
     print()
-    print("Ouvre dashboard.html dans un navigateur pour la vue manager.")
+    print("Open dashboard.html in a browser for the manager-facing view.")
     sys.stdout.flush()

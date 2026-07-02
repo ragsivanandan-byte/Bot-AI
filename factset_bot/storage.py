@@ -189,14 +189,8 @@ class Storage:
             ).fetchall()
             return [Change(**dict(r)) for r in rows]
 
-    def mark_changes_notified(self, ids: list[int]) -> None:
-        if not ids:
-            return
+    def mark_all_pending_notified(self) -> int:
+        """Mark every currently-pending change as notified. Returns row count."""
         with self._conn() as c:
-            placeholders = ",".join("?" * len(ids))
-            c.execute(f"UPDATE changes SET notified = 1 WHERE id IN ({placeholders})", ids)
-
-    def get_pending_change_ids(self) -> list[int]:
-        with self._conn() as c:
-            rows = c.execute("SELECT id FROM changes WHERE notified = 0").fetchall()
-            return [r[0] for r in rows]
+            cur = c.execute("UPDATE changes SET notified = 1 WHERE notified = 0")
+            return cur.rowcount
