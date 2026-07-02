@@ -1,0 +1,215 @@
+"""Alert rendering. Demo mode writes HTML previews; production mode sends via SMTP/Teams webhook."""
+from __future__ import annotations
+
+import html
+import json
+import smtplib
+from dataclasses import dataclass
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from pathlib import Path
+from typing import Iterable
+
+from .storage import Change
+
+
+@dataclass
+class AlertOutputs:
+    email_html_path: Path
+    teams_preview_html_path: Path
+    teams_payload_path: Path
+
+
+def render_demo_alerts(changes: Iterable[Change], out_dir: Path) -> AlertOutputs:
+    """Write email + Teams previews to `out_dir` and return their paths."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    change_list = list(changes)
+
+    email_html = _render_email_html(change_list)
+    email_path = out_dir / "alert_email_preview.html"
+    email_path.write_text(email_html, encoding="utf-8")
+
+    teams_card = _render_teams_card(change_list)
+    teams_payload_path = out_dir / "alert_teams_payload.json"
+    teams_payload_path.write_text(json.dumps(teams_card, indent=2), encoding="utf-8")
+
+    teams_html = _render_teams_preview_html(change_list)
+    teams_preview_path = out_dir / "alert_teams_preview.html"
+    teams_preview_path.write_text(teams_html, encoding="utf-8")
+
+    return AlertOutputs(
+        email_html_path=email_path,
+        teams_preview_html_path=teams_preview_path,
+        teams_payload_path=teams_payload_path,
+    )
+
+
+def send_email(email_html: str, subject: str, smtp_host: str, smtp_port: int,
+               smtp_user: str, smtp_password: str, sender: str,
+               recipients: list[str], use_tls: bool = True) -> None:
+    """Send the digest email in production mode."""
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = ", ".join(recipients)
+    msg.attach(MIMEText(email_html, "html", "utf-8"))
+
+    with smtplib.SMTP(smtp_host, smtp_port) as server:
+        if use_tls:
+            server.starttls()
+        if smtp_user:
+            server.login(smtp_user, smtp_password)
+        server.sendmail(sender, recipients, msg.as_string())
+
+
+def send_teams(webhook_url: str, payload: dict) -> None:
+    """Post the Teams Adaptive Card in production mode."""
+    import requests  # imported lazily; demo mode does not depend on it
+    resp = requests.post(webhook_url, json=payload, timeout=15)
+    resp.raise_for_status()
+
+
+def _render_email_html(changes: list[Change]) -> str:
+    rows = "".join(_email_row(c) for c in changes) or _empty_row_html()
+    total = len(changes)
+    return f"""<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>FactSet Client Watch - Alertes hebdo</title></head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1a1f36;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <tr><td style="background:#0f2645;padding:24px 28px;color:#ffffff;">
+          <div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;">FactSet Client Watch</div>
+          <div style="font-size:22px;font-weight:600;margin-top:6px;">Alertes hebdomadaires - changements d'employeur</div>
+          <div style="font-size:14px;opacity:0.8;margin-top:4px;">{total} utilisateur(s) FactSet ont chang&eacute; de soci&eacute;t&eacute; cette semaine</div>
+        </td></tr>
+        <tr><td style="padding:24px 28px;">
+          <p style="margin:0 0 20px 0;font-size:14px;line-height:1.55;color:#3c4257;">
+            Bonjour,<br><br>
+            Voici les changements d&eacute;tect&eacute;s cette semaine sur les profils LinkedIn de vos utilisateurs FactSet.
+            Chaque ligne indique la soci&eacute;t&eacute; pr&eacute;c&eacute;dente et la nouvelle soci&eacute;t&eacute; de l'utilisateur.
+          </p>
+          {rows}
+          <p style="margin:24px 0 0 0;font-size:12px;color:#697386;line-height:1.5;">
+            Prochaine ex&eacute;cution&nbsp;: lundi prochain.<br>
+            G&eacute;n&eacute;r&eacute; par FactSet Client Watch (mode d&eacute;monstration).
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+
+
+def _email_row(c: Change) -> str:
+    name = html.escape(c.full_name)
+    prev = html.escape(c.previous_company or "-")
+    new = html.escape(c.new_company or "-")
+    title = html.escape(c.new_title or "-")
+    url = html.escape(c.linkedin_url or "#")
+    return f"""
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e3e8ee;border-radius:8px;margin-bottom:14px;">
+          <tr><td style="padding:16px 18px;">
+            <div style="font-size:15px;font-weight:600;color:#0f2645;">{name}</div>
+            <div style="margin-top:10px;font-size:13px;color:#3c4257;">
+              <span style="display:inline-block;background:#fdecea;color:#b3261e;padding:3px 8px;border-radius:4px;font-size:12px;">Ancien</span>&nbsp;{prev}
+              &nbsp;&rarr;&nbsp;
+              <span style="display:inline-block;background:#e6f4ea;color:#137333;padding:3px 8px;border-radius:4px;font-size:12px;">Nouveau</span>&nbsp;<strong>{new}</strong>
+            </div>
+            <div style="margin-top:8px;font-size:13px;color:#697386;">Nouveau poste&nbsp;: {title}</div>
+            <div style="margin-top:12px;">
+              <a href="{url}" style="font-size:12px;color:#0a5cff;text-decoration:none;">Ouvrir le profil LinkedIn &rarr;</a>
+            </div>
+          </td></tr>
+        </table>"""
+
+
+def _empty_row_html() -> str:
+    return """<div style="padding:24px;background:#f6f8fa;border-radius:8px;color:#697386;font-size:14px;text-align:center;">
+        Aucun changement d&eacute;tect&eacute; cette semaine.
+      </div>"""
+
+
+def _render_teams_card(changes: list[Change]) -> dict:
+    """Build a MessageCard-compatible payload for a Teams incoming webhook."""
+    sections = []
+    for c in changes:
+        sections.append({
+            "activityTitle": c.full_name,
+            "activitySubtitle": f"{c.previous_company or '?'} → {c.new_company or '?'}",
+            "facts": [
+                {"name": "Nouveau poste", "value": c.new_title or "-"},
+                {"name": "D&eacute;tect&eacute; le", "value": c.detected_at},
+            ],
+            "potentialAction": [{
+                "@type": "OpenUri",
+                "name": "Ouvrir le profil LinkedIn",
+                "targets": [{"os": "default", "uri": c.linkedin_url or "#"}],
+            }] if c.linkedin_url else [],
+        })
+
+    return {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0F2645",
+        "summary": f"FactSet Client Watch - {len(changes)} changement(s)",
+        "title": "FactSet Client Watch - alertes hebdo",
+        "text": f"{len(changes)} utilisateur(s) FactSet ont chang&eacute; de soci&eacute;t&eacute; cette semaine.",
+        "sections": sections,
+    }
+
+
+def _render_teams_preview_html(changes: list[Change]) -> str:
+    """Static HTML that mimics the look of a Teams Adaptive Card render."""
+    cards = "".join(_teams_section_html(c) for c in changes) or f"""
+      <div style="padding:20px;color:#616770;">Aucun changement cette semaine.</div>"""
+    return f"""<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Aper&ccedil;u Teams - Alertes FactSet</title></head>
+<body style="margin:0;padding:32px;background:#e6e9ef;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#252424;">
+  <div style="max-width:520px;margin:0 auto;">
+    <div style="font-size:13px;color:#616770;margin-bottom:8px;">Microsoft Teams &middot; canal <strong>#account-management</strong></div>
+    <div style="background:#ffffff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.12);overflow:hidden;">
+      <div style="background:#0f2645;color:#ffffff;padding:14px 18px;">
+        <div style="font-size:11px;letter-spacing:1.2px;text-transform:uppercase;opacity:0.75;">Connector &middot; FactSet Client Watch</div>
+        <div style="font-size:16px;font-weight:600;margin-top:4px;">Alertes hebdomadaires - changements d'employeur</div>
+      </div>
+      <div style="padding:8px 18px 18px 18px;">
+        {cards}
+      </div>
+    </div>
+    <div style="font-size:11px;color:#616770;margin-top:10px;">Aper&ccedil;u statique du message Teams. En prod, ce contenu est envoy&eacute; via un webhook entrant.</div>
+  </div>
+</body></html>"""
+
+
+def _teams_section_html(c: Change) -> str:
+    name = html.escape(c.full_name)
+    prev = html.escape(c.previous_company or "-")
+    new = html.escape(c.new_company or "-")
+    title = html.escape(c.new_title or "-")
+    url = html.escape(c.linkedin_url or "#")
+    return f"""
+        <div style="border-top:1px solid #edebe9;padding:14px 0;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:#0f2645;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;">
+              {html.escape(_initials(c.full_name))}
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:600;">{name}</div>
+              <div style="font-size:12px;color:#616770;">{prev} &rarr; <strong style="color:#252424;">{new}</strong></div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#616770;margin:8px 0 0 42px;">Nouveau poste&nbsp;: {title}</div>
+          <div style="margin:10px 0 0 42px;">
+            <a href="{url}" style="display:inline-block;font-size:12px;color:#ffffff;background:#0a5cff;padding:6px 12px;border-radius:4px;text-decoration:none;">Ouvrir le profil LinkedIn</a>
+          </div>
+        </div>"""
+
+
+def _initials(name: str) -> str:
+    parts = [p for p in name.split() if p]
+    if not parts:
+        return "?"
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return (parts[0][0] + parts[-1][0]).upper()
