@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FactSet Client Watch - Demo showcase</title>
+</head><body>
+<style>
+:root {
+  --bg:#f5f6f8; --ink:#0f172a; --muted:#64748b;
+  --brand:#0f2645; --card:#ffffff; --border:#e5e7eb;
+  --accent:#0a5cff;
+}
+* { box-sizing:border-box; }
+body { margin:0; padding:0; background:var(--bg); color:var(--ink);
+        font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; }
+.shell { min-height:100vh; display:flex; flex-direction:column; }
+.top { background:var(--brand); color:#ffffff; padding:20px 28px; }
+.top-row { display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+.brand { font-size:11px; letter-spacing:2px; text-transform:uppercase; opacity:.75; }
+.title { font-size:22px; font-weight:600; margin-top:2px; }
+.subtitle { font-size:12.5px; opacity:.72; margin-top:2px; }
+.demo-pill { display:inline-block; background:#fff4d6; color:#8a5a00;
+               padding:3px 10px; border-radius:999px; font-size:11px;
+               font-weight:600; margin-left:8px; vertical-align:middle; }
+nav.tabs { display:inline-flex; background:rgba(255,255,255,.08); padding:4px;
+            border-radius:10px; gap:2px; }
+nav.tabs button { background:transparent; color:#ffffff; border:0;
+                    padding:8px 16px; border-radius:8px; font-size:13px;
+                    font-weight:500; cursor:pointer;
+                    font-family:inherit; letter-spacing:.2px; }
+nav.tabs button.active { background:#ffffff; color:var(--brand); font-weight:600; }
+nav.tabs button:not(.active):hover { background:rgba(255,255,255,.12); }
+nav.tabs button:focus-visible { outline:2px solid #93c5fd; outline-offset:1px; }
+.panels { flex:1; padding:16px 28px 28px 28px; }
+.panel { display:none; background:var(--card); border:1px solid var(--border);
+          border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(15,23,42,.05); }
+.panel.active { display:block; }
+.panel iframe { border:0; width:100%; display:block; background:#ffffff; }
+.panel-note { padding:14px 20px; border-top:1px solid var(--border);
+               background:#f8fafc; color:var(--muted); font-size:12.5px;
+               display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.panel-note strong { color:var(--ink); font-weight:600; }
+.foot { text-align:center; color:var(--muted); font-size:11.5px; padding:12px 28px 24px 28px; }
+@media (max-width:640px) {
+  .top-row { flex-direction:column; align-items:flex-start; }
+  .panels { padding:12px 14px 20px 14px; }
+}
+</style>
+
+<div class="shell">
+  <header class="top">
+    <div class="top-row">
+      <div>
+        <div class="brand">FactSet Client Watch</div>
+        <div class="title">Weekly alerts <span class="demo-pill">Demo</span></div>
+        <div class="subtitle">Simulated run &middot; 2026-07-02 21:39 UTC</div>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Preview">
+        <button type="button" role="tab" data-tab="dashboard" class="active" aria-selected="true">Dashboard</button>
+        <button type="button" role="tab" data-tab="email" aria-selected="false">Email digest</button>
+        <button type="button" role="tab" data-tab="teams" aria-selected="false">Microsoft Teams</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="panels">
+    <div class="panel active" data-panel="dashboard" role="tabpanel">
+      <iframe title="Dashboard preview" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;
+&lt;title&gt;FactSet Client Watch - Demo dashboard&lt;/title&gt;
+&lt;style&gt;
+:root {
+  --bg:#f4f5f7; --card:#ffffff; --ink:#1a1f36; --muted:#697386;
+  --border:#e3e8ee; --brand:#0f2645; --accent:#0a5cff;
+  --danger:#b3261e; --danger-bg:#fdecea; --ok:#137333; --ok-bg:#e6f4ea;
+  --info:#0b57d0; --info-bg:#e8f0fe;
+}
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,&#x27;Segoe UI&#x27;,Roboto,Arial,sans-serif;
+       background:var(--bg); color:var(--ink); }
+header { background:var(--brand); color:#ffffff; padding:28px 32px; }
+header .brand { font-size:12px; letter-spacing:1.8px; text-transform:uppercase; opacity:.7; }
+header h1 { margin:6px 0 4px 0; font-size:26px; font-weight:600; }
+header .sub { font-size:14px; opacity:.8; }
+main { max-width:1160px; margin:0 auto; padding:24px 32px 60px 32px; }
+.kpis { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:28px; }
+.kpi { background:var(--card); border:1px solid var(--border); border-radius:12px;
+        padding:18px 20px; }
+.kpi .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+.kpi .value { font-size:30px; font-weight:600; margin-top:6px; }
+.kpi .split { font-size:12px; color:var(--muted); margin-top:6px; }
+.kpi.alert .value { color:var(--danger); }
+.kpi.info .value { color:var(--info); }
+.kpi.ok .value { color:var(--ok); }
+section.card { background:var(--card); border:1px solid var(--border); border-radius:12px;
+                padding:20px 24px; margin-bottom:24px; }
+section.card h2 { margin:0 0 4px 0; font-size:17px; }
+section.card .hint { color:var(--muted); font-size:13px; margin-bottom:16px; }
+.alerts { display:grid; grid-template-columns:1fr; gap:14px; }
+.alert-item { border-radius:10px; overflow:hidden;
+               display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center;
+               padding:16px 20px 16px 18px;
+               border-left:8px solid #cbd5e1;
+               background:#f8fafc; }
+.alert-item.outcome-transfer { background:#ecfdf3; border-left-color:#0d7f42; }
+.alert-item.outcome-churn    { background:#fef2f2; border-left-color:#c62828; }
+.alert-item.outcome-internal { background:#eff6ff; border-left-color:#1a56db; }
+.alert-item .header { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.alert-item .name { font-weight:600; font-size:15.5px; }
+.alert-item .move { font-size:13.5px; margin-top:8px; color:#1e293b; }
+.alert-item .move strong { color:#0f172a; }
+.alert-item .title { font-size:12.5px; color:#475569; margin-top:5px; }
+.alert-item .account { font-size:11.5px; color:#475569; margin-top:5px;
+                        font-family:&#x27;SF Mono&#x27;,&#x27;Cascadia Code&#x27;,&#x27;Roboto Mono&#x27;,ui-monospace,monospace;
+                        letter-spacing:-0.2px; }
+.tag { display:inline-block; padding:3px 9px; border-radius:999px; font-size:10.5px;
+        font-weight:600; letter-spacing:.6px; text-transform:uppercase; }
+.tag.company { background:#fdecea; color:#b3261e; }
+.tag.role { background:#e8f0fe; color:#1a56db; }
+.outcome-badge { display:inline-flex; align-items:center; gap:6px;
+                  padding:6px 12px 6px 10px; border-radius:999px;
+                  font-size:11.5px; font-weight:700; letter-spacing:.5px;
+                  text-transform:uppercase; color:#ffffff; }
+.outcome-badge.transfer { background:#0d7f42; }
+.outcome-badge.churn    { background:#c62828; }
+.outcome-badge.internal { background:#1a56db; }
+.outcome-badge svg { width:14px; height:14px; }
+.badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px;
+          font-weight:500; }
+.badge.prev { background:var(--danger-bg); color:var(--danger); }
+.badge.next { background:var(--ok-bg); color:var(--ok); }
+.badge.rolefrom { background:#e6e9ef; color:#3c4257; }
+.badge.roleto { background:var(--info-bg); color:var(--info); }
+.arrow { margin:0 6px; color:var(--muted); }
+.linkbtn { background:var(--accent); color:#fff; padding:8px 12px; border-radius:6px;
+            font-size:12px; text-decoration:none; white-space:nowrap; }
+.linkbtn.secondary { background:#ffffff; color:var(--accent); border:1px solid var(--accent); }
+.actions { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead th { text-align:left; font-size:11px; letter-spacing:1px; text-transform:uppercase;
+            color:var(--muted); padding:10px 12px; border-bottom:1px solid var(--border); }
+tbody td { padding:12px; border-bottom:1px solid #f0f2f5; vertical-align:middle; }
+tr.company_change { background:#fff8f7; }
+tr.role_change { background:#f4f8ff; }
+tr.company_change td.status .status-badge { background:var(--danger-bg); color:var(--danger); }
+tr.role_change td.status .status-badge { background:var(--info-bg); color:var(--info); }
+td.status .status-badge { display:inline-block; padding:2px 8px; border-radius:999px;
+                            font-size:11px; font-weight:500; background:var(--ok-bg); color:var(--ok); }
+.small { color:var(--muted); font-size:12px; }
+.li { font-size:12px; color:var(--accent); text-decoration:none; }
+.legend { font-size:12px; color:var(--muted); margin-top:12px; display:flex; gap:16px; flex-wrap:wrap; }
+.legend .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+.legend .dot.company { background:var(--danger); }
+.legend .dot.role { background:var(--info); }
+.legend .dot.client { background:var(--ok); }
+.legend .dot.churn { background:var(--danger); }
+footer { text-align:center; color:var(--muted); font-size:12px; margin-top:20px; }
+.tag-demo { display:inline-block; background:#fff4d6; color:#8a5a00; padding:2px 8px;
+             border-radius:999px; font-size:11px; margin-left:8px; vertical-align:middle; }
+@media (max-width: 900px) { .kpis { grid-template-columns:repeat(3,1fr); } }
+@media (max-width: 600px) { .kpis { grid-template-columns:repeat(2,1fr); } }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;div class=&quot;brand&quot;&gt;FactSet Client Watch &lt;span class=&quot;tag-demo&quot;&gt;Demo mode&lt;/span&gt;&lt;/div&gt;
+    &lt;h1&gt;Weekly alerts - user movements&lt;/h1&gt;
+    &lt;div class=&quot;sub&quot;&gt;Simulated run on 2026-07-02 21:39 UTC &amp;middot; portfolio of 20 FactSet users&lt;/div&gt;
+  &lt;/header&gt;
+  &lt;main&gt;
+    &lt;div class=&quot;kpis&quot;&gt;
+      &lt;div class=&quot;kpi&quot;&gt;
+        &lt;div class=&quot;label&quot;&gt;Users monitored&lt;/div&gt;
+        &lt;div class=&quot;value&quot;&gt;20&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;kpi ok&quot;&gt;
+        &lt;div class=&quot;label&quot;&gt;LinkedIn profiles resolved&lt;/div&gt;
+        &lt;div class=&quot;value&quot;&gt;20&lt;/div&gt;
+        &lt;div class=&quot;split&quot;&gt;20/20&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;kpi alert&quot;&gt;
+        &lt;div class=&quot;label&quot;&gt;Employer changes&lt;/div&gt;
+        &lt;div class=&quot;value&quot;&gt;3&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;kpi info&quot;&gt;
+        &lt;div class=&quot;label&quot;&gt;Internal mobility&lt;/div&gt;
+        &lt;div class=&quot;value&quot;&gt;2&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;kpi&quot;&gt;
+        &lt;div class=&quot;label&quot;&gt;New employer FactSet client?&lt;/div&gt;
+        &lt;div class=&quot;value&quot; style=&quot;font-size:20px;line-height:1.6;&quot;&gt;
+          &lt;span style=&quot;color:var(--ok);&quot;&gt;2&lt;/span&gt;&amp;nbsp;transfer
+          &lt;span style=&quot;color:var(--muted);font-weight:400;font-size:14px;&quot;&gt;/&lt;/span&gt;
+          &lt;span style=&quot;color:var(--danger);&quot;&gt;1&lt;/span&gt;&amp;nbsp;churn
+        &lt;/div&gt;
+        &lt;div class=&quot;split&quot;&gt;Based on Salesforce Account lookup&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;section class=&quot;card&quot;&gt;
+      &lt;h2&gt;Active alerts&lt;/h2&gt;
+      &lt;div class=&quot;hint&quot;&gt;Each row is a movement detected on a LinkedIn profile since the last check. Employer changes and internal mobility are weighted equally.&lt;/div&gt;
+      &lt;div class=&quot;alerts&quot;&gt;
+      &lt;div class=&quot;alert-item outcome-internal&quot;&gt;
+        &lt;div&gt;
+          &lt;div class=&quot;header&quot;&gt;
+            &lt;span class=&quot;tag role&quot;&gt;Internal mobility&lt;/span&gt;
+            &lt;span class=&quot;name&quot;&gt;Chloe Vidal&lt;/span&gt;
+            &lt;span class=&quot;outcome-badge internal&quot;&gt;&lt;svg viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M6 10h9m-3-3l3 3-3 3&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;Relationship opportunity&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;move&quot;&gt;Head of ESG Research &amp;rarr; &lt;strong&gt;Global Head of ESG Strategy&lt;/strong&gt;&lt;/div&gt;
+          &lt;div class=&quot;title&quot;&gt;Still at:&amp;nbsp;iM Global Partner&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;a class=&quot;linkbtn&quot; href=&quot;https://www.linkedin.com/in/chloe-vidal-factset-demo&quot; target=&quot;_blank&quot;&gt;Open LinkedIn&lt;/a&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;alert-item outcome-transfer&quot;&gt;
+        &lt;div&gt;
+          &lt;div class=&quot;header&quot;&gt;
+            &lt;span class=&quot;tag company&quot;&gt;Employer change&lt;/span&gt;
+            &lt;span class=&quot;name&quot;&gt;Elena Rossi&lt;/span&gt;
+            &lt;span class=&quot;outcome-badge transfer&quot;&gt;&lt;svg viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M4 10.5l4 4L16 6&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;Seat may transfer&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;move&quot;&gt;Silex &amp;rarr; &lt;strong&gt;Pictet Wealth Management&lt;/strong&gt;&lt;/div&gt;
+          &lt;div class=&quot;title&quot;&gt;New title:&amp;nbsp;Executive Director, Private Wealth&lt;/div&gt;
+          &lt;div class=&quot;account&quot;&gt;Salesforce account: 0011x000ACC029 &amp;middot; Pictet Wealth Management is an existing FactSet client&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;a class=&quot;linkbtn&quot; href=&quot;https://www.linkedin.com/in/elena-rossi-factset-demo&quot; target=&quot;_blank&quot;&gt;Open LinkedIn&lt;/a&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;alert-item outcome-internal&quot;&gt;
+        &lt;div&gt;
+          &lt;div class=&quot;header&quot;&gt;
+            &lt;span class=&quot;tag role&quot;&gt;Internal mobility&lt;/span&gt;
+            &lt;span class=&quot;name&quot;&gt;Julien Petit&lt;/span&gt;
+            &lt;span class=&quot;outcome-badge internal&quot;&gt;&lt;svg viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M6 10h9m-3-3l3 3-3 3&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;Relationship opportunity&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;move&quot;&gt;Senior Investment Manager &amp;rarr; &lt;strong&gt;Head of Private Markets&lt;/strong&gt;&lt;/div&gt;
+          &lt;div class=&quot;title&quot;&gt;Still at:&amp;nbsp;Meeschaert Amilton AM&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;a class=&quot;linkbtn&quot; href=&quot;https://www.linkedin.com/in/julien-petit-factset-demo&quot; target=&quot;_blank&quot;&gt;Open LinkedIn&lt;/a&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;alert-item outcome-churn&quot;&gt;
+        &lt;div&gt;
+          &lt;div class=&quot;header&quot;&gt;
+            &lt;span class=&quot;tag company&quot;&gt;Employer change&lt;/span&gt;
+            &lt;span class=&quot;name&quot;&gt;Marc Dubois&lt;/span&gt;
+            &lt;span class=&quot;outcome-badge churn&quot;&gt;&lt;svg viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M5 5l10 10M15 5L5 15&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;Likely churn&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;move&quot;&gt;Sycomore Asset Management &amp;rarr; &lt;strong&gt;Portzamparc Gestion&lt;/strong&gt;&lt;/div&gt;
+          &lt;div class=&quot;title&quot;&gt;New title:&amp;nbsp;Senior Portfolio Manager, Global Equities&lt;/div&gt;
+          &lt;div class=&quot;account&quot;&gt;Portzamparc Gestion is NOT on the FactSet client roster &amp;mdash; seat likely lost&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;a class=&quot;linkbtn&quot; href=&quot;https://www.linkedin.com/in/marc-dubois-factset-demo&quot; target=&quot;_blank&quot;&gt;Open LinkedIn&lt;/a&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;alert-item outcome-transfer&quot;&gt;
+        &lt;div&gt;
+          &lt;div class=&quot;header&quot;&gt;
+            &lt;span class=&quot;tag company&quot;&gt;Employer change&lt;/span&gt;
+            &lt;span class=&quot;name&quot;&gt;Sophie Laurent&lt;/span&gt;
+            &lt;span class=&quot;outcome-badge transfer&quot;&gt;&lt;svg viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M4 10.5l4 4L16 6&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;Seat may transfer&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;move&quot;&gt;Sanso Investment Solutions &amp;rarr; &lt;strong&gt;Amundi&lt;/strong&gt;&lt;/div&gt;
+          &lt;div class=&quot;title&quot;&gt;New title:&amp;nbsp;Head of ESG Client Solutions&lt;/div&gt;
+          &lt;div class=&quot;account&quot;&gt;Salesforce account: 0011x000ACC001 &amp;middot; Amundi is an existing FactSet client&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;a class=&quot;linkbtn&quot; href=&quot;https://www.linkedin.com/in/sophie-laurent-factset-demo&quot; target=&quot;_blank&quot;&gt;Open LinkedIn&lt;/a&gt;
+      &lt;/div&gt;&lt;/div&gt;
+      &lt;div class=&quot;legend&quot;&gt;
+        &lt;span&gt;&lt;span class=&quot;dot company&quot;&gt;&lt;/span&gt;Employer change&lt;/span&gt;
+        &lt;span&gt;&lt;span class=&quot;dot role&quot;&gt;&lt;/span&gt;Internal mobility&lt;/span&gt;
+        &lt;span&gt;&lt;span class=&quot;dot client&quot;&gt;&lt;/span&gt;New employer is a FactSet client (seat may transfer)&lt;/span&gt;
+        &lt;span&gt;&lt;span class=&quot;dot churn&quot;&gt;&lt;/span&gt;New employer is NOT a FactSet client (likely churn)&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;actions&quot;&gt;
+        &lt;a class=&quot;linkbtn&quot; href=&quot;alert_email_preview.html&quot; target=&quot;_blank&quot;&gt;View email digest&lt;/a&gt;
+        &lt;a class=&quot;linkbtn secondary&quot; href=&quot;alert_teams_preview.html&quot; target=&quot;_blank&quot;&gt;View Teams card&lt;/a&gt;
+        &lt;a class=&quot;linkbtn secondary&quot; href=&quot;alert_teams_payload.json&quot; target=&quot;_blank&quot;&gt;Teams JSON payload&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;section class=&quot;card&quot;&gt;
+      &lt;h2&gt;FactSet portfolio&lt;/h2&gt;
+      &lt;div class=&quot;hint&quot;&gt;All 20 monitored users, with their current LinkedIn company &amp;amp; title, and status for the week.&lt;/div&gt;
+      &lt;table&gt;
+        &lt;thead&gt;&lt;tr&gt;
+          &lt;th&gt;Name&lt;/th&gt;&lt;th&gt;Salesforce company&lt;/th&gt;&lt;th&gt;LinkedIn company&lt;/th&gt;
+          &lt;th&gt;LinkedIn title&lt;/th&gt;&lt;th&gt;Profile&lt;/th&gt;&lt;th class=&quot;status&quot;&gt;Status&lt;/th&gt;
+        &lt;/tr&gt;&lt;/thead&gt;
+        &lt;tbody&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Alice Fournier&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Talence Gestion&lt;/td&gt;
+          &lt;td&gt;Talence Gestion&lt;/td&gt;
+          &lt;td&gt;Fixed Income Strategist&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/alice-fournier-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Antoine Roux&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Twenty First Capital&lt;/td&gt;
+          &lt;td&gt;Twenty First Capital&lt;/td&gt;
+          &lt;td&gt;Head of Investment Research&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/antoine-roux-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Camille Moreau&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Mansartis&lt;/td&gt;
+          &lt;td&gt;Mansartis&lt;/td&gt;
+          &lt;td&gt;Head of Multi-Asset Solutions&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/camille-moreau-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;role_change&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Chloe Vidal&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;iM Global Partner&lt;/td&gt;
+          &lt;td&gt;iM Global Partner&lt;/td&gt;
+          &lt;td&gt;Global Head of ESG Strategy&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/chloe-vidal-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Internal mobility&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;David Chen&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Auris Gestion&lt;/td&gt;
+          &lt;td&gt;Auris Gestion&lt;/td&gt;
+          &lt;td&gt;Head of Portfolio Management&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/david-chen-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;company_change&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Elena Rossi&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Silex&lt;/td&gt;
+          &lt;td&gt;Pictet Wealth Management&lt;/td&gt;
+          &lt;td&gt;Executive Director, Private Wealth&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/elena-rossi-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Changed employer&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Emma Wagner&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Gemway Assets&lt;/td&gt;
+          &lt;td&gt;Gemway Assets&lt;/td&gt;
+          &lt;td&gt;Emerging Markets Portfolio Manager&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/emma-wagner-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Isabelle Lefevre&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Erasmus Gestion&lt;/td&gt;
+          &lt;td&gt;Erasmus Gestion&lt;/td&gt;
+          &lt;td&gt;Head of Client Solutions&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/isabelle-lefevre-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;role_change&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Julien Petit&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Meeschaert Amilton AM&lt;/td&gt;
+          &lt;td&gt;Meeschaert Amilton AM&lt;/td&gt;
+          &lt;td&gt;Head of Private Markets&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/julien-petit-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Internal mobility&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Laura Martinez&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Financiere Arbevel&lt;/td&gt;
+          &lt;td&gt;Financiere Arbevel&lt;/td&gt;
+          &lt;td&gt;Small &amp;amp; Mid Cap Analyst&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/laura-martinez-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Lucas Fischer&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Zadig Asset Management&lt;/td&gt;
+          &lt;td&gt;Zadig Asset Management&lt;/td&gt;
+          &lt;td&gt;Alternative Investments Manager&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/lucas-fischer-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;company_change&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Marc Dubois&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Sycomore Asset Management&lt;/td&gt;
+          &lt;td&gt;Portzamparc Gestion&lt;/td&gt;
+          &lt;td&gt;Senior Portfolio Manager, Global Equities&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/marc-dubois-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Changed employer&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Marta Silva&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Pergam Finance&lt;/td&gt;
+          &lt;td&gt;Pergam Finance&lt;/td&gt;
+          &lt;td&gt;Wealth Advisor&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/marta-silva-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Mathieu Blanc&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Yomoni&lt;/td&gt;
+          &lt;td&gt;Yomoni&lt;/td&gt;
+          &lt;td&gt;Head of Product&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/mathieu-blanc-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Nicolas Girard&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Financiere Tiepolo&lt;/td&gt;
+          &lt;td&gt;Financiere Tiepolo&lt;/td&gt;
+          &lt;td&gt;Head of Equity Research&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/nicolas-girard-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Paolo Ricci&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Ecofi Investissements&lt;/td&gt;
+          &lt;td&gt;Ecofi Investissements&lt;/td&gt;
+          &lt;td&gt;Head of Institutional Sales&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/paolo-ricci-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Raphael Costa&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Nalo&lt;/td&gt;
+          &lt;td&gt;Nalo&lt;/td&gt;
+          &lt;td&gt;Head of Investment Solutions&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/raphael-costa-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Sarah Klein&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Kirao AM&lt;/td&gt;
+          &lt;td&gt;Kirao AM&lt;/td&gt;
+          &lt;td&gt;Senior Fund Manager, Small Caps&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/sarah-klein-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;company_change&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Sophie Laurent&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Sanso Investment Solutions&lt;/td&gt;
+          &lt;td&gt;Amundi&lt;/td&gt;
+          &lt;td&gt;Head of ESG Client Solutions&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/sophie-laurent-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Changed employer&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr class=&quot;&quot;&gt;
+          &lt;td&gt;&lt;strong&gt;Thomas Bernard&lt;/strong&gt;&lt;/td&gt;
+          &lt;td&gt;Palatine Asset Management&lt;/td&gt;
+          &lt;td&gt;Palatine Asset Management&lt;/td&gt;
+          &lt;td&gt;Senior Quantitative Analyst&lt;/td&gt;
+          &lt;td&gt;&lt;a class=&quot;li&quot; href=&quot;https://www.linkedin.com/in/thomas-bernard-factset-demo&quot; target=&quot;_blank&quot;&gt;linkedin.com/in/...&lt;/a&gt;&lt;/td&gt;
+          &lt;td class=&quot;status&quot;&gt;&lt;span class=&quot;status-badge&quot;&gt;Stable&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;&lt;/tbody&gt;
+      &lt;/table&gt;
+    &lt;/section&gt;
+
+    &lt;footer&gt;
+      All data on this page is fictional, generated for demonstration purposes.
+      In production, users come from Salesforce, profiles are queried via the LinkedIn API (Proxycurl),
+      and client-status of the new employer is verified against the Salesforce Account object.
+    &lt;/footer&gt;
+  &lt;/main&gt;
+&lt;/body&gt;&lt;/html&gt;" style="height:1400px;"></iframe>
+      <div class="panel-note"><strong>Manager view.</strong>
+        20 FactSet users monitored. Alerts weighted equally, ordered by detection time.
+        Each employer change is enriched with a Salesforce lookup on the destination company.</div>
+    </div>
+    <div class="panel" data-panel="email" role="tabpanel">
+      <iframe title="Email digest preview" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;title&gt;FactSet Client Watch - Weekly alerts&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,&#x27;Segoe UI&#x27;,Roboto,Arial,sans-serif;color:#1a1f36;&quot;&gt;
+  &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;background:#f4f5f7;padding:32px 16px;&quot;&gt;
+    &lt;tr&gt;&lt;td align=&quot;center&quot;&gt;
+      &lt;table role=&quot;presentation&quot; width=&quot;640&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#0f2645;padding:24px 28px;color:#ffffff;&quot;&gt;
+          &lt;div style=&quot;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.7;&quot;&gt;FactSet Client Watch&lt;/div&gt;
+          &lt;div style=&quot;font-size:22px;font-weight:600;margin-top:6px;&quot;&gt;Weekly alerts - user movements&lt;/div&gt;
+          &lt;div style=&quot;font-size:14px;opacity:0.8;margin-top:4px;&quot;&gt;5 movement(s) detected on your FactSet users this week&lt;/div&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td style=&quot;padding:24px 28px;&quot;&gt;
+          &lt;p style=&quot;margin:0 0 20px 0;font-size:14px;line-height:1.55;color:#3c4257;&quot;&gt;
+            Hi,&lt;br&gt;&lt;br&gt;
+            Here are the movements detected this week on the LinkedIn profiles of your FactSet users.
+            Employer changes and internal mobility are shown with equal priority; each employer change also
+            indicates whether the new employer is already a FactSet client account.
+          &lt;/p&gt;
+          
+          &lt;div style=&quot;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b3261e;margin:0 0 10px 0;&quot;&gt;
+            Employer changes (3)
+          &lt;/div&gt;
+          
+        &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;border-left:8px solid #0d7f42;background:#ecfdf3;border-radius:8px;margin-bottom:14px;&quot;&gt;
+          &lt;tr&gt;&lt;td style=&quot;padding:16px 18px;&quot;&gt;
+            &lt;div style=&quot;font-size:15px;font-weight:600;color:#0f172a;&quot;&gt;Elena Rossi&lt;span style=&quot;display:inline-block;background:#0d7f42;color:#ffffff;padding:5px 11px 5px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-left:10px;&quot;&gt;&lt;svg width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; style=&quot;vertical-align:-2px;&quot;&gt;&lt;path d=&quot;M4 10.5l4 4L16 6&quot; stroke=&quot;#ffffff&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;&amp;nbsp;SEAT MAY TRANSFER&lt;/span&gt;&lt;/div&gt;
+            &lt;div style=&quot;margin-top:10px;font-size:13px;color:#1e293b;&quot;&gt;
+              &lt;span style=&quot;color:#64748b;&quot;&gt;Silex&lt;/span&gt;&amp;nbsp;&amp;rarr;&amp;nbsp;&lt;strong&gt;Pictet Wealth Management&lt;/strong&gt;
+            &lt;/div&gt;
+            &lt;div style=&quot;margin-top:6px;font-size:12.5px;color:#475569;&quot;&gt;New title: Executive Director, Private Wealth&lt;/div&gt;
+            &lt;div style=&quot;margin-top:6px;font-size:12px;color:#0d7f42;font-weight:600;&quot;&gt;FactSet client account&amp;nbsp;: 0011x000ACC029&lt;/div&gt;
+            &lt;div style=&quot;margin-top:12px;&quot;&gt;
+              &lt;a href=&quot;https://www.linkedin.com/in/elena-rossi-factset-demo&quot; style=&quot;font-size:12px;color:#0a5cff;text-decoration:none;&quot;&gt;Open LinkedIn profile &amp;rarr;&lt;/a&gt;
+            &lt;/div&gt;
+          &lt;/td&gt;&lt;/tr&gt;
+        &lt;/table&gt;
+        &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;border-left:8px solid #c62828;background:#fef2f2;border-radius:8px;margin-bottom:14px;&quot;&gt;
+          &lt;tr&gt;&lt;td style=&quot;padding:16px 18px;&quot;&gt;
+            &lt;div style=&quot;font-size:15px;font-weight:600;color:#0f172a;&quot;&gt;Marc Dubois&lt;span style=&quot;display:inline-block;background:#c62828;color:#ffffff;padding:5px 11px 5px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-left:10px;&quot;&gt;&lt;svg width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; style=&quot;vertical-align:-2px;&quot;&gt;&lt;path d=&quot;M5 5l10 10M15 5L5 15&quot; stroke=&quot;#ffffff&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;&amp;nbsp;LIKELY CHURN&lt;/span&gt;&lt;/div&gt;
+            &lt;div style=&quot;margin-top:10px;font-size:13px;color:#1e293b;&quot;&gt;
+              &lt;span style=&quot;color:#64748b;&quot;&gt;Sycomore Asset Management&lt;/span&gt;&amp;nbsp;&amp;rarr;&amp;nbsp;&lt;strong&gt;Portzamparc Gestion&lt;/strong&gt;
+            &lt;/div&gt;
+            &lt;div style=&quot;margin-top:6px;font-size:12.5px;color:#475569;&quot;&gt;New title: Senior Portfolio Manager, Global Equities&lt;/div&gt;
+            &lt;div style=&quot;margin-top:6px;font-size:12px;color:#c62828;font-weight:600;&quot;&gt;Portzamparc Gestion is not on the FactSet client roster&lt;/div&gt;
+            &lt;div style=&quot;margin-top:12px;&quot;&gt;
+              &lt;a href=&quot;https://www.linkedin.com/in/marc-dubois-factset-demo&quot; style=&quot;font-size:12px;color:#0a5cff;text-decoration:none;&quot;&gt;Open LinkedIn profile &amp;rarr;&lt;/a&gt;
+            &lt;/div&gt;
+          &lt;/td&gt;&lt;/tr&gt;
+        &lt;/table&gt;
+        &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;border-left:8px solid #0d7f42;background:#ecfdf3;border-radius:8px;margin-bottom:14px;&quot;&gt;
+          &lt;tr&gt;&lt;td style=&quot;padding:16px 18px;&quot;&gt;
+            &lt;div style=&quot;font-size:15px;font-weight:600;color:#0f172a;&quot;&gt;Sophie Laurent&lt;span style=&quot;display:inline-block;background:#0d7f42;color:#ffffff;padding:5px 11px 5px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-left:10px;&quot;&gt;&lt;svg width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; style=&quot;vertical-align:-2px;&quot;&gt;&lt;path d=&quot;M4 10.5l4 4L16 6&quot; stroke=&quot;#ffffff&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;&amp;nbsp;SEAT MAY TRANSFER&lt;/span&gt;&lt;/div&gt;
+            &lt;div style=&quot;margin-top:10px;font-size:13px;color:#1e293b;&quot;&gt;
+              &lt;span style=&quot;color:#64748b;&quot;&gt;Sanso Investment Solutions&lt;/span&gt;&amp;nbsp;&amp;rarr;&amp;nbsp;&lt;strong&gt;Amundi&lt;/strong&gt;
+            &lt;/div&gt;
+            &lt;div style=&quot;margin-top:6px;font-size:12.5px;color:#475569;&quot;&gt;New title: Head of ESG Client Solutions&lt;/div&gt;
+            &lt;div style=&quot;margin-top:6px;font-size:12px;color:#0d7f42;font-weight:600;&quot;&gt;FactSet client account&amp;nbsp;: 0011x000ACC001&lt;/div&gt;
+            &lt;div style=&quot;margin-top:12px;&quot;&gt;
+              &lt;a href=&quot;https://www.linkedin.com/in/sophie-laurent-factset-demo&quot; style=&quot;font-size:12px;color:#0a5cff;text-decoration:none;&quot;&gt;Open LinkedIn profile &amp;rarr;&lt;/a&gt;
+            &lt;/div&gt;
+          &lt;/td&gt;&lt;/tr&gt;
+        &lt;/table&gt;
+          &lt;div style=&quot;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#0b57d0;margin:20px 0 10px 0;&quot;&gt;
+            Internal mobility (2)
+          &lt;/div&gt;
+          
+        &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;border-left:8px solid #1a56db;background:#eff6ff;border-radius:8px;margin-bottom:14px;&quot;&gt;
+          &lt;tr&gt;&lt;td style=&quot;padding:16px 18px;&quot;&gt;
+            &lt;div style=&quot;font-size:15px;font-weight:600;color:#0f172a;&quot;&gt;Chloe Vidal&lt;span style=&quot;display:inline-block;background:#1a56db;color:#ffffff;padding:5px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-left:10px;&quot;&gt;RELATIONSHIP OPPORTUNITY&lt;/span&gt;&lt;/div&gt;
+            &lt;div style=&quot;margin-top:10px;font-size:13px;color:#1e293b;&quot;&gt;
+              &lt;span style=&quot;color:#64748b;&quot;&gt;Head of ESG Research&lt;/span&gt;&amp;nbsp;&amp;rarr;&amp;nbsp;&lt;strong&gt;Global Head of ESG Strategy&lt;/strong&gt;
+            &lt;/div&gt;
+            &lt;div style=&quot;margin-top:6px;font-size:12.5px;color:#475569;&quot;&gt;Still at: iM Global Partner&lt;/div&gt;
+            &lt;div style=&quot;margin-top:12px;&quot;&gt;
+              &lt;a href=&quot;https://www.linkedin.com/in/chloe-vidal-factset-demo&quot; style=&quot;font-size:12px;color:#0a5cff;text-decoration:none;&quot;&gt;Open LinkedIn profile &amp;rarr;&lt;/a&gt;
+            &lt;/div&gt;
+          &lt;/td&gt;&lt;/tr&gt;
+        &lt;/table&gt;
+        &lt;table role=&quot;presentation&quot; width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;border-left:8px solid #1a56db;background:#eff6ff;border-radius:8px;margin-bottom:14px;&quot;&gt;
+          &lt;tr&gt;&lt;td style=&quot;padding:16px 18px;&quot;&gt;
+            &lt;div style=&quot;font-size:15px;font-weight:600;color:#0f172a;&quot;&gt;Julien Petit&lt;span style=&quot;display:inline-block;background:#1a56db;color:#ffffff;padding:5px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-left:10px;&quot;&gt;RELATIONSHIP OPPORTUNITY&lt;/span&gt;&lt;/div&gt;
+            &lt;div style=&quot;margin-top:10px;font-size:13px;color:#1e293b;&quot;&gt;
+              &lt;span style=&quot;color:#64748b;&quot;&gt;Senior Investment Manager&lt;/span&gt;&amp;nbsp;&amp;rarr;&amp;nbsp;&lt;strong&gt;Head of Private Markets&lt;/strong&gt;
+            &lt;/div&gt;
+            &lt;div style=&quot;margin-top:6px;font-size:12.5px;color:#475569;&quot;&gt;Still at: Meeschaert Amilton AM&lt;/div&gt;
+            &lt;div style=&quot;margin-top:12px;&quot;&gt;
+              &lt;a href=&quot;https://www.linkedin.com/in/julien-petit-factset-demo&quot; style=&quot;font-size:12px;color:#0a5cff;text-decoration:none;&quot;&gt;Open LinkedIn profile &amp;rarr;&lt;/a&gt;
+            &lt;/div&gt;
+          &lt;/td&gt;&lt;/tr&gt;
+        &lt;/table&gt;
+          &lt;p style=&quot;margin:24px 0 0 0;font-size:12px;color:#697386;line-height:1.5;&quot;&gt;
+            Next run: next Monday.&lt;br&gt;
+            Generated by FactSet Client Watch (demo mode).
+          &lt;/p&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+  &lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;" style="height:1400px;"></iframe>
+      <div class="panel-note"><strong>Weekly digest email.</strong>
+        Sent every Monday to the account-management team via SMTP.</div>
+    </div>
+    <div class="panel" data-panel="teams" role="tabpanel">
+      <iframe title="Microsoft Teams preview" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;title&gt;Teams preview - FactSet alerts&lt;/title&gt;&lt;/head&gt;
+&lt;body style=&quot;margin:0;padding:32px;background:#e6e9ef;font-family:&#x27;Segoe UI&#x27;,-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#252424;&quot;&gt;
+  &lt;div style=&quot;max-width:520px;margin:0 auto;&quot;&gt;
+    &lt;div style=&quot;font-size:13px;color:#616770;margin-bottom:8px;&quot;&gt;Microsoft Teams &amp;middot; channel &lt;strong&gt;#account-management&lt;/strong&gt;&lt;/div&gt;
+    &lt;div style=&quot;background:#ffffff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.12);overflow:hidden;&quot;&gt;
+      &lt;div style=&quot;background:#0f2645;color:#ffffff;padding:14px 18px;&quot;&gt;
+        &lt;div style=&quot;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;opacity:0.75;&quot;&gt;Connector &amp;middot; FactSet Client Watch&lt;/div&gt;
+        &lt;div style=&quot;font-size:16px;font-weight:600;margin-top:4px;&quot;&gt;Weekly alerts - user movements&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div style=&quot;padding:8px 18px 18px 18px;&quot;&gt;
+        
+        &lt;div style=&quot;border-top:1px solid #edebe9;padding:14px 0 14px 14px;margin-left:-4px;border-left:4px solid #1a56db;&quot;&gt;
+          &lt;div style=&quot;display:flex;align-items:flex-start;gap:10px;&quot;&gt;
+            &lt;div style=&quot;width:32px;height:32px;border-radius:50%;background:#0f2645;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;&quot;&gt;
+              CV
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;div style=&quot;font-size:14px;font-weight:600;&quot;&gt;&lt;span style=&quot;background:#e8f0fe;color:#1a56db;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-right:6px;&quot;&gt;Internal mobility&lt;/span&gt;Chloe Vidal&lt;/div&gt;
+              &lt;div style=&quot;font-size:12px;color:#616770;margin-top:4px;&quot;&gt;&lt;span style=&quot;color:#616770;&quot;&gt;Head of ESG Research&lt;/span&gt; &amp;rarr; &lt;strong style=&quot;color:#252424;&quot;&gt;Global Head of ESG Strategy&lt;/strong&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div style=&quot;font-size:12px;color:#616770;margin:8px 0 0 42px;&quot;&gt;Still at: iM Global Partner&lt;/div&gt;
+          &lt;div style=&quot;margin:10px 0 0 42px;&quot;&gt;
+            &lt;a href=&quot;https://www.linkedin.com/in/chloe-vidal-factset-demo&quot; style=&quot;display:inline-block;font-size:12px;color:#ffffff;background:#0a5cff;padding:6px 12px;border-radius:4px;text-decoration:none;&quot;&gt;Open LinkedIn profile&lt;/a&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div style=&quot;border-top:1px solid #edebe9;padding:14px 0 14px 14px;margin-left:-4px;border-left:4px solid #0d7f42;&quot;&gt;
+          &lt;div style=&quot;display:flex;align-items:flex-start;gap:10px;&quot;&gt;
+            &lt;div style=&quot;width:32px;height:32px;border-radius:50%;background:#0f2645;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;&quot;&gt;
+              ER
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;div style=&quot;font-size:14px;font-weight:600;&quot;&gt;&lt;span style=&quot;background:#fdecea;color:#b3261e;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-right:6px;&quot;&gt;Employer change&lt;/span&gt;Elena Rossi&lt;span style=&quot;display:inline-block;background:#0d7f42;color:#ffffff;padding:5px 11px 5px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-left:10px;&quot;&gt;&lt;svg width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; style=&quot;vertical-align:-2px;&quot;&gt;&lt;path d=&quot;M4 10.5l4 4L16 6&quot; stroke=&quot;#ffffff&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;&amp;nbsp;SEAT MAY TRANSFER&lt;/span&gt;&lt;/div&gt;
+              &lt;div style=&quot;font-size:12px;color:#616770;margin-top:4px;&quot;&gt;&lt;span style=&quot;color:#616770;&quot;&gt;Silex&lt;/span&gt; &amp;rarr; &lt;strong style=&quot;color:#252424;&quot;&gt;Pictet Wealth Management&lt;/strong&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div style=&quot;font-size:12px;color:#616770;margin:8px 0 0 42px;&quot;&gt;New title: Executive Director, Private Wealth&lt;/div&gt;
+          &lt;div style=&quot;margin:10px 0 0 42px;&quot;&gt;
+            &lt;a href=&quot;https://www.linkedin.com/in/elena-rossi-factset-demo&quot; style=&quot;display:inline-block;font-size:12px;color:#ffffff;background:#0a5cff;padding:6px 12px;border-radius:4px;text-decoration:none;&quot;&gt;Open LinkedIn profile&lt;/a&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div style=&quot;border-top:1px solid #edebe9;padding:14px 0 14px 14px;margin-left:-4px;border-left:4px solid #1a56db;&quot;&gt;
+          &lt;div style=&quot;display:flex;align-items:flex-start;gap:10px;&quot;&gt;
+            &lt;div style=&quot;width:32px;height:32px;border-radius:50%;background:#0f2645;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;&quot;&gt;
+              JP
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;div style=&quot;font-size:14px;font-weight:600;&quot;&gt;&lt;span style=&quot;background:#e8f0fe;color:#1a56db;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-right:6px;&quot;&gt;Internal mobility&lt;/span&gt;Julien Petit&lt;/div&gt;
+              &lt;div style=&quot;font-size:12px;color:#616770;margin-top:4px;&quot;&gt;&lt;span style=&quot;color:#616770;&quot;&gt;Senior Investment Manager&lt;/span&gt; &amp;rarr; &lt;strong style=&quot;color:#252424;&quot;&gt;Head of Private Markets&lt;/strong&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div style=&quot;font-size:12px;color:#616770;margin:8px 0 0 42px;&quot;&gt;Still at: Meeschaert Amilton AM&lt;/div&gt;
+          &lt;div style=&quot;margin:10px 0 0 42px;&quot;&gt;
+            &lt;a href=&quot;https://www.linkedin.com/in/julien-petit-factset-demo&quot; style=&quot;display:inline-block;font-size:12px;color:#ffffff;background:#0a5cff;padding:6px 12px;border-radius:4px;text-decoration:none;&quot;&gt;Open LinkedIn profile&lt;/a&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div style=&quot;border-top:1px solid #edebe9;padding:14px 0 14px 14px;margin-left:-4px;border-left:4px solid #c62828;&quot;&gt;
+          &lt;div style=&quot;display:flex;align-items:flex-start;gap:10px;&quot;&gt;
+            &lt;div style=&quot;width:32px;height:32px;border-radius:50%;background:#0f2645;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;&quot;&gt;
+              MD
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;div style=&quot;font-size:14px;font-weight:600;&quot;&gt;&lt;span style=&quot;background:#fdecea;color:#b3261e;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-right:6px;&quot;&gt;Employer change&lt;/span&gt;Marc Dubois&lt;span style=&quot;display:inline-block;background:#c62828;color:#ffffff;padding:5px 11px 5px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-left:10px;&quot;&gt;&lt;svg width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; style=&quot;vertical-align:-2px;&quot;&gt;&lt;path d=&quot;M5 5l10 10M15 5L5 15&quot; stroke=&quot;#ffffff&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;&amp;nbsp;LIKELY CHURN&lt;/span&gt;&lt;/div&gt;
+              &lt;div style=&quot;font-size:12px;color:#616770;margin-top:4px;&quot;&gt;&lt;span style=&quot;color:#616770;&quot;&gt;Sycomore Asset Management&lt;/span&gt; &amp;rarr; &lt;strong style=&quot;color:#252424;&quot;&gt;Portzamparc Gestion&lt;/strong&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div style=&quot;font-size:12px;color:#616770;margin:8px 0 0 42px;&quot;&gt;New title: Senior Portfolio Manager, Global Equities&lt;/div&gt;
+          &lt;div style=&quot;margin:10px 0 0 42px;&quot;&gt;
+            &lt;a href=&quot;https://www.linkedin.com/in/marc-dubois-factset-demo&quot; style=&quot;display:inline-block;font-size:12px;color:#ffffff;background:#0a5cff;padding:6px 12px;border-radius:4px;text-decoration:none;&quot;&gt;Open LinkedIn profile&lt;/a&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div style=&quot;border-top:1px solid #edebe9;padding:14px 0 14px 14px;margin-left:-4px;border-left:4px solid #0d7f42;&quot;&gt;
+          &lt;div style=&quot;display:flex;align-items:flex-start;gap:10px;&quot;&gt;
+            &lt;div style=&quot;width:32px;height:32px;border-radius:50%;background:#0f2645;color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;&quot;&gt;
+              SL
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;div style=&quot;font-size:14px;font-weight:600;&quot;&gt;&lt;span style=&quot;background:#fdecea;color:#b3261e;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-right:6px;&quot;&gt;Employer change&lt;/span&gt;Sophie Laurent&lt;span style=&quot;display:inline-block;background:#0d7f42;color:#ffffff;padding:5px 11px 5px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-left:10px;&quot;&gt;&lt;svg width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 20 20&quot; fill=&quot;none&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; style=&quot;vertical-align:-2px;&quot;&gt;&lt;path d=&quot;M4 10.5l4 4L16 6&quot; stroke=&quot;#ffffff&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;/&gt;&lt;/svg&gt;&amp;nbsp;SEAT MAY TRANSFER&lt;/span&gt;&lt;/div&gt;
+              &lt;div style=&quot;font-size:12px;color:#616770;margin-top:4px;&quot;&gt;&lt;span style=&quot;color:#616770;&quot;&gt;Sanso Investment Solutions&lt;/span&gt; &amp;rarr; &lt;strong style=&quot;color:#252424;&quot;&gt;Amundi&lt;/strong&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div style=&quot;font-size:12px;color:#616770;margin:8px 0 0 42px;&quot;&gt;New title: Head of ESG Client Solutions&lt;/div&gt;
+          &lt;div style=&quot;margin:10px 0 0 42px;&quot;&gt;
+            &lt;a href=&quot;https://www.linkedin.com/in/sophie-laurent-factset-demo&quot; style=&quot;display:inline-block;font-size:12px;color:#ffffff;background:#0a5cff;padding:6px 12px;border-radius:4px;text-decoration:none;&quot;&gt;Open LinkedIn profile&lt;/a&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div style=&quot;font-size:11px;color:#616770;margin-top:10px;&quot;&gt;Static preview of the Teams message. In production, this content is sent via an incoming webhook.&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;" style="height:900px;"></iframe>
+      <div class="panel-note"><strong>Microsoft Teams card.</strong>
+        Posted to the account-management channel via an incoming webhook.</div>
+    </div>
+  </main>
+
+  <footer class="foot">
+    All data on this page is fictional, generated for demonstration purposes.
+    In production, users come from Salesforce, LinkedIn profiles are queried via the Proxycurl API,
+    and the destination-employer status is verified against the Salesforce Account object.
+  </footer>
+</div>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll('nav.tabs button');
+  var panels = document.querySelectorAll('.panel');
+  buttons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = btn.getAttribute('data-tab');
+      buttons.forEach(function (b) {
+        var active = b === btn;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      panels.forEach(function (p) {
+        p.classList.toggle('active', p.getAttribute('data-panel') === target);
+      });
+    });
+  });
+  // Fit each iframe to its content once it loads (each panel has one).
+  document.querySelectorAll('iframe').forEach(function (frame) {
+    frame.addEventListener('load', function () {
+      try {
+        var doc = frame.contentDocument;
+        if (doc && doc.documentElement) {
+          var h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
+          frame.style.height = (h + 8) + 'px';
+        }
+      } catch (e) { /* srcdoc same-origin, but guard anyway */ }
+    });
+  });
+})();
+</script>
+</body></html>

@@ -1,0 +1,59 @@
+name: Refresh FactSet demo showcase
+
+# Regenerates docs/factset-demo/*.html by running the demo pipeline whenever
+# the bot code, its fixtures, or this workflow itself changes. The Pages site
+# is served by the existing pages.yml config (branch: main, folder: /docs),
+# so the manager-facing URL updates as soon as the regenerated files land on
+# main.
+on:
+  push:
+    branches:
+      - main
+      - claude/factset-linkedin-alerts-n07xfn
+    paths:
+      - "factset_bot/**"
+      - "data/factset_users_demo.csv"
+      - "data/factset_client_roster.csv"
+      - ".github/workflows/factset-demo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: factset-demo
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run demo pipeline
+        run: python -m factset_bot demo --no-open --fast
+
+      - name: Stage generated pages under docs/factset-demo/
+        run: |
+          mkdir -p docs/factset-demo
+          cp demo_output/showcase.html docs/factset-demo/index.html
+          cp demo_output/dashboard.html docs/factset-demo/
+          cp demo_output/alert_email_preview.html docs/factset-demo/
+          cp demo_output/alert_teams_preview.html docs/factset-demo/
+          cp demo_output/alert_teams_payload.json docs/factset-demo/
+
+      - name: Commit if anything changed
+        run: |
+          if ! git diff --quiet -- docs/factset-demo/; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/factset-demo/
+            git commit -m "Refresh FactSet demo showcase [skip ci]"
+            git push
+          else
+            echo "No changes to the FactSet demo showcase."
+          fi

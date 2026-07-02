@@ -1,0 +1,160 @@
+{
+  "@type": "MessageCard",
+  "@context": "http://schema.org/extensions",
+  "themeColor": "0F2645",
+  "summary": "FactSet Client Watch - 5 movement(s)",
+  "title": "FactSet Client Watch - weekly alerts",
+  "text": "3 employer change(s) and 2 internal move(s) detected on your FactSet users this week.",
+  "sections": [
+    {
+      "activityTitle": "Chloe Vidal",
+      "activitySubtitle": "Internal mobility @ iM Global Partner",
+      "facts": [
+        {
+          "name": "Previous title",
+          "value": "Head of ESG Research"
+        },
+        {
+          "name": "New title",
+          "value": "Global Head of ESG Strategy"
+        },
+        {
+          "name": "Detected on",
+          "value": "2026-07-02T21:39:20+00:00"
+        }
+      ],
+      "potentialAction": [
+        {
+          "@type": "OpenUri",
+          "name": "Open LinkedIn profile",
+          "targets": [
+            {
+              "os": "default",
+              "uri": "https://www.linkedin.com/in/chloe-vidal-factset-demo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "activityTitle": "Elena Rossi",
+      "activitySubtitle": "Silex -> Pictet Wealth Management",
+      "facts": [
+        {
+          "name": "New title",
+          "value": "Executive Director, Private Wealth"
+        },
+        {
+          "name": "New employer FactSet client",
+          "value": "Yes (0011x000ACC029) - seat may transfer"
+        },
+        {
+          "name": "Detected on",
+          "value": "2026-07-02T21:39:20+00:00"
+        }
+      ],
+      "potentialAction": [
+        {
+          "@type": "OpenUri",
+          "name": "Open LinkedIn profile",
+          "targets": [
+            {
+              "os": "default",
+              "uri": "https://www.linkedin.com/in/elena-rossi-factset-demo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "activityTitle": "Julien Petit",
+      "activitySubtitle": "Internal mobility @ Meeschaert Amilton AM",
+      "facts": [
+        {
+          "name": "Previous title",
+          "value": "Senior Investment Manager"
+        },
+        {
+          "name": "New title",
+          "value": "Head of Private Markets"
+        },
+        {
+          "name": "Detected on",
+          "value": "2026-07-02T21:39:20+00:00"
+        }
+      ],
+      "potentialAction": [
+        {
+          "@type": "OpenUri",
+          "name": "Open LinkedIn profile",
+          "targets": [
+            {
+              "os": "default",
+              "uri": "https://www.linkedin.com/in/julien-petit-factset-demo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "activityTitle": "Marc Dubois",
+      "activitySubtitle": "Sycomore Asset Management -> Portzamparc Gestion",
+      "facts": [
+        {
+          "name": "New title",
+          "value": "Senior Portfolio Manager, Global Equities"
+        },
+        {
+          "name": "New employer FactSet client",
+          "value": "No - likely churn"
+        },
+        {
+          "name": "Detected on",
+          "value": "2026-07-02T21:39:20+00:00"
+        }
+      ],
+      "potentialAction": [
+        {
+          "@type": "OpenUri",
+          "name": "Open LinkedIn profile",
+          "targets": [
+            {
+              "os": "default",
+              "uri": "https://www.linkedin.com/in/marc-dubois-factset-demo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "activityTitle": "Sophie Laurent",
+      "activitySubtitle": "Sanso Investment Solutions -> Amundi",
+      "facts": [
+        {
+          "name": "New title",
+          "value": "Head of ESG Client Solutions"
+        },
+        {
+          "name": "New employer FactSet client",
+          "value": "Yes (0011x000ACC001) - seat may transfer"
+        },
+        {
+          "name": "Detected on",
+          "value": "2026-07-02T21:39:20+00:00"
+        }
+      ],
+      "potentialAction": [
+        {
+          "@type": "OpenUri",
+          "name": "Open LinkedIn profile",
+          "targets": [
+            {
+              "os": "default",
+              "uri": "https://www.linkedin.com/in/sophie-laurent-factset-demo"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
