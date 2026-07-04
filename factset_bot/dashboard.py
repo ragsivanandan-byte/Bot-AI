@@ -204,8 +204,9 @@ footer {{ text-align:center; color:var(--muted); font-size:12px; margin-top:20px
 
     <footer>
       All data on this page is fictional, generated for demonstration purposes.
-      In production, users come from Salesforce, profiles are queried via the LinkedIn API (Proxycurl),
-      and client-status of the new employer is verified against the Salesforce Account object.
+      In production, users come from Salesforce, LinkedIn signal comes from a compliant enrichment
+      provider (Coresignal, People Data Labs, or LinkedIn's SNAP API), and the client-status of
+      the new employer is verified against the Salesforce Account object.
     </footer>
   </main>
 </body></html>"""

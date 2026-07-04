@@ -3,16 +3,16 @@ from __future__ import annotations
 
 import logging
 
-from .linkedin_client import ProxycurlClient, ProxycurlError
+from .linkedin_client import LinkedInProvider, LinkedInProviderError
 from .normalize import split_name
 from .storage import Storage, User
 
 log = logging.getLogger(__name__)
 
 
-def match_all_unresolved(storage: Storage, client: ProxycurlClient,
+def match_all_unresolved(storage: Storage, client: LinkedInProvider,
                          limit: int | None = None) -> tuple[int, int]:
-    """For every user with no LinkedIn URL yet, ask Proxycurl to resolve one.
+    """For every user with no LinkedIn URL yet, ask the provider to resolve one.
 
     Returns (attempted, matched).
     """
@@ -26,7 +26,7 @@ def match_all_unresolved(storage: Storage, client: ProxycurlClient,
         attempted += 1
         try:
             result = _resolve_one(user, client)
-        except ProxycurlError as exc:
+        except LinkedInProviderError as exc:
             log.error("Lookup failed for %s (%s): %s", user.full_name, user.salesforce_id, exc)
             continue
         if not result:
@@ -39,7 +39,7 @@ def match_all_unresolved(storage: Storage, client: ProxycurlClient,
     return attempted, matched
 
 
-def _resolve_one(user: User, client: ProxycurlClient) -> tuple[str, str | None, str | None, float | None] | None:
+def _resolve_one(user: User, client: LinkedInProvider) -> tuple[str, str | None, str | None, float | None] | None:
     first_name, last_name = split_name(user.full_name)
     if not last_name:
         return None

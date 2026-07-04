@@ -1,11 +1,11 @@
-"""Deterministic mock LinkedIn client for the sales demo.
+"""Deterministic mock LinkedIn provider for the sales demo.
 
-Implements the same interface as :class:`ProxycurlClient` but returns
-canned responses. Once :meth:`advance_week` is called, three users appear
-at a new company and two get promoted inside their existing company —
-so the weekly-check step in the demo always yields exactly five alerts
-(3 employer changes + 2 internal moves) drawn from
-data/factset_users_demo.csv.
+Implements the :class:`LinkedInProvider` protocol from
+:mod:`factset_bot.linkedin_client` and returns canned responses. Once
+:meth:`advance_week` is called, three users appear at a new company and
+two get promoted inside their existing company — so the weekly-check
+step in the demo always yields exactly five alerts (3 employer changes
++ 2 internal moves) drawn from data/factset_users_demo.csv.
 
 Destination choices are tuned so the client-directory lookup produces a
 mixed story: two departures land at FactSet clients (Amundi, Pictet
@@ -98,8 +98,8 @@ TITLE_BY_NAME: dict[str, str] = {
 
 
 @dataclass
-class MockProxycurlClient:
-    """Drop-in stand-in for :class:`ProxycurlClient` used by the demo."""
+class MockLinkedInProvider:
+    """Deterministic in-memory :class:`LinkedInProvider` used by the demo."""
 
     week: int = 1
 

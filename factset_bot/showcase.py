@@ -96,8 +96,9 @@ nav.tabs button:focus-visible {{ outline:2px solid #93c5fd; outline-offset:1px; 
 
   <footer class="foot">
     All data on this page is fictional, generated for demonstration purposes.
-    In production, users come from Salesforce, LinkedIn profiles are queried via the Proxycurl API,
-    and the destination-employer status is verified against the Salesforce Account object.
+    In production, users come from Salesforce, LinkedIn signal comes from a compliant enrichment
+    provider (Coresignal, People Data Labs, or LinkedIn's SNAP API), and the destination-employer
+    status is verified against the Salesforce Account object.
   </footer>
 </div>
 

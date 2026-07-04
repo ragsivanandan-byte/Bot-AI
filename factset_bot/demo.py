@@ -11,7 +11,7 @@ from . import alerts as alerts_module
 from . import matcher, monitor
 from .client_directory import ClientDirectory
 from .dashboard import DashboardLinks, render_dashboard
-from .mock_client import MockProxycurlClient
+from .mock_client import MockLinkedInProvider
 from .salesforce_ingest import load_csv
 from .showcase import render_showcase
 from .storage import CHANGE_TYPE_COMPANY, CHANGE_TYPE_ROLE, Storage
@@ -25,7 +25,7 @@ def run_demo(csv_path: Path, out_dir: Path, roster_path: Path,
     if db_path.exists():
         db_path.unlink()  # fresh run every demo
     storage = Storage(db_path)
-    client = MockProxycurlClient()
+    client = MockLinkedInProvider()
     directory = ClientDirectory.from_csv(roster_path)
 
     _step("1/6", "Ingesting FactSet users from Salesforce export")
@@ -39,7 +39,7 @@ def run_demo(csv_path: Path, out_dir: Path, roster_path: Path,
 
     _step("3/6", "Matching Salesforce names + companies to LinkedIn profiles")
     attempted, matched = matcher.match_all_unresolved(storage, client)
-    print(f"      -> {matched}/{attempted} LinkedIn profiles resolved (mock Proxycurl).")
+    print(f"      -> {matched}/{attempted} LinkedIn profiles resolved (mock LinkedIn provider).")
     time.sleep(pause)
 
     _step("4/6", "Simulating one week elapsed (mock clock advances)")

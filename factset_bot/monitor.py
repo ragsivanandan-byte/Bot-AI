@@ -4,14 +4,14 @@ from __future__ import annotations
 import logging
 
 from .client_directory import ClientDirectory
-from .linkedin_client import ProxycurlClient, ProxycurlError
+from .linkedin_client import LinkedInProvider, LinkedInProviderError
 from .normalize import normalize_company
 from .storage import CHANGE_TYPE_COMPANY, CHANGE_TYPE_ROLE, Storage, User
 
 log = logging.getLogger(__name__)
 
 
-def check_all(storage: Storage, client: ProxycurlClient,
+def check_all(storage: Storage, client: LinkedInProvider,
               directory: ClientDirectory | None = None,
               limit: int | None = None) -> tuple[int, int, int]:
     """Fetch each matched user's LinkedIn profile and record any change.
@@ -39,7 +39,7 @@ def check_all(storage: Storage, client: ProxycurlClient,
         checked += 1
         try:
             profile = client.fetch_profile(user.linkedin_url)
-        except ProxycurlError as exc:
+        except LinkedInProviderError as exc:
             log.error("Profile fetch failed for %s: %s", user.full_name, exc)
             continue
 
