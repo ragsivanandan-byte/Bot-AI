@@ -1,14 +1,14 @@
 {
   "symbol": "STRC",
-  "generated_utc": "2026-08-03T09:21:36Z",
+  "generated_utc": "2026-08-10T07:10:04Z",
   "live": false,
   "source": "snapshot local",
   "par": 100.0,
   "ipo_price": 90.0,
   "first_trade": "2025-07-30",
   "default_apy": 0.09,
-  "interpolated_weeks": 43,
-  "weeks": 53,
+  "interpolated_weeks": 44,
+  "weeks": 54,
   "latest_close": 88.59,
   "weekly_closes": [
     {
@@ -273,6 +273,11 @@
     },
     {
       "date": "2026-07-31",
+      "close": 88.59,
+      "estimated": true
+    },
+    {
+      "date": "2026-08-07",
       "close": 88.59,
       "estimated": true
     }
