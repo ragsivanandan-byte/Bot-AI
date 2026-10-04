@@ -126,6 +126,125 @@ ok(await looksLikeMp4(await openAsBlob(f("plain.mp4"))), "looksLikeMp4 : MP4");
 ok(await looksLikeMp4(await openAsBlob(f("quicktime.mov"))), "looksLikeMp4 : MOV");
 ok(!(await looksLikeMp4(await openAsBlob(f("song.mp3")))), "looksLikeMp4 : MP3 = non");
 
+// --- Outils de réécriture de fichiers MP4 (cas difficiles à produire avec ffmpeg)
+const CONT = new Set(["moov", "trak", "mdia", "minf", "stbl", "edts", "dinf"]);
+function tree(buf, s = 0, e = buf.length) {
+  const out = [];
+  for (let p = s; p + 8 <= e;) {
+    const size = buf.readUInt32BE(p), type = buf.toString("latin1", p + 4, p + 8);
+    out.push(CONT.has(type) ? { type, kids: tree(buf, p + 8, p + size) } : { type, raw: buf.subarray(p, p + size) });
+    p += size;
+  }
+  return out;
+}
+function ser(n) {
+  if (n.raw) return n.raw;
+  const body = Buffer.concat(n.kids.map(ser));
+  const h = Buffer.alloc(8);
+  h.writeUInt32BE(body.length + 8);
+  h.write(n.type, 4, "latin1");
+  return Buffer.concat([h, body]);
+}
+const mapTree = (nodes, fn) => nodes.map((n) => fn(n.kids ? { ...n, kids: mapTree(n.kids, fn) } : n));
+const findAfter = (buf, what, after) => buf.indexOf(Buffer.from(what, "latin1"), buf.indexOf(Buffer.from(after, "latin1")));
+
+// QuickTime : la description audio v1 (esds dans « wave ») devient ISO v0 (esds direct).
+{
+  const { out } = await run("quicktime.mov");
+  const b = readFileSync(out);
+  const e = findAfter(b, "mp4a", "stsd") - 4;
+  ok(b.readUInt16BE(e + 16) === 0, "MOV : description audio convertie en ISO v0");
+  ok(b.toString("latin1", e + 40, e + 44) === "esds", "MOV : esds directement dans mp4a (plus de « wave »)");
+  ok(!b.includes(Buffer.from("wave")), "MOV : bloc QuickTime « wave » retiré");
+}
+
+// Vidéo > 4 Go : offsets 64 bits (co64) et mdat à taille 64 bits en ENTRÉE.
+{
+  const src = readFileSync(f("plain.mp4"));
+  const top = tree(src);
+  const SHIFT = 8; // l'en-tête de mdat passe de 8 à 16 octets
+  const moov = mapTree(top.filter((n) => n.type === "moov"), (n) => {
+    if (n.type !== "stco") return n;
+    const count = n.raw.readUInt32BE(12);
+    const co = Buffer.alloc(16 + 8 * count);
+    co.writeUInt32BE(co.length); co.write("co64", 4, "latin1"); co.writeUInt32BE(count, 12);
+    for (let i = 0; i < count; i++) co.writeBigUInt64BE(BigInt(n.raw.readUInt32BE(16 + 4 * i) + SHIFT), 16 + 8 * i);
+    return { type: "co64", raw: co };
+  });
+  const parts = top.map((n) => {
+    if (n.type === "moov") return ser(moov[0]);
+    if (n.type !== "mdat") return ser(n);
+    const h = Buffer.alloc(16);
+    h.writeUInt32BE(1); h.write("mdat", 4, "latin1"); h.writeBigUInt64BE(BigInt(n.raw.length - 8 + 16), 8);
+    return Buffer.concat([h, n.raw.subarray(8)]);
+  });
+  writeFileSync(f("big64.mp4"), Buffer.concat(parts));
+  ok(audioHash(f("big64.mp4")) === audioHash(f("plain.mp4")), "fichier 64 bits valide pour ffmpeg (contrôle)");
+  const { out } = await run("big64.mp4", "64 bits");
+  ok(audioHash(out) === audioHash(f("plain.mp4")), "co64 + mdat 64 bits en entrée : paquets identiques");
+}
+
+// Piste désactivée en premier : on prend la piste audio ACTIVÉE (2e, 880 Hz).
+{
+  ff(...SRC, "-f", "lavfi", "-i", "sine=frequency=880:sample_rate=44100", ...ENC, "-map", "0:v", "-map", "1:a", "-map", "2:a",
+    "-disposition:a:0", "0", "-disposition:a:1", "default", f("second_enabled.mp4"));
+  const { out } = await run("second_enabled.mp4");
+  ok(audioHash(out) === audioHash(f("second_enabled.mp4"), 1), "piste activée choisie plutôt que la 1re désactivée");
+}
+
+// Nouveaux cas d'erreur : moov coupé, DRM, codec non pris en charge, table géante.
+{
+  const plain = readFileSync(f("plain.mp4"));
+  await expectError(new Blob([plain.subarray(0, plain.length - 50)]), "truncated", "moov coupé en fin de fichier");
+  const patch = (name, what, after, by) => {
+    const b = Buffer.from(readFileSync(f(name)));
+    b.write(by, findAfter(b, what, after), "latin1");
+    return new Blob([b]);
+  };
+  await expectError(patch("audio.m4a", "mp4a", "stsd", "enca"), "drm", "audio chiffré (DRM)");
+  await expectError(patch("audio.m4a", "mp4a", "stsd", "sowt"), "codec", "PCM QuickTime refusé (sinon son corrompu)");
+  const b = Buffer.from(readFileSync(f("faststart.mp4")));
+  const stsz = b.indexOf(Buffer.from("stsz"), b.indexOf(Buffer.from("stsz")) + 4); // 2e = piste audio
+  b.writeUInt32BE(0x7fffffff, stsz + 12);
+  await expectError(new Blob([b]), "corrupt", "nombre d'échantillons absurde (pas d'allocation géante)");
+}
+
+// Fuzzing : des fichiers corrompus au hasard ne doivent JAMAIS planter, seulement
+// produire une Mp4Error (ou réussir), et rapidement.
+{
+  let seed = 2026;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  let bad = 0, slow = 0, runs = 0;
+  for (const name of ["faststart.mp4", "frag_moof.mp4", "quicktime.mov", "hls_joined.mp4"]) {
+    const src = readFileSync(f(name));
+    const moov = src.indexOf(Buffer.from("moov")) - 4;
+    for (let it = 0; it < 250; it++) {
+      const b = Buffer.from(src);
+      for (let k = 0, n = 1 + Math.floor(rnd() * 4); k < n; k++) {
+        const at = rnd() < 0.8 ? moov + Math.floor(rnd() * 4000) : Math.floor(rnd() * b.length);
+        if (at < b.length) b[at] = rnd() < 0.5 ? 0xff : Math.floor(rnd() * 256);
+      }
+      const t0 = Date.now();
+      try { await extractAudio(new Blob([b])); } catch (e) { if (!e.code) { bad++; if (bad < 4) console.log("   ", e); } }
+      if (Date.now() - t0 > 1000) slow++;
+      runs++;
+    }
+  }
+  ok(bad === 0, `fuzzing : ${bad} erreur(s) non contrôlée(s) sur ${runs} fichiers corrompus`);
+  ok(slow === 0, `fuzzing : ${slow} analyse(s) > 1 s`);
+}
+
+// Performance : 10 min en fragments d'1 s (600 moof) analysées vite.
+{
+  ff("-f", "lavfi", "-i", "sine=frequency=500:sample_rate=48000", "-t", "600", "-c:a", "aac", "-b:a", "64k",
+    "-movflags", "frag_keyframe+empty_moov+default_base_moof", "-frag_duration", "1000000", f("long_frag.mp4"));
+  const t0 = Date.now();
+  const { out, res } = await run("long_frag.mp4");
+  const ms = Date.now() - t0;
+  ok(ms < 3000, `600 fragments analysés en ${ms} ms`);
+  ok(Math.abs(res.duration - 600) < 0.2 && audioHash(out) === audioHash(f("long_frag.mp4")), "10 min fragmentées : durée et paquets exacts");
+}
+
 rmSync(dir, { recursive: true, force: true });
 if (fail) { console.log(`✗ ${fail} échec(s)`); process.exit(1); }
-console.log("✓ test_audio_extract : extraction audio OK (MP4, MOV, fMP4, HLS, M4A, erreurs)");
+console.log("✓ test_audio_extract : extraction audio OK (MP4, MOV, fMP4, HLS, M4A, 64 bits, DRM, fuzzing, perf)");

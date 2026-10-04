@@ -9,10 +9,11 @@
 //   NODE_PATH=$(npm root -g) node test_audio_browser.mjs   (Playwright + ffmpeg)
 
 import { createRequire } from "node:module";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
+import { promisify } from "node:util";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
-import { mkdtempSync, readFileSync, writeFileSync, chmodSync, rmSync, openAsBlob } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync, chmodSync, rmSync, readdirSync, openAsBlob } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, extname, resolve } from "node:path";
 
@@ -30,10 +31,13 @@ const ok = (c, m) => { if (!c) { console.log("  ✗ " + m); fail++; } };
 const DOCS = resolve("docs");
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css",
   ".png": "image/png", ".webmanifest": "application/manifest+json", ".json": "application/json" };
+let MEDIA = null; // fichiers de test servis sous /media/ (chaîne yt-dlp)
 const server = createServer((req, res) => {
-  let p = join(DOCS, decodeURIComponent(new URL(req.url, "http://x").pathname));
+  const pathname = decodeURIComponent(new URL(req.url, "http://x").pathname);
+  const root = MEDIA && pathname.startsWith("/media/") ? MEDIA : DOCS;
+  let p = join(root, root === MEDIA ? pathname.slice(7) : pathname);
   if (p.endsWith("/")) p += "index.html";
-  if (!p.startsWith(DOCS)) { res.writeHead(403).end(); return; }
+  if (!p.startsWith(root)) { res.writeHead(403).end(); return; }
   try { const body = readFileSync(p); res.writeHead(200, { "Content-Type": TYPES[extname(p)] || "application/octet-stream" }); res.end(body); }
   catch (e) { res.writeHead(404).end(); }
 });
@@ -142,6 +146,43 @@ const page1 = `<!doctype html><html><head><title>Bitcoin Talk – Academia Olive
   ok(args[args.indexOf("-o") + 1] === "l-econ-rm-rf-x.%(ext)s", `nom de fichier assaini : ${args[args.indexOf("-o") + 1]}`);
   ok(!args.join(" ").includes("pwned\n"), "pas d'exécution de commande injectée");
 }
+{
+  // Même vidéo Vimeo en double (attribut sans hash autour de l'iframe avec hash,
+  // plus grand) : on doit garder le hash, sinon une vidéo non listée échoue.
+  const { command, candidates } = await detect(`<body><div data-vimeo-id="76979871" style="width:900px;height:520px">
+    <iframe src="https://player.vimeo.com/video/76979871?h=abc123&amp;badge=0" style="width:800px;height:450px"></iframe></div></body>`);
+  ok(urlArg(shellArgs(command)) === "https://player.vimeo.com/video/76979871?h=abc123", "Vimeo : hash conservé malgré le doublon");
+  ok(candidates.length === 1, `Vimeo : doublon fusionné (${candidates.length})`);
+}
+{
+  const { command } = await detect(`<body><div class="lesson" data-video-url="https://vimeo.com/1012345678/9f8e7d6c5b" style="width:640px;height:360px"></div></body>`);
+  ok(urlArg(shellArgs(command)) === "https://player.vimeo.com/video/1012345678?h=9f8e7d6c5b", "data-video-url vimeo.com/ID/HASH -> lecteur intégré");
+}
+{
+  // Lecteur HLS en JavaScript (src « blob: ») : le .m3u8 chargé l'emporte sur un petit YouTube.
+  const setup = async () => {
+    const v = document.createElement("video");
+    v.controls = true;
+    v.style.cssText = "width:800px;height:450px";
+    v.src = URL.createObjectURL(new MediaSource());
+    document.body.appendChild(v);
+    await fetch("https://stream.example.net/v/abc/master.m3u8?token=xyz", { mode: "no-cors" });
+  };
+  const { command } = await detect(`<body><aside><iframe src="https://www.youtube.com/embed/BBBBBBBBBBB" style="width:300px;height:170px"></iframe></aside></body>`, { setup });
+  ok(urlArg(shellArgs(command)) === "https://stream.example.net/v/abc/master.m3u8?token=xyz", "vidéo HLS en blob: -> flux .m3u8 chargé choisi");
+}
+{
+  const { command } = await detect(`<head><script src="https://player.vimeo.com/api/player.js"></script></head>
+    <body><a href="https://vimeo.com/">Vimeo</a><iframe src="https://www.youtube.com/embed/videoseries?list=PL123" style="width:640px;height:360px"></iframe></body>`);
+  ok(/^echo /.test(command), "ni player.js de Vimeo ni playlist YouTube pris pour une vidéo");
+}
+{
+  // Une erreur inattendue ne doit jamais bloquer le raccourci : completion() est appelée.
+  const setup = () => { Document.prototype.querySelectorAll = () => { throw new Error("boom"); }; };
+  const { command } = await detect(`<body><iframe src="https://player.vimeo.com/video/1"></iframe></body>`, { setup });
+  ok(/^echo /.test(command) && execFileSync("bash", ["-c", command]).toString().includes("Erreur du script Lecons Audio : boom"), "erreur du script -> message, raccourci débloqué");
+}
+ok(/^[\x00-\x7f]*$/.test(detectSrc.replace(/\/\/.*$/gm, "").replace(/\/\*.*?\*\//g, "")), "script du raccourci en ASCII (hors commentaires) : copier-coller sûr");
 
 // ---------------------------------------------------------------------------
 // 2) L'application
@@ -252,16 +293,105 @@ await page.click('#menu [data-act="rename"]');
 await page.waitForSelector('.track:has-text("Bitcoin Talk — 20 sept.")');
 ok(true, "renommage");
 await page.screenshot({ path: join(tmp, "library.png") });
+
+// « Enregistrer dans Fichiers » : sans partage natif -> téléchargement du bon fichier.
+await page.evaluate(() => { navigator.canShare = undefined; });
+await page.click('.track:has-text("Bitcoin Talk") .t-more');
+{
+  const [dl] = await Promise.all([page.waitForEvent("download"), page.click('#menu [data-act="share"]')]);
+  ok(dl.suggestedFilename() === "2026-09-20 Bitcoin Talk - 20 sept.m4a", `nom du fichier enregistré : ${dl.suggestedFilename()}`);
+  const saved = readFileSync(await dl.path());
+  ok(createHash("sha256").update(saved).digest("hex") === expectedHash, "fichier enregistré = audio de la bibliothèque");
+}
+// Marquer comme écoutée / fermer le menu en touchant à côté.
+await page.click('.track:has-text("Lecon test") .t-more');
+await page.click('#menu [data-act="done"]');
+await page.waitForFunction(() => document.querySelector(".track.done") !== null);
+ok((await page.textContent('.track:has-text("Lecon test") .t-meta')).includes("écoutée ✓"), "marquée comme écoutée");
+await page.click('.track:has-text("Lecon test") .t-more');
+await page.mouse.click(5, 5);
+ok(await page.evaluate(() => !document.getElementById("menu").open), "menu fermé en touchant à côté");
+
 await page.click('.track:has-text("Bitcoin Talk") .t-more');
 page.once("dialog", (d) => d.accept());
 await page.click('#menu [data-act="delete"]');
 await page.waitForFunction(() => document.querySelectorAll(".track").length === 1);
 ok((await readDb()).length === 1, "suppression (bibliothèque + fichier)");
 
+// Vitesses : cycle complet 1,5 → 1,75 → 2 → 0,75 → 1 → 1,25.
+{
+  const labels = [];
+  for (let i = 0; i < 6; i++) { await page.click("#p-speed"); labels.push(await page.textContent("#p-speed")); }
+  ok(labels.join(" ") === "1,5× 1,75× 2× 0,75× 1× 1,25×", `cycle des vitesses : ${labels.join(" ")}`);
+}
+await page.click("#p-close");
+ok(await page.isHidden("#player"), "lecteur fermé");
+
+// Doublon refusé ; import multiple ; fichier illisible -> message (pas de silence).
+await page.click("#tab-add");
+await page.setInputFiles("#file", mp3);
+await page.waitForFunction(() => document.querySelector(".job.err .j-state") && [...document.querySelectorAll(".job.err .j-state")].some((e) => e.textContent.includes("Déjà dans la bibliothèque")));
+ok(true, "doublon refusé");
+const broken = join(tmp, "fichier-abime.mp3");
+writeFileSync(broken, Buffer.alloc(4096, 7));
+await page.setInputFiles("#file", [mp4, broken]);
+await page.waitForFunction(() => document.querySelectorAll(".track").length === 3);
+ok((await readDb()).length === 3, "import multiple (2 fichiers d'un coup)");
+await page.click('.track:has-text("Fichier abime") .track-main');
+await page.waitForFunction(() => document.getElementById("toast").textContent.includes("Lecture impossible"));
+ok(true, "fichier illisible -> message « Lecture impossible »");
+
 ok(errors.length === 0, "aucune erreur JavaScript : " + errors.join(" | "));
+
+// ---------------------------------------------------------------------------
+// 3) Chaîne complète du raccourci avec le VRAI yt-dlp (facultatif) :
+//    YT_DLP="python3 -m yt_dlp" ou yt-dlp dans le PATH.
+// ---------------------------------------------------------------------------
+const YTDLP = process.env.YT_DLP || (() => { try { execFileSync("yt-dlp", ["--version"]); return "yt-dlp"; } catch (e) { return null; } })();
+if (!YTDLP) {
+  console.log("↷ chaîne yt-dlp ignorée (yt-dlp absent ; YT_DLP=\"python3 -m yt_dlp\" pour la tester)");
+} else {
+  MEDIA = join(tmp, "media");
+  execFileSync("mkdir", ["-p", join(MEDIA, "hls"), join(tmp, "home")]);
+  // Source audio AAC, puis HLS « à la Vimeo » : vidéo et audio en pistes séparées.
+  const srcAudio = join(MEDIA, "source.m4a");
+  ff("-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000", "-t", "20", "-c:a", "aac", "-b:a", "128k", srcAudio);
+  ff("-f", "lavfi", "-i", "testsrc=size=640x360:rate=25", "-i", srcAudio, "-t", "20", "-map", "0:v", "-map", "1:a",
+    "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-c:a", "copy",
+    "-f", "hls", "-hls_time", "4", "-hls_playlist_type", "vod", "-hls_segment_type", "fmp4",
+    "-master_pl_name", "master.m3u8", "-var_stream_map", "v:0,agroup:aud a:0,agroup:aud,default:yes",
+    "-hls_segment_filename", join(MEDIA, "hls", "stream_%v", "seg%03d.m4s"), join(MEDIA, "hls", "stream_%v", "index.m3u8"));
+  execFileSync("cp", [mp4, join(MEDIA, "talk.mp4")]);
+  writeFileSync(join(fakeBin, "yt-dlp"), `#!/bin/sh\nexec ${YTDLP} --proxy "" "$@"\n`);
+  chmodSync(join(fakeBin, "yt-dlp"), 0o755);
+  const hash = (file) => execFileSync("ffmpeg", ["-v", "error", "-i", file, "-map", "0:a:0", "-c", "copy", "-f", "hash", "-"]).toString().trim();
+  const cases = [
+    ["HLS audio séparé (type Vimeo)", "2026-09-20-bitcoin-talk-life-discord", BASE + "/media/hls/master.m3u8", hash(srcAudio)],
+    ["MP4 progressif (auto-hébergé)", "2026-09-27-autre-lecon", BASE + "/media/talk.mp4", hash(mp4)],
+  ];
+  for (const [label, slug, mediaUrl, expectedAudio] of cases) {
+    const { command } = await detect(`<body><video controls style="width:640px;height:360px" src="${mediaUrl}"></video></body>`,
+      { url: `https://academiaolivervelez.com/lecciones/${slug}/` });
+    // « ~ » entre apostrophes : prouve que yt-dlp le développe lui-même (si a-Shell ne le fait pas).
+    const cmd = command.replace("-P ~/Documents/Lecons-Audio", "-P '~/Documents/Lecons-Audio'");
+    ok(cmd !== command, `${label} : commande avec dossier ~/Documents/Lecons-Audio`);
+    // Asynchrone : le serveur de test tourne dans ce même processus Node.
+    await promisify(execFile)("bash", ["-c", cmd], { env: { ...process.env, HOME: join(tmp, "home"), PATH: fakeBin + ":" + process.env.PATH }, timeout: 120000 });
+    const dir = join(tmp, "home", "Documents", "Lecons-Audio");
+    const file = readdirSync(dir).find((n) => n.startsWith(slug + "."));
+    ok(!!file, `${label} : fichier « ${file} » dans ~/Documents/Lecons-Audio`);
+    if (!file) continue;
+    const streams = JSON.parse(execFileSync("ffprobe", ["-v", "error", "-show_streams", "-of", "json", join(dir, file)])).streams;
+    if (label.startsWith("HLS")) ok(streams.length === 1 && streams[0].codec_type === "audio", `${label} : seule la piste audio est téléchargée`);
+    const r = await extractAudio(await openAsBlob(join(dir, file)), { title: slug });
+    const outFile = join(tmp, slug + ".m4a");
+    writeFileSync(outFile, Buffer.from(await r.blob.arrayBuffer()));
+    ok(hash(outFile) === expectedAudio, `${label} : audio final identique à la source (bit à bit)`);
+  }
+}
 
 await browser.close();
 server.close();
 if (process.env.KEEP_SCREENSHOTS) console.log("captures :", tmp); else rmSync(tmp, { recursive: true, force: true });
 if (fail) { console.log(`✗ ${fail} échec(s)`); process.exit(1); }
-console.log("✓ test_audio_browser : détection + app (import, lecture, reprise, hors ligne, menu) OK");
+console.log(`✓ test_audio_browser : détection + app (import, lecture, reprise, hors ligne, menu)${YTDLP ? " + chaîne yt-dlp réelle" : ""} OK`);

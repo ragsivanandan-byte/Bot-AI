@@ -99,18 +99,20 @@
               <button class="ghost mini" type="button" data-copy="pip-cmd">Copier</button></div>
           </li>
           <li><strong>Réglages</strong> de l'iPhone → <strong>Apps</strong> → <strong>Raccourcis</strong> → <strong>Avancé</strong>
-            → activez <strong>Autoriser l'exécution de scripts</strong>.</li>
+            → activez <strong>Autoriser l'exécution de scripts</strong>
+            <span class="muted small">(iOS 17 et avant : Réglages → Raccourcis → Avancé)</span>.</li>
           <li>App <strong>Raccourcis</strong> → <strong>＋</strong> → nommez le raccourci <strong>Leçon en audio</strong>.</li>
           <li>Touchez <strong>ⓘ</strong> (Détails) → activez <strong>Afficher dans la feuille de partage</strong>.
             Dans le bloc « Recevoir … de Feuille de partage », ne gardez que <strong>Pages web Safari</strong>.</li>
           <li>Ajoutez l'action <strong>Exécuter du JavaScript sur une page web</strong>
-            (entrée : <em>Entrée du raccourci</em>). Effacez son code d'exemple et collez ce script :
+            (tapez « JavaScript » dans la recherche d'actions ; entrée : <em>Entrée du raccourci</em>). Effacez son code d'exemple et collez ce script :
             <div class="copyrow"><button class="primary mini" type="button" data-copy="script-code">Copier le script</button>
               <span class="muted small" id="script-size"></span></div>
             <details class="code"><summary>Voir le script</summary><pre><code id="script-code">Chargement…</code></pre></details>
           </li>
           <li>Ajoutez l'action <strong>Execute Command</strong> d'a-Shell (cherchez « a-Shell »).
-            Dans son champ de commandes, insérez la variable <strong>Résultat JavaScript</strong>.
+            Dans son champ de commandes, insérez la variable produite par l'action précédente
+            (<strong>Résultat JavaScript</strong>), et rien d'autre.
             Si l'action propose de s'exécuter dans l'app (« Open a-Shell »), activez-le :
             les longs téléchargements y sont plus fiables.</li>
         </ol>
@@ -121,7 +123,8 @@
             a-Shell s'ouvre et affiche la progression.</li>
           <li>Ici : <strong>Ajouter</strong> → <strong>Choisir un fichier</strong> → <em>Sur mon iPhone › a-Shell › Lecons-Audio</em>.</li>
         </ol>
-        <p class="muted small">Le fichier prend le nom de la leçon (ex. <code>2026-09-20-bitcoin-talk-life-discord.m4a</code>).
+        <p class="muted small">Le fichier prend le nom de la leçon (ex. <code>2026-09-20-bitcoin-talk-life-discord.m4a</code> ;
+          l'extension peut être <code>.mp4</code> : c'est quand même l'audio seul).
           Il est lisible tel quel dans Fichiers ; l'ajouter ici donne en plus la reprise de lecture, la vitesse et
           les contrôles sur l'écran verrouillé.</p>
       </details>
@@ -132,6 +135,7 @@
         <ol>
           <li>Ajoutez <strong>Enregistrement de l'écran</strong> au Centre de contrôle (Réglages → Centre de contrôle).</li>
           <li>Activez <strong>Ne pas déranger</strong> et réglez le verrouillage auto sur <strong>Jamais</strong> le temps de l'enregistrement.</li>
+          <li>Laissez le <strong>micro désactivé</strong> (appui long sur le bouton d'enregistrement) : seul le son de la vidéo sera capté.</li>
           <li>Lancez la vidéo de la leçon, démarrez l'enregistrement de l'écran, laissez jouer jusqu'au bout, puis arrêtez.</li>
           <li>Dans Photos : <strong>Partager → Enregistrer dans Fichiers</strong> (évite la compression),
             puis ici : <strong>Ajouter → Choisir un fichier</strong>. Vous pouvez ensuite supprimer la vidéo de Photos.</li>

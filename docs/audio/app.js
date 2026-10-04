@@ -42,7 +42,11 @@
     if (title) title = title[0].toUpperCase() + title.slice(1);
     return { title: title || (date ? `Leçon du ${frDate(date)}` : "Leçon"), date };
   }
-  const safeFileName = (t) => (t.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) || "lecon");
+  // Nom de fichier en ASCII : certains navigateurs refusent les accents et les
+  // tirets typographiques (« Leçon — 20 sept. » -> « Lecon - 20 sept »).
+  const ACCENTS = new RegExp("[" + String.fromCharCode(0x300) + "-" + String.fromCharCode(0x36f) + "]", "g");
+  const safeFileName = (t) => (t.normalize("NFD").replace(ACCENTS, "").replace(/[^\x20-\x7e]+/g, "-")
+    .replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").replace(/-+/g, "-").trim().slice(0, 100).replace(/[.\s-]+$/, "") || "lecon");
 
   function toast(msg, ms = 2600) {
     const el = $("toast");
@@ -88,7 +92,9 @@
     try {
       await tx(["tracks", "blobs"], "readwrite", (t) => { t.objectStore("blobs").put(blob, track.id); t.objectStore("tracks").put(track); });
     } catch (e) {
-      // Repli pour les moteurs qui refusent les Blob dans IndexedDB.
+      // Repli pour les moteurs qui refusent les Blob dans IndexedDB (anciens iOS) ;
+      // toute autre erreur (espace plein…) est remontée telle quelle.
+      if (!e || (e.name !== "DataCloneError" && e.name !== "UnknownError")) throw e;
       const buf = await blob.arrayBuffer();
       await tx(["tracks", "blobs"], "readwrite", (t) => { t.objectStore("blobs").put(buf, track.id); t.objectStore("tracks").put(track); });
     }
@@ -180,7 +186,12 @@
     ul.replaceChildren(...tracks.map(trackRow));
     $("empty").hidden = tracks.length > 0;
     updateStorage();
-    // Prépare les fichiers : un toucher lance la lecture immédiatement (exigence iOS).
+    preload(tracks);
+  }
+
+  // Prépare les fichiers en arrière-plan : un toucher lance alors la lecture
+  // immédiatement, dans le geste de l'utilisateur (exigence d'iOS).
+  async function preload(tracks) {
     for (const t of tracks) await mediaFor(t.id).catch(() => {});
   }
 
@@ -208,6 +219,9 @@
     });
   }
 
+  // Erreur destinée à l'utilisateur (message affiché tel quel).
+  function userError(msg) { const e = new Error(msg); e.userFacing = true; return e; }
+
   async function convert(file, onProgress) {
     const base = file.name.replace(/\.[^.]+$/, "");
     const { title, date } = prettyName(base);
@@ -220,9 +234,9 @@
       return { blob: file, duration: await probeDuration(file), title, date, mime: file.type || MIME[ext.toLowerCase()] || "audio/mpeg" };
     }
     if (/^video\//.test(file.type) || /\.(webm|mkv|avi|wmv|flv|ts)$/i.test(file.name)) {
-      throw new Error("Format vidéo non pris en charge : seuls MP4, MOV et M4V sont acceptés.");
+      throw userError("Format vidéo non pris en charge : seuls MP4, MOV et M4V sont acceptés.");
     }
-    throw new Error("Ce fichier n'est ni une vidéo MP4/MOV ni un fichier audio.");
+    throw userError("Ce fichier n'est ni une vidéo MP4/MOV ni un fichier audio.");
   }
 
   function newId() {
@@ -243,20 +257,26 @@
       li.append(name, st);
       jobs.prepend(li);
       try {
+        for (const t of state.tracks.values()) {
+          if (t.fileName === file.name && t.sourceSize === file.size) throw userError(`Déjà dans la bibliothèque : « ${t.title} ».`);
+        }
         const r = await convert(file, (p) => { st.textContent = `Analyse de la vidéo… ${Math.round(p * 100)} %`; });
         st.textContent = `Enregistrement sur l'iPhone… (${fmtSize(r.blob.size)})`;
         const track = {
-          id: newId(), title: r.title, date: r.date, fileName: file.name, mime: r.mime,
+          id: newId(), title: r.title, date: r.date, fileName: file.name, sourceSize: file.size, mime: r.mime,
           size: r.blob.size, duration: r.duration, addedAt: Date.now(), position: 0, done: false,
         };
         await dbAdd(track, r.blob);
+        state.tracks.set(track.id, track);
         li.classList.add("ok");
         st.textContent = `✓ Ajoutée : ${r.title} — ${[fmtDur(r.duration), fmtSize(r.blob.size)].filter(Boolean).join(" · ")}`;
         added++;
       } catch (e) {
         li.classList.add("err");
         const quota = e && (e.name === "QuotaExceededError" || /quota/i.test(e.message || ""));
-        st.textContent = "✗ " + (quota ? "Espace de stockage insuffisant sur l'iPhone." : (e && e.message) || "Échec de la conversion.");
+        const readable = e && (e.userFacing || e instanceof Mp4Audio.Mp4Error);
+        st.textContent = "✗ " + (quota ? "Espace de stockage insuffisant sur l'iPhone."
+          : readable ? e.message : "Échec de l'enregistrement sur l'iPhone" + (e && e.name ? ` (${e.name})` : "") + ".");
         console.error(e);
       }
     }
@@ -353,6 +373,12 @@
     t.position = 0;
     dbPut(t).catch(() => {});
     refreshRow(t.id);
+  });
+  audio.addEventListener("error", () => {
+    if (!audio.getAttribute("src")) return; // lecteur fermé / déverrouillage iOS
+    state.loading = false;
+    state.pendingSeek = 0;
+    toast("Lecture impossible : ce fichier n'est pas lisible sur cet appareil.", 5000);
   });
   document.addEventListener("visibilitychange", () => { if (document.hidden) savePosition(); });
   window.addEventListener("pagehide", savePosition);

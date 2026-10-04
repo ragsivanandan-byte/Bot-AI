@@ -187,7 +187,17 @@ enregistrements.
 ```bash
 node test_audio_extract.mjs                          # extraction (ffmpeg requis)
 NODE_PATH=$(npm root -g) node test_audio_browser.mjs # détection + app (Playwright)
+# + chaîne complète avec le vrai yt-dlp (facultatif) :
+YT_DLP="python3 -m yt_dlp" NODE_PATH=$(npm root -g) node test_audio_browser.mjs
 ```
+
+Les tests couvrent : copie audio bit à bit sur 9 variantes de MP4/MOV/fMP4/HLS,
+fichiers > 4 Go (offsets 64 bits), choix de la bonne piste, DRM et codecs
+refusés proprement, 1 000 fichiers corrompus au hasard (jamais de plantage),
+10 min fragmentées en < 3 s, détection de la vidéo sur des pages simulées
+(Vimeo avec hash, HLS en JavaScript, shadow DOM, Plyr, Wistia…), injection de
+commande impossible, et l'app (import, doublons, lecture, reprise, vitesses,
+hors ligne, menu, fichier illisible).
 
 ## Avertissement
 
