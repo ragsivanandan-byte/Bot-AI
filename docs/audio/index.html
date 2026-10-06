@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Leçons Audio</title>
+  <meta name="description" content="Convertit les vidéos de leçons en audio (.m4a) et les garde sur l'iPhone pour une écoute hors ligne." />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#0b0e14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Leçons Audio" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="audio.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-row">
+      <h1><span class="logo" aria-hidden="true"></span>Leçons Audio</h1>
+      <span id="storage" class="muted small"></span>
+    </div>
+    <nav class="wrap tabs" role="tablist">
+      <button role="tab" id="tab-library" aria-controls="library" aria-selected="true">Bibliothèque</button>
+      <button role="tab" id="tab-add" aria-controls="add" aria-selected="false">Ajouter</button>
+      <button role="tab" id="tab-help" aria-controls="help" aria-selected="false">Mode d'emploi</button>
+    </nav>
+  </header>
+
+  <div id="install-tip" class="wrap" hidden>
+    <div class="tip">
+    <p><strong>Installez l'app :</strong> touchez <span class="ios-share" aria-label="Partager"></span>
+      puis « Sur l'écran d'accueil ». Utilisez ensuite toujours l'icône : sur iPhone, Safari et
+      l'icône ont chacun leur propre bibliothèque.</p>
+    <button id="install-tip-close" class="ghost mini" type="button" aria-label="Masquer">✕</button>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <!-- Bibliothèque -->
+    <section id="library" role="tabpanel" aria-labelledby="tab-library">
+      <div id="empty" class="empty" hidden>
+        <p class="big">Aucune leçon pour l'instant.</p>
+        <p class="muted">Ajoutez une vidéo de leçon (ou un fichier audio) : l'audio est extrait
+          sur l'iPhone, puis reste disponible sans connexion.</p>
+        <button id="empty-add" class="primary" type="button">Ajouter une leçon</button>
+      </div>
+      <ul id="tracks" class="tracks"></ul>
+    </section>
+
+    <!-- Ajout / conversion -->
+    <section id="add" role="tabpanel" aria-labelledby="tab-add" hidden>
+      <label class="pick">
+        <input id="file" type="file" multiple
+          accept="video/*,audio/*,.mp4,.mov,.m4v,.m4a,.mp3,.aac,.wav" />
+        <span class="pick-icon" aria-hidden="true">＋</span>
+        <span class="pick-title">Choisir une vidéo ou un audio</span>
+        <span class="muted small">MP4 · MOV · M4V → audio M4A sans perte · MP3/M4A acceptés tels quels</span>
+      </label>
+      <ul id="jobs" class="jobs"></ul>
+      <div class="note">
+        <p><strong>Où trouver la vidéo ?</strong></p>
+        <ul>
+          <li><strong>Raccourci « Leçon en audio »</strong> : fichier dans <em>Fichiers › Sur mon iPhone › a-Shell ›
+            Lecons-Audio</em> → « Choisir un fichier ».</li>
+          <li><strong>Enregistrement de l'écran</strong> : « Photothèque » (ou mieux : enregistrez-le d'abord
+            dans Fichiers pour éviter la compression).</li>
+          <li>Fichier reçu par AirDrop ou téléchargé : « Choisir un fichier ».</li>
+        </ul>
+        <p class="muted small">Tout se fait sur l'iPhone : rien n'est envoyé sur Internet.</p>
+      </div>
+    </section>
+
+    <!-- Mode d'emploi -->
+    <section id="help" role="tabpanel" aria-labelledby="tab-help" hidden>
+      <p class="lead">Trois étapes : <strong>1</strong> récupérer la vidéo (ou directement son audio) de la leçon,
+        <strong>2</strong> l'ajouter ici, <strong>3</strong> écouter, même en mode Avion.</p>
+
+      <details open>
+        <summary>① Installer Leçons Audio sur l'écran d'accueil</summary>
+        <ol>
+          <li>Ouvrez cette page dans <strong>Safari</strong>.</li>
+          <li>Touchez <span class="ios-share" aria-label="Partager"></span> → <strong>Sur l'écran d'accueil</strong> → Ajouter.</li>
+          <li>Lancez désormais l'app depuis son icône : elle fonctionne <strong>sans connexion</strong>.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>② Méthode recommandée : le raccourci « Leçon en audio »</summary>
+        <p>Depuis la page de la leçon dans Safari, un seul geste télécharge <strong>uniquement la piste
+          audio</strong> (rapide et léger, même pour une vidéo de 2 h). Il utilise l'app gratuite
+          <strong>a-Shell</strong> et l'outil libre <strong>yt-dlp</strong>.</p>
+        <h3>Installation (une seule fois, ~5 min)</h3>
+        <ol>
+          <li>Installez <strong>a-Shell</strong> (gratuit) depuis l'App Store, ouvrez-le et tapez :
+            <div class="copyrow"><code id="pip-cmd">pip install yt-dlp</code>
+              <button class="ghost mini" type="button" data-copy="pip-cmd">Copier</button></div>
+          </li>
+          <li><strong>Réglages</strong> de l'iPhone → <strong>Apps</strong> → <strong>Raccourcis</strong> → <strong>Avancé</strong>
+            → activez <strong>Autoriser l'exécution de scripts</strong>
+            <span class="muted small">(iOS 17 et avant : Réglages → Raccourcis → Avancé)</span>.</li>
+          <li>App <strong>Raccourcis</strong> → <strong>＋</strong> → nommez le raccourci <strong>Leçon en audio</strong>.</li>
+          <li>Touchez <strong>ⓘ</strong> (Détails) → activez <strong>Afficher dans la feuille de partage</strong>.
+            Dans le bloc « Recevoir … de Feuille de partage », ne gardez que <strong>Pages web Safari</strong>.</li>
+          <li>Ajoutez l'action <strong>Exécuter du JavaScript sur une page web</strong>
+            (tapez « JavaScript » dans la recherche d'actions ; entrée : <em>Entrée du raccourci</em>). Effacez son code d'exemple et collez ce script :
+            <div class="copyrow"><button class="primary mini" type="button" data-copy="script-code">Copier le script</button>
+              <span class="muted small" id="script-size"></span></div>
+            <details class="code"><summary>Voir le script</summary><pre><code id="script-code">Chargement…</code></pre></details>
+          </li>
+          <li>Ajoutez l'action <strong>Execute Command</strong> d'a-Shell (cherchez « a-Shell »).
+            Dans son champ de commandes, insérez la variable produite par l'action précédente
+            (<strong>Résultat JavaScript</strong>), et rien d'autre.
+            Si l'action propose de s'exécuter dans l'app (« Open a-Shell »), activez-le :
+            les longs téléchargements y sont plus fiables.</li>
+        </ol>
+        <h3>Utilisation</h3>
+        <ol>
+          <li>Ouvrez la leçon dans <strong>Safari</strong> (connecté à l'Académie) et attendez que la vidéo s'affiche.</li>
+          <li>Touchez <span class="ios-share" aria-label="Partager"></span> → <strong>Leçon en audio</strong>.
+            a-Shell s'ouvre et affiche la progression.</li>
+          <li>Ici : <strong>Ajouter</strong> → <strong>Choisir un fichier</strong> → <em>Sur mon iPhone › a-Shell › Lecons-Audio</em>.</li>
+        </ol>
+        <p class="muted small">Le fichier prend le nom de la leçon (ex. <code>2026-09-20-bitcoin-talk-life-discord.m4a</code> ;
+          l'extension peut être <code>.mp4</code> : c'est quand même l'audio seul).
+          Il est lisible tel quel dans Fichiers ; l'ajouter ici donne en plus la reprise de lecture, la vitesse et
+          les contrôles sur l'écran verrouillé.</p>
+      </details>
+
+      <details>
+        <summary>③ Sans aucune app : l'enregistrement de l'écran</summary>
+        <p>Fonctionne avec n'importe quel lecteur vidéo, mais en temps réel (1 h de vidéo = 1 h d'enregistrement).</p>
+        <ol>
+          <li>Ajoutez <strong>Enregistrement de l'écran</strong> au Centre de contrôle (Réglages → Centre de contrôle).</li>
+          <li>Activez <strong>Ne pas déranger</strong> et réglez le verrouillage auto sur <strong>Jamais</strong> le temps de l'enregistrement.</li>
+          <li>Laissez le <strong>micro désactivé</strong> (appui long sur le bouton d'enregistrement) : seul le son de la vidéo sera capté.</li>
+          <li>Lancez la vidéo de la leçon, démarrez l'enregistrement de l'écran, laissez jouer jusqu'au bout, puis arrêtez.</li>
+          <li>Dans Photos : <strong>Partager → Enregistrer dans Fichiers</strong> (évite la compression),
+            puis ici : <strong>Ajouter → Choisir un fichier</strong>. Vous pouvez ensuite supprimer la vidéo de Photos.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>④ Écouter hors ligne et sauvegarder</summary>
+        <ul>
+          <li>Les leçons ajoutées sont stockées <strong>dans l'app, sur l'iPhone</strong> : aucune connexion nécessaire.</li>
+          <li>Lecture en arrière-plan et écran verrouillé, <strong>−15 s / +30 s</strong>, vitesse
+            <strong>0,75× à 2×</strong>, reprise automatique là où vous vous êtes arrêté.</li>
+          <li>Menu <strong>⋯</strong> d'une leçon → <strong>Enregistrer dans Fichiers</strong> pour en garder une copie
+            (iCloud Drive, ou pour l'écouter dans une autre app comme VLC).</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Dépannage</summary>
+        <ul>
+          <li><strong>« Aucune video trouvee »</strong> : lancez la lecture de la vidéo, attendez quelques secondes, relancez le raccourci.</li>
+          <li><strong>Erreur yt-dlp</strong> (403, « Unable to extract »…) : dans a-Shell, mettez à jour avec
+            <code>pip install -U yt-dlp</code> puis réessayez.</li>
+          <li><strong>« Aucune piste audio »</strong> : la vidéo n'a pas de son (enregistrement d'écran fait volume coupé ?).</li>
+          <li><strong>Format non pris en charge</strong> : seuls MP4/MOV/M4V (et MP3/M4A) sont acceptés.</li>
+          <li>La bibliothèque a disparu ? Vous êtes peut-être dans Safari au lieu de l'icône (bibliothèques séparées).</li>
+        </ul>
+        <p class="muted small">Usage personnel : respectez les conditions de l'Académie et ne partagez pas les enregistrements.</p>
+      </details>
+    </section>
+  </main>
+
+  <!-- Lecteur -->
+  <div id="player" class="player" hidden>
+    <div class="wrap">
+      <div class="p-title" id="p-title"></div>
+      <div class="p-seek">
+        <span id="p-cur" class="p-time">0:00</span>
+        <input id="p-range" type="range" min="0" max="1000" step="1" value="0" aria-label="Position" />
+        <span id="p-left" class="p-time">-0:00</span>
+      </div>
+      <div class="p-ctrl">
+        <button id="p-speed" class="ghost speed" type="button" aria-label="Vitesse de lecture">1×</button>
+        <button id="p-back" class="round" type="button" aria-label="Reculer de 15 secondes">−15</button>
+        <button id="p-play" class="round play" type="button" aria-label="Lecture">▶</button>
+        <button id="p-fwd" class="round" type="button" aria-label="Avancer de 30 secondes">+30</button>
+        <button id="p-close" class="ghost speed" type="button" aria-label="Fermer le lecteur">✕</button>
+      </div>
+    </div>
+    <audio id="audio" preload="auto"></audio>
+  </div>
+
+  <!-- Menu d'actions d'une leçon -->
+  <dialog id="menu" class="sheet">
+    <p id="menu-title" class="sheet-title"></p>
+    <button type="button" data-act="share">Enregistrer dans Fichiers / Partager</button>
+    <button type="button" data-act="rename">Renommer</button>
+    <button type="button" data-act="done">Marquer comme écoutée</button>
+    <button type="button" data-act="delete" class="danger">Supprimer</button>
+    <button type="button" data-act="cancel" class="cancel">Annuler</button>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="mp4audio.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

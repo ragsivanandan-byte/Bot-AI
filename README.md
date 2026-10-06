@@ -153,6 +153,52 @@ node test_web_parity.mjs   # le JS donne EXACTEMENT les mêmes chiffres que Pyth
 node test_web_render.mjs   # app.js s'exécute et peuple l'UI sans erreur
 ```
 
+## 🎧 Leçons Audio — vidéos de leçons → audio hors ligne sur iPhone
+
+Une seconde app (dossier `docs/audio/`) transforme les vidéos de leçons (ex.
+[academiaolivervelez.com/lecciones/…](https://academiaolivervelez.com/lecciones/2026-09-20-bitcoin-talk-life-discord/))
+en fichiers audio **.m4a** gardés **sur l'iPhone**, écoutables en mode Avion.
+
+**Adresse :** `https://ragsivanandan-byte.github.io/Bot-AI/audio/` (en ligne une
+fois cette branche fusionnée sur `main`). Ouvrez-la dans Safari →
+Partager → **Sur l'écran d'accueil**, puis utilisez toujours l'icône.
+
+- **Conversion sur l'iPhone, sans perte et sans envoi sur Internet** : la piste
+  AAC est recopiée telle quelle depuis le MP4/MOV (aucun ré-encodage), sans
+  charger la vidéo en mémoire — OK même pour une vidéo de 2 h. Gère MP4, MOV
+  (vidéos et enregistrements d'écran iPhone), MP4 fragmentés (DASH/HLS, fichiers
+  yt-dlp), M4A ; MP3/M4A acceptés tels quels.
+- **Bibliothèque hors ligne** (IndexedDB) + **lecteur** : reprise là où vous vous
+  êtes arrêté, vitesse 0,75×–2×, −15 s/+30 s, contrôles sur l'écran verrouillé,
+  « Enregistrer dans Fichiers ». L'app elle-même marche hors ligne (service worker).
+- **Récupérer la vidéo d'une leçon** (détaillé dans l'onglet *Mode d'emploi*) :
+  1. *Recommandé* — raccourci iOS **« Leçon en audio »** : depuis la page de la
+     leçon dans Safari (connecté), Partager → Leçon en audio. Le script
+     `docs/audio/detect.js` repère la vidéo (Vimeo, YouTube, Wistia, Bunny,
+     lecteur HTML5/HLS…) et lance **yt-dlp** dans l'app gratuite **a-Shell** pour
+     télécharger **l'audio seul**, nommé d'après la leçon
+     (`2026-09-20-bitcoin-talk-life-discord`).
+  2. *Sans app* — enregistrement de l'écran de l'iPhone, puis import ici.
+  3. Tout fichier vidéo déjà en votre possession (AirDrop, Fichiers).
+
+Usage personnel : respectez les conditions de l'Académie et ne partagez pas les
+enregistrements.
+
+```bash
+node test_audio_extract.mjs                          # extraction (ffmpeg requis)
+NODE_PATH=$(npm root -g) node test_audio_browser.mjs # détection + app (Playwright)
+# + chaîne complète avec le vrai yt-dlp (facultatif) :
+YT_DLP="python3 -m yt_dlp" NODE_PATH=$(npm root -g) node test_audio_browser.mjs
+```
+
+Les tests couvrent : copie audio bit à bit sur 9 variantes de MP4/MOV/fMP4/HLS,
+fichiers > 4 Go (offsets 64 bits), choix de la bonne piste, DRM et codecs
+refusés proprement, 1 000 fichiers corrompus au hasard (jamais de plantage),
+10 min fragmentées en < 3 s, détection de la vidéo sur des pages simulées
+(Vimeo avec hash, HLS en JavaScript, shadow DOM, Plyr, Wistia…), injection de
+commande impossible, et l'app (import, doublons, lecture, reprise, vitesses,
+hors ligne, menu, fichier illisible).
+
 ## Avertissement
 
 Outil pédagogique / d'analyse. Les chiffres dépendent des données de marché
