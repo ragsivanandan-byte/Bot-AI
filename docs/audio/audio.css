@@ -166,7 +166,10 @@ pre code { display: block; padding: 10px; font-size: 11px; white-space: pre; }
   border-top: 1px solid var(--border);
   padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom));
 }
-.p-title { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.p-head { display: flex; align-items: center; gap: 8px; }
+.p-head::before { content: ""; width: 36px; flex: none; } /* garde le titre centré */
+.p-title { flex: 1; min-width: 0; font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.p-x { appearance: none; background: none; border: 0; color: var(--muted); font-size: 18px; width: 36px; height: 32px; flex: none; }
 .p-seek { display: flex; align-items: center; gap: 10px; margin: 6px 0 8px; }
 .p-time { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 52px; }
 .p-time:last-child { text-align: right; }
@@ -178,6 +181,11 @@ pre code { display: block; padding: 10px; font-size: 11px; white-space: pre; }
 }
 .round.play { width: 66px; height: 66px; font-size: 24px; background: var(--accent); color: var(--accent-ink); border: 0; }
 .speed { width: 64px; padding: 8px 0; font-variant-numeric: tabular-nums; }
+.speed.on { color: var(--accent); border-color: var(--accent); }
+/* Minuterie de sommeil inactive : icône de lune. */
+.moon {
+  background: var(--panel2) no-repeat center / 22px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e6edf3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/%3E%3C/svg%3E");
+}
 
 /* Menu (feuille d'actions) */
 .sheet {

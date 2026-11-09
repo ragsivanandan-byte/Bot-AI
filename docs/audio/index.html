@@ -69,7 +69,7 @@
             dans Fichiers pour éviter la compression).</li>
           <li>Fichier reçu par AirDrop ou téléchargé : « Choisir un fichier ».</li>
         </ul>
-        <p class="muted small">Tout se fait sur l'iPhone : rien n'est envoyé sur Internet. · <span id="app-version">version 3</span></p>
+        <p class="muted small">Tout se fait sur l'iPhone : rien n'est envoyé sur Internet. · <span id="app-version">version 4</span></p>
       </div>
     </section>
 
@@ -90,43 +90,64 @@
       <details>
         <summary>② Méthode recommandée : le raccourci « Leçon en audio »</summary>
         <p>Depuis la page de la leçon dans Safari, un seul geste télécharge <strong>uniquement la piste
-          audio</strong> (rapide et léger, même pour une vidéo de 2 h). Il utilise l'app gratuite
-          <strong>a-Shell</strong> et l'outil libre <strong>yt-dlp</strong>.</p>
-        <h3>Installation (une seule fois, ~5 min)</h3>
+          audio</strong> (environ 3 min pour une leçon de 2 h). Il utilise deux apps gratuites,
+          <strong>a-Shell</strong> et <strong>Raccourcis</strong> (Apple), et l'outil libre <strong>yt-dlp</strong>.</p>
+        <h3>A. Préparer les apps (une seule fois)</h3>
         <ol>
-          <li>Installez <strong>a-Shell</strong> (gratuit) depuis l'App Store, ouvrez-le et tapez :
+          <li>Dans l'App Store, installez <strong>a-Shell</strong>, ainsi que <strong>Raccourcis</strong> d'Apple
+            si elle n'est pas sur votre iPhone (elle a pu être supprimée).</li>
+          <li>Ouvrez a-Shell, tapez cette commande puis Entrée, et attendez le retour du <code>$</code> :
             <div class="copyrow"><code id="pip-cmd">pip install yt-dlp</code>
               <button class="ghost mini" type="button" data-copy="pip-cmd">Copier</button></div>
           </li>
-          <li><strong>Réglages</strong> de l'iPhone → <strong>Apps</strong> → <strong>Raccourcis</strong> → <strong>Avancé</strong>
-            → activez <strong>Autoriser l'exécution de scripts</strong>
-            <span class="muted small">(iOS 17 et avant : Réglages → Raccourcis → Avancé)</span>.</li>
-          <li>App <strong>Raccourcis</strong> → <strong>＋</strong> → nommez le raccourci <strong>Leçon en audio</strong>.</li>
-          <li>Touchez <strong>ⓘ</strong> (Détails) → activez <strong>Afficher dans la feuille de partage</strong>.
-            Dans le bloc « Recevoir … de Feuille de partage », ne gardez que <strong>Pages web Safari</strong>.</li>
-          <li>Ajoutez l'action <strong>Exécuter du JavaScript sur une page web</strong>
-            (tapez « JavaScript » dans la recherche d'actions ; entrée : <em>Entrée du raccourci</em>). Effacez son code d'exemple et collez ce script :
+          <li><strong>Réglages</strong> → tout en bas <strong>Apps</strong> → <strong>Raccourcis</strong> →
+            <strong>Avancé</strong> → activez <strong>Autoriser l'exécution des scripts</strong>.
+            <span class="muted small">La recherche des Réglages ne trouve pas cette option : passez par ce chemin.
+            Si « Raccourcis » manque dans la liste des apps, c'est qu'elle n'est pas installée (étape 1).</span></li>
+        </ol>
+        <h3>B. Créer le raccourci (une seule fois, ~5 min)</h3>
+        <ol>
+          <li>App <strong>Raccourcis</strong> → <strong>＋</strong> en haut à droite.</li>
+          <li>Touchez <strong>« Nouv. raccourci ⌄ »</strong> en haut → <strong>Renommer</strong> →
+            <strong>Leçon en audio</strong>.</li>
+          <li>Touchez <strong>Rechercher des actions</strong>, tapez <strong>JavaScript</strong> et choisissez
+            <strong>Exécuter JavaScript sur une page web</strong>.</li>
+          <li>Touchez <strong>ⓘ</strong> en bas de l'écran → activez <strong>Dans la feuille de partage</strong> → ✓.
+            Un bloc « Recevoir … depuis Feuille partagée » apparaît en haut : touchez le mot bleu après
+            « Recevoir » et ne cochez que <strong>Pages web Safari</strong>.</li>
+          <li>Dans l'action JavaScript, touchez le mot bleu <strong>« Page web »</strong> →
+            <strong>Entrée de raccourci</strong>.</li>
+          <li>Copiez le script avec ce bouton, puis dans l'action : appui long dans le code d'exemple →
+            <strong>Tout sélectionner</strong> → <strong>Coller</strong>. Le code doit commencer par
+            <code>// Leçons Audio</code>.
             <div class="copyrow"><button class="primary mini" type="button" data-copy="script-code">Copier le script</button>
               <span class="muted small" id="script-size"></span></div>
             <details class="code"><summary>Voir le script</summary><pre><code id="script-code">Chargement…</code></pre></details>
           </li>
-          <li>Ajoutez l'action <strong>Execute Command</strong> d'a-Shell (cherchez « a-Shell »).
-            Dans son champ de commandes, insérez la variable produite par l'action précédente
-            (<strong>Résultat JavaScript</strong>), et rien d'autre.
-            Si l'action propose de s'exécuter dans l'app (« Open a-Shell »), activez-le :
-            les longs téléchargements y sont plus fiables.</li>
+          <li>Recherchez <strong>a-Shell</strong> dans les actions et choisissez <strong>Execute Command</strong>
+            (affichée « Exécuter »). Elle doit indiquer « Exécuter <strong>Résultat JavaScript</strong> » ;
+            sinon, touchez son champ et choisissez cette variable au-dessus du clavier.</li>
+          <li>Touchez la petite flèche de l'action a-Shell → <strong>Ouvrir l'application ?</strong> : choisissez
+            l'option qui ouvre <strong>toujours</strong> a-Shell. Laissez « Continuer après une erreur » désactivé.</li>
+          <li>Touchez <strong>&lt;</strong> en haut à gauche (enregistrement automatique), puis
+            <strong>redémarrez l'iPhone</strong> : iOS n'ajoute souvent le raccourci au bouton Partager
+            qu'après un redémarrage.</li>
         </ol>
-        <h3>Utilisation</h3>
+        <h3>C. Pour chaque leçon</h3>
         <ol>
           <li>Ouvrez la leçon dans <strong>Safari</strong> (connecté à l'Académie) et attendez que la vidéo s'affiche.</li>
-          <li>Touchez <span class="ios-share" aria-label="Partager"></span> → <strong>Leçon en audio</strong>.
-            a-Shell s'ouvre et affiche la progression.</li>
-          <li>Ici : <strong>Ajouter</strong> → <strong>Choisir un fichier</strong> → <em>Sur mon iPhone › a-Shell › Lecons-Audio</em>.</li>
+          <li><span class="ios-share" aria-label="Partager"></span> Partager (parfois dans le menu <strong>•••</strong>) →
+            faites défiler → <strong>Leçon en audio</strong>. La première fois, répondez <strong>Toujours autoriser</strong>.
+            <span class="muted small">Astuce : en bas de cette liste, « Modifier les actions… » → ＋ vert sur
+            « Leçon en audio » pour l'avoir tout en haut.</span></li>
+          <li>a-Shell s'ouvre et télécharge : <strong>restez dedans, écran allumé</strong>, jusqu'à
+            <code>100%</code> et le retour du <code>$</code>.</li>
+          <li>Ici : <strong>Ajouter</strong> → <strong>Choisir un fichier</strong> → <em>Sur mon iPhone › a-Shell ›
+            Lecons-Audio</em> → le fichier, puis attendez « ✓ Ajoutée ».</li>
+          <li>Supprimez ensuite le fichier du dossier a-Shell (appui long → Supprimer) : l'app garde sa propre copie.</li>
         </ol>
-        <p class="muted small">Le fichier prend le nom de la leçon (ex. <code>2026-09-20-bitcoin-talk-life-discord.m4a</code> ;
-          l'extension peut être <code>.mp4</code> : c'est quand même l'audio seul).
-          Il est lisible tel quel dans Fichiers ; l'ajouter ici donne en plus la reprise de lecture, la vitesse et
-          les contrôles sur l'écran verrouillé.</p>
+        <p class="muted small">Le fichier porte le nom de la leçon (ex. <code>2026-09-20-bitcoin-talk-life-discord.mp4</code>) :
+          même en <code>.mp4</code>, c'est bien l'audio seul.</p>
       </details>
 
       <details>
@@ -148,6 +169,8 @@
           <li>Les leçons ajoutées sont stockées <strong>dans l'app, sur l'iPhone</strong> : aucune connexion nécessaire.</li>
           <li>Lecture en arrière-plan et écran verrouillé, <strong>−15 s / +30 s</strong>, vitesse
             <strong>0,75× à 2×</strong>, reprise automatique là où vous vous êtes arrêté.</li>
+          <li><strong>Minuterie de sommeil</strong> : le bouton lune du lecteur arrête la lecture après
+            15, 30, 45, 60 ou 90 min d'écoute (touchez-le plusieurs fois pour choisir ; les pauses ne comptent pas).</li>
           <li>Menu <strong>⋯</strong> d'une leçon → <strong>Enregistrer dans Fichiers</strong> pour en garder une copie
             (iCloud Drive, ou pour l'écouter dans une autre app comme VLC).</li>
         </ul>
@@ -156,6 +179,11 @@
       <details>
         <summary>Dépannage</summary>
         <ul>
+          <li><strong>« Leçon en audio » absent du bouton Partager</strong> : redémarrez l'iPhone ; vérifiez dans
+            Raccourcis → le raccourci → ⓘ que « Dans la feuille de partage » est activé, et que la page est ouverte dans Safari.</li>
+          <li><strong>Réglage « Autoriser l'exécution des scripts » introuvable</strong> : installez l'app Raccourcis d'Apple.</li>
+          <li><strong>Mise à jour de cette app</strong> : fermez-la complètement puis rouvrez-la (deux fois si besoin) ;
+            le numéro de version est en bas de l'onglet Ajouter.</li>
           <li><strong>« Aucune video trouvee »</strong> : lancez la lecture de la vidéo, attendez quelques secondes, relancez le raccourci.</li>
           <li><strong>Erreur yt-dlp</strong> (403, « Unable to extract »…) : dans a-Shell, mettez à jour avec
             <code>pip install -U yt-dlp</code> puis réessayez.</li>
@@ -171,7 +199,10 @@
   <!-- Lecteur -->
   <div id="player" class="player" hidden>
     <div class="wrap">
-      <div class="p-title" id="p-title"></div>
+      <div class="p-head">
+        <div class="p-title" id="p-title"></div>
+        <button id="p-close" class="p-x" type="button" aria-label="Fermer le lecteur">✕</button>
+      </div>
       <div class="p-seek">
         <span id="p-cur" class="p-time">0:00</span>
         <input id="p-range" type="range" min="0" max="1000" step="1" value="0" aria-label="Position" />
@@ -182,7 +213,7 @@
         <button id="p-back" class="round" type="button" aria-label="Reculer de 15 secondes">−15</button>
         <button id="p-play" class="round play" type="button" aria-label="Lecture">▶</button>
         <button id="p-fwd" class="round" type="button" aria-label="Avancer de 30 secondes">+30</button>
-        <button id="p-close" class="ghost speed" type="button" aria-label="Fermer le lecteur">✕</button>
+        <button id="p-sleep" class="ghost speed moon" type="button" aria-label="Minuterie de sommeil : désactivée"></button>
       </div>
     </div>
     <audio id="audio" preload="auto"></audio>
