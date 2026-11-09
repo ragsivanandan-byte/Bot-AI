@@ -5,7 +5,7 @@
 // suivant. Les fichiers audio, eux, sont dans IndexedDB (pas dans ce cache).
 // Changer le numéro à chaque mise en ligne : tous les fichiers sont alors
 // re-téléchargés ensemble (jamais de mélange ancienne/nouvelle version).
-const CACHE = "lecons-audio-v2";
+const CACHE = "lecons-audio-v3";
 const ASSETS = [
   "./", "index.html", "audio.css", "app.js", "mp4audio.js", "detect.js",
   "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png",

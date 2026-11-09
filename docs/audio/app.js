@@ -56,18 +56,29 @@
     toast.t = setTimeout(() => { el.hidden = true; }, ms);
   }
 
-  // --- Stockage IndexedDB : métadonnées (tracks) + fichiers audio (blobs) ---------
+  // --- Stockage IndexedDB --------------------------------------------------------
+  // « tracks » : fiches des leçons. « chunks » : l'audio découpé en blocs de 4 Mo,
+  // clé [id, n]. Safari échoue à enregistrer d'un seul tenant un gros Blob fait de
+  // morceaux du fichier choisi (160 Mo -> échec après plusieurs minutes) : par
+  // petits blocs, chaque écriture est courte et sûre, avec une progression.
+  // « blobs » : ancien format (un seul Blob par leçon), encore lu.
+  const CHUNK = 4 * 1024 * 1024;
   let dbp = null;
   function db() {
     if (!dbp) {
       dbp = new Promise((resolve, reject) => {
-        const req = indexedDB.open("lecons-audio", 1);
+        const req = indexedDB.open("lecons-audio", 2);
         req.onupgradeneeded = () => {
           const d = req.result;
           if (!d.objectStoreNames.contains("tracks")) d.createObjectStore("tracks", { keyPath: "id" });
           if (!d.objectStoreNames.contains("blobs")) d.createObjectStore("blobs");
+          if (!d.objectStoreNames.contains("chunks")) d.createObjectStore("chunks");
         };
-        req.onsuccess = () => resolve(req.result);
+        req.onsuccess = () => {
+          const d = req.result;
+          d.onversionchange = () => d.close(); // laisse une version plus récente s'installer
+          resolve(d);
+        };
         req.onerror = () => reject(req.error);
       });
     }
@@ -77,29 +88,66 @@
     const d = await db();
     return new Promise((resolve, reject) => {
       const t = d.transaction(stores, mode);
-      let out;
+      let out, err = null;
       const req = fn(t);
       if (req) req.onsuccess = () => { out = req.result; };
       t.oncomplete = () => resolve(out);
-      t.onerror = () => reject(t.error);
-      t.onabort = () => reject(t.error || new Error("Enregistrement annulé (espace insuffisant ?)"));
+      // L'erreur précise est portée par la requête fautive (t.error n'est rempli qu'à l'abandon).
+      t.onerror = (ev) => { err = err || (ev.target && ev.target.error) || t.error; };
+      t.onabort = () => reject(t.error || err || new Error("Enregistrement annulé (espace insuffisant ?)"));
     });
   }
+  const chunkRange = (id) => IDBKeyRange.bound([id, 0], [id, Infinity]);
+  const isQuota = (e) => !!e && (e.name === "QuotaExceededError" || /quota/i.test(e.message || ""));
   const dbAll = () => tx("tracks", "readonly", (t) => t.objectStore("tracks").getAll());
   const dbPut = (track) => tx("tracks", "readwrite", (t) => t.objectStore("tracks").put(track));
-  const dbBlob = (id) => tx("blobs", "readonly", (t) => t.objectStore("blobs").get(id));
-  async function dbAdd(track, blob) {
+
+  // Enregistre l'audio bloc par bloc, puis la fiche : une leçon n'apparaît dans
+  // la bibliothèque qu'une fois complète. Repli en ArrayBuffer si le moteur
+  // refuse les Blob ; en cas d'échec, les blocs déjà écrits sont effacés.
+  async function dbAdd(track, blob, onProgress) {
+    const n = Math.max(1, Math.ceil(blob.size / CHUNK));
+    let asBuffer = false;
     try {
-      await tx(["tracks", "blobs"], "readwrite", (t) => { t.objectStore("blobs").put(blob, track.id); t.objectStore("tracks").put(track); });
+      for (let i = 0; i < n; i++) {
+        const buf = await blob.slice(i * CHUNK, Math.min(blob.size, (i + 1) * CHUNK)).arrayBuffer();
+        if (!asBuffer) {
+          try {
+            await tx("chunks", "readwrite", (t) => t.objectStore("chunks").put(new Blob([buf]), [track.id, i]));
+          } catch (e) {
+            if (isQuota(e)) throw e;
+            asBuffer = true;
+          }
+        }
+        if (asBuffer) await tx("chunks", "readwrite", (t) => t.objectStore("chunks").put(buf, [track.id, i]));
+        if (onProgress) onProgress((i + 1) / n);
+      }
+      track.chunks = n;
+      track.storage = asBuffer ? "buffer" : "blob";
+      await dbPut(track);
     } catch (e) {
-      // Repli pour les moteurs qui refusent les Blob dans IndexedDB (anciens iOS) ;
-      // toute autre erreur (espace plein…) est remontée telle quelle.
-      if (!e || (e.name !== "DataCloneError" && e.name !== "UnknownError")) throw e;
-      const buf = await blob.arrayBuffer();
-      await tx(["tracks", "blobs"], "readwrite", (t) => { t.objectStore("blobs").put(buf, track.id); t.objectStore("tracks").put(track); });
+      await tx("chunks", "readwrite", (t) => t.objectStore("chunks").delete(chunkRange(track.id))).catch(() => {});
+      throw e;
     }
   }
-  const dbDelete = (id) => tx(["tracks", "blobs"], "readwrite", (t) => { t.objectStore("blobs").delete(id); t.objectStore("tracks").delete(id); });
+  const dbDelete = (id) => tx(["tracks", "blobs", "chunks"], "readwrite", (t) => {
+    t.objectStore("chunks").delete(chunkRange(id));
+    t.objectStore("blobs").delete(id);
+    t.objectStore("tracks").delete(id);
+  });
+
+  // Recompose le fichier audio d'une leçon (blocs, ou ancien format).
+  async function readAudio(t) {
+    const type = t.mime || "audio/mp4";
+    if (t.chunks) {
+      const parts = await tx("chunks", "readonly", (x) => x.objectStore("chunks").getAll(chunkRange(t.id)));
+      if (!parts || parts.length !== t.chunks) throw new Error("Fichier audio incomplet : supprimez la leçon puis ajoutez-la de nouveau.");
+      return new Blob(parts, { type });
+    }
+    const v = await tx("blobs", "readonly", (x) => x.objectStore("blobs").get(t.id));
+    if (!v) throw new Error("Fichier audio introuvable.");
+    return v instanceof Blob ? v : new Blob([v], { type });
+  }
 
   // --- État ---------------------------------------------------------------------
   const state = { tracks: new Map(), currentId: null, loading: false, pendingSeek: 0 };
@@ -109,10 +157,16 @@
     let m = media.get(id);
     if (m) return m;
     const t = state.tracks.get(id);
-    let v = await dbBlob(id);
-    if (!v) throw new Error("Fichier audio introuvable.");
-    if (!(v instanceof Blob)) v = new Blob([v], { type: (t && t.mime) || "audio/mp4" });
-    m = { blob: v, url: URL.createObjectURL(v) };
+    if (!t) throw new Error("Leçon introuvable.");
+    const blob = await readAudio(t);
+    // Une leçon stockée en ArrayBuffer occupe la mémoire : une seule à la fois.
+    if (t.storage === "buffer") {
+      for (const [k, v] of media) {
+        const o = state.tracks.get(k);
+        if (k !== state.currentId && o && o.storage === "buffer") { URL.revokeObjectURL(v.url); media.delete(k); }
+      }
+    }
+    m = { blob, url: URL.createObjectURL(blob) };
     media.set(id, m);
     return m;
   }
@@ -192,7 +246,7 @@
   // Prépare les fichiers en arrière-plan : un toucher lance alors la lecture
   // immédiatement, dans le geste de l'utilisateur (exigence d'iOS).
   async function preload(tracks) {
-    for (const t of tracks) await mediaFor(t.id).catch(() => {});
+    for (const t of tracks) if (t.storage !== "buffer") await mediaFor(t.id).catch(() => {});
   }
 
   async function updateStorage() {
@@ -245,6 +299,8 @@
 
   async function importFiles(files) {
     const jobs = $("jobs");
+    // Demande à iOS de ne jamais effacer la bibliothèque (avant d'écrire, pas après).
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) { /* facultatif */ }
     let added = 0;
     for (const file of files) {
       const li = document.createElement("li");
@@ -266,14 +322,16 @@
           id: newId(), title: r.title, date: r.date, fileName: file.name, sourceSize: file.size, mime: r.mime,
           size: r.blob.size, duration: r.duration, addedAt: Date.now(), position: 0, done: false,
         };
-        await dbAdd(track, r.blob);
+        await dbAdd(track, r.blob, (p) => {
+          st.textContent = `Enregistrement sur l'iPhone… ${Math.round(p * 100)} % (${fmtSize(r.blob.size)})`;
+        });
         state.tracks.set(track.id, track);
         li.classList.add("ok");
         st.textContent = `✓ Ajoutée : ${r.title} — ${[fmtDur(r.duration), fmtSize(r.blob.size)].filter(Boolean).join(" · ")}`;
         added++;
       } catch (e) {
         li.classList.add("err");
-        const quota = e && (e.name === "QuotaExceededError" || /quota/i.test(e.message || ""));
+        const quota = isQuota(e);
         const readable = e && (e.userFacing || e instanceof Mp4Audio.Mp4Error);
         st.textContent = "✗ " + (quota ? "Espace de stockage insuffisant sur l'iPhone."
           : readable ? e.message : "Échec de l'enregistrement sur l'iPhone" + (e && e.name ? ` (${e.name})` : "") + ".");
@@ -281,7 +339,6 @@
       }
     }
     if (added) {
-      try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) { /* facultatif */ }
       await renderLibrary();
       toast(added > 1 ? `${added} leçons ajoutées` : "Leçon ajoutée à la bibliothèque");
       showTab("library");
@@ -560,6 +617,12 @@
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    // Nouvelle version installée en arrière-plan : on recharge pour l'utiliser
+    // aussitôt (sauf à la toute première installation, et jamais pendant une lecture).
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (hadController && audio.paused && !document.querySelector(".job:not(.ok):not(.err)")) location.reload();
+    });
   }
 
   // --- Démarrage ---------------------------------------------------------------------
