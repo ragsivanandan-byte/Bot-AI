@@ -206,18 +206,31 @@ await page.goto(BASE + "/audio/");
 await page.waitForSelector("#empty:not([hidden])");
 ok(await page.isVisible("#install-tip"), "iPhone dans Safari : conseil « Sur l'écran d'accueil » affiché");
 
+const createHashHex = (buf) => createHash("sha256").update(buf).digest("hex");
 const readDb = () => page.evaluate(async () => {
   const db = await new Promise((res, rej) => { const r = indexedDB.open("lecons-audio"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
   const get = (store, fn) => new Promise((res) => { const r = fn(db.transaction(store).objectStore(store)); r.onsuccess = () => res(r.result); });
   const tracks = await get("tracks", (s) => s.getAll());
   const out = [];
   for (const t of tracks) {
-    const blob = await get("blobs", (s) => s.get(t.id));
+    // Audio stocké en blocs de 4 Mo (clé [id, n]), recomposé dans l'ordre.
+    const parts = await get("chunks", (s) => s.getAll(IDBKeyRange.bound([t.id, 0], [t.id, Infinity])));
+    const blob = new Blob(parts);
     const h = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
-    out.push({ ...t, hash: [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("") });
+    out.push({ ...t, parts: parts.length, kinds: [...new Set(parts.map((p) => (p instanceof Blob ? "blob" : "buffer")))].join(","),
+      hash: [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("") });
   }
   db.close();
   return out;
+});
+// Blocs audio sans fiche correspondante (déchets d'un import raté).
+const orphanChunks = () => page.evaluate(async () => {
+  const db = await new Promise((res, rej) => { const r = indexedDB.open("lecons-audio"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  const get = (store, fn) => new Promise((res) => { const r = fn(db.transaction(store).objectStore(store)); r.onsuccess = () => res(r.result); });
+  const ids = (await get("tracks", (s) => s.getAllKeys()));
+  const keys = await get("chunks", (s) => s.getAllKeys());
+  db.close();
+  return keys.filter((k) => !ids.includes(k[0])).length;
 });
 
 // Import MP4 -> audio
@@ -233,6 +246,95 @@ await page.waitForSelector(".track");
   const meta = await page.textContent(".track .t-meta");
   ok(meta.includes("20/09/2026") && meta.includes("12 s"), `ligne de la leçon : ${meta}`);
   ok(await page.isVisible("#library"), "retour automatique à la bibliothèque");
+}
+
+// Gros fichier (la panne vue sur iPhone : 160 Mo d'un seul tenant) : écrit par
+// blocs de 4 Mo, recomposé à l'identique, progression affichée.
+const bigMp3 = join(tmp, "2026-10-04-grosse-lecon.mp3");
+ff("-f", "lavfi", "-i", "sine=frequency=220:sample_rate=44100", "-t", "660", "-c:a", "libmp3lame", "-b:a", "128k", bigMp3);
+const bigHash = createHash("sha256").update(readFileSync(bigMp3)).digest("hex");
+await page.click("#tab-add");
+const progress = [];
+await page.exposeFunction("__noteProgress", (t) => progress.push(t));
+await page.evaluate(() => new MutationObserver(() => {
+  const st = document.querySelector(".job .j-state");
+  if (st) window.__noteProgress(st.textContent);
+}).observe(document.getElementById("jobs"), { subtree: true, childList: true, characterData: true }));
+await page.setInputFiles("#file", bigMp3);
+await page.waitForFunction(() => document.querySelectorAll(".track").length === 2);
+{
+  const t = (await readDb()).find((x) => x.title === "Grosse lecon");
+  ok(t && t.parts === Math.ceil(readFileSync(bigMp3).length / (4 * 1024 * 1024)) && t.parts >= 3, `gros fichier écrit en ${t && t.parts} blocs de 4 Mo`);
+  ok(t && t.hash === bigHash, "gros fichier recomposé à l'identique (octet par octet)");
+  ok(t && t.kinds === "blob" && t.storage === "blob", `blocs stockés en Blob (${t && t.kinds})`);
+  ok(progress.some((x) => /Enregistrement sur l'iPhone… \d+ %/.test(x)), "progression de l'enregistrement affichée");
+}
+// Repli : moteur qui refuse les Blob dans IndexedDB -> blocs en ArrayBuffer, lecture OK.
+await page.evaluate(() => {
+  const put = IDBObjectStore.prototype.put;
+  window.__restorePut = () => { IDBObjectStore.prototype.put = put; };
+  IDBObjectStore.prototype.put = function (v, k) {
+    if (v instanceof Blob) throw new DOMException("Blob refusé (simulation)", "DataCloneError");
+    return put.call(this, v, k);
+  };
+});
+await page.setInputFiles("#file", mp3);
+await page.waitForFunction(() => document.querySelectorAll(".track").length === 3);
+await page.evaluate(() => window.__restorePut());
+{
+  const t = (await readDb()).find((x) => x.title === "Lecon test");
+  ok(t && t.kinds === "buffer" && t.storage === "buffer", "repli ArrayBuffer quand les Blob sont refusés");
+  ok(t && t.hash === createHashHex(readFileSync(mp3)), "repli : audio identique");
+}
+// Panne passagère au 2e bloc : le bloc est réécrit, l'import réussit quand même.
+const patchPut = (mode) => page.evaluate((mode) => {
+  const put = IDBObjectStore.prototype.put;
+  window.__restorePut = () => { IDBObjectStore.prototype.put = put; };
+  let n = 0;
+  IDBObjectStore.prototype.put = function (v, k) {
+    if (this.name === "chunks" && ++n >= 2) {
+      if (mode === "quota") throw new DOMException("Espace plein (simulation)", "QuotaExceededError");
+      if (n === 2) { const req = put.call(this, v, k); this.transaction.abort(); return req; } // échec unique
+    }
+    return put.call(this, v, k);
+  };
+}, mode);
+const glitchFile = join(tmp, "coupure.mp3");
+writeFileSync(glitchFile, readFileSync(bigMp3));
+await patchPut("once");
+await page.setInputFiles("#file", glitchFile);
+await page.waitForFunction(() => document.querySelectorAll(".track").length === 4);
+await page.evaluate(() => window.__restorePut());
+{
+  const t = (await readDb()).find((x) => x.title === "Coupure");
+  ok(t && t.hash === bigHash, "panne passagère pendant l'écriture : bloc réécrit, audio identique");
+}
+// Espace plein : message clair, rien d'ajouté, aucun bloc orphelin.
+const fullFile = join(tmp, "plein.mp3");
+writeFileSync(fullFile, readFileSync(bigMp3));
+await patchPut("quota");
+await page.setInputFiles("#file", fullFile);
+await page.waitForFunction(() => [...document.querySelectorAll(".job.err .j-state")].some((e) => e.textContent.includes("Espace de stockage insuffisant")));
+await page.evaluate(() => window.__restorePut());
+{
+  const db = await readDb(), orphans = await orphanChunks();
+  ok(db.length === 4 && orphans === 0, `espace plein : rien d'ajouté, aucun bloc orphelin (${db.length} leçons, ${orphans} orphelins)`);
+}
+// La leçon en blocs se lit (MP3 lisible par le Chromium de test).
+await page.click('.track:has-text("Grosse lecon") .track-main');
+await page.waitForFunction(() => { const a = document.getElementById("audio"); return a.duration > 600 && a.currentTime > 0.3; }, null, { timeout: 15000 });
+ok(true, "lecture d'une leçon stockée en blocs");
+await page.click("#p-close");
+// Suppression : fiche + blocs, sans orphelins. Puis on revient à l'état attendu par la suite.
+for (const title of ["Grosse lecon", "Lecon test", "Coupure"]) {
+  await page.click(`.track:has-text("${title}") .t-more`);
+  page.once("dialog", (d) => d.accept());
+  await page.click('#menu [data-act="delete"]');
+  await page.waitForFunction((t) => ![...document.querySelectorAll(".track .t-title")].some((e) => e.textContent === t), title);
+}
+{
+  const db = await readDb(), orphans = await orphanChunks();
+  ok(db.length === 1 && orphans === 0, `suppression : fiche et blocs effacés (${db.length} leçon, ${orphans} orphelins)`);
 }
 
 // Erreurs d'import
