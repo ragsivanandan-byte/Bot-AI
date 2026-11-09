@@ -467,7 +467,55 @@
     $("p-speed").textContent = speedLabel(speed);
     pref.set("speed", String(speed));
   });
+  // Minuterie de sommeil : arrête la lecture après N minutes d'ÉCOUTE (les
+  // pauses ne comptent pas). Le temps est mesuré à l'horloge, pas au fichier,
+  // pour rester juste quelle que soit la vitesse de lecture.
+  const SLEEP_STEPS = [0, 15, 30, 45, 60, 90];
+  let sleepStep = 0, sleepLeft = 0, sleepTick = 0;
+  function sleepLabel() {
+    const b = $("p-sleep");
+    if (!sleepLeft) {
+      b.textContent = "";
+      b.classList.add("moon");
+      b.classList.remove("on");
+      b.setAttribute("aria-label", "Minuterie de sommeil : désactivée");
+      return;
+    }
+    const sec = Math.ceil(sleepLeft / 1000);
+    b.textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+    b.classList.remove("moon");
+    b.classList.add("on");
+    b.setAttribute("aria-label", `Minuterie de sommeil : arrêt dans ${Math.ceil(sec / 60)} min`);
+  }
+  function sleepUpdate() {
+    const now = Date.now();
+    if (sleepLeft && !audio.paused && sleepTick) {
+      sleepLeft -= now - sleepTick;
+      if (sleepLeft <= 0) {
+        sleepLeft = 0;
+        sleepStep = 0;
+        audio.pause();
+        toast("Minuterie : lecture arrêtée. Bonne nuit !", 4000);
+      }
+    }
+    sleepTick = now;
+    sleepLabel();
+  }
+  function sleepReset() { sleepLeft = 0; sleepStep = 0; sleepLabel(); }
+  $("p-sleep").addEventListener("click", () => {
+    sleepUpdate();
+    sleepStep = (sleepStep + 1) % SLEEP_STEPS.length;
+    sleepLeft = SLEEP_STEPS[sleepStep] * 60000;
+    sleepTick = Date.now();
+    sleepLabel();
+    toast(sleepLeft ? `Minuterie : arrêt après ${SLEEP_STEPS[sleepStep]} min d'écoute` : "Minuterie désactivée");
+  });
+  setInterval(sleepUpdate, 1000); // en arrière-plan, « timeupdate » prend le relais
+  audio.addEventListener("timeupdate", sleepUpdate);
+  audio.addEventListener("play", () => { sleepTick = Date.now(); });
+
   $("p-close").addEventListener("click", () => {
+    sleepReset();
     audio.pause();
     savePosition();
     const prev = state.currentId;

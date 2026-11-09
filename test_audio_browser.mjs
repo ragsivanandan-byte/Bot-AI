@@ -445,6 +445,55 @@ ok(true, "fichier illisible -> message « Lecture impossible »");
 
 ok(errors.length === 0, "aucune erreur JavaScript : " + errors.join(" | "));
 
+// Minuterie de sommeil, avec une horloge simulée (15 min écoulées en quelques ms).
+{
+  const ctx2 = await browser.newContext({ ...playwright.devices["iPhone 13"] });
+  const p2 = await ctx2.newPage();
+  const errs2 = [];
+  p2.on("pageerror", (e) => errs2.push(e.message));
+  await p2.clock.install();
+  await p2.goto(BASE + "/audio/");
+  const until = async (fn, label, ms = 15000) => {
+    for (const t0 = Date.now(); Date.now() - t0 < ms;) {
+      if (await p2.evaluate(fn)) return true;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    ok(false, "délai dépassé : " + label);
+    return false;
+  };
+  const label = () => p2.textContent("#p-sleep");
+  const mmss = (t) => { const [m, sec] = t.split(":").map(Number); return m * 60 + sec; };
+  await p2.click("#tab-add");
+  await p2.setInputFiles("#file", bigMp3);
+  await until(() => document.querySelectorAll(".track").length === 1, "import pour la minuterie", 30000);
+  await p2.click(".track .track-main");
+  await until(() => { const a = document.getElementById("audio"); return !a.paused && a.currentTime > 0.1; }, "lecture");
+  ok(await p2.evaluate(() => document.getElementById("p-sleep").classList.contains("moon")), "minuterie inactive : icône lune");
+  await p2.click("#p-sleep");
+  ok((await label()) === "15:00", `minuterie réglée sur 15:00 (${await label()})`);
+  await p2.clock.runFor(5 * 60 * 1000);
+  const left = mmss(await label());
+  ok(left >= 595 && left <= 601 && !(await p2.evaluate(() => document.getElementById("audio").paused)), `après 5 min d'écoute : ${await label()} restantes, lecture en cours`);
+  await p2.click("#p-play"); // pause : le temps ne doit plus être décompté
+  await p2.clock.runFor(20 * 60 * 1000);
+  ok(Math.abs(mmss(await label()) - left) <= 1, `pause de 20 min non décomptée (${await label()})`);
+  await p2.click("#p-play");
+  await until(() => !document.getElementById("audio").paused, "reprise");
+  await p2.clock.runFor(10 * 60 * 1000 + 3000);
+  ok(await p2.evaluate(() => document.getElementById("audio").paused), "lecture arrêtée à la fin de la minuterie");
+  ok(await p2.evaluate(() => document.getElementById("p-sleep").classList.contains("moon")), "minuterie remise à zéro après l'arrêt");
+  ok((await p2.textContent("#toast")).includes("Minuterie : lecture arrêtée"), "message « lecture arrêtée »");
+  const seq = [];
+  for (let i = 0; i < 6; i++) { await p2.click("#p-sleep"); seq.push((await label()) || "lune"); }
+  ok(seq.join(" ") === "15:00 30:00 45:00 60:00 90:00 lune", `choix de durées : ${seq.join(" ")}`);
+  await p2.click("#p-sleep");
+  await p2.click("#p-close");
+  ok(await p2.evaluate(() => document.getElementById("p-sleep").classList.contains("moon")), "fermer le lecteur annule la minuterie");
+  await p2.screenshot({ path: join(tmp, "sleep.png") });
+  ok(errs2.length === 0, "minuterie : aucune erreur JavaScript " + errs2.join(" | "));
+  await ctx2.close();
+}
+
 // ---------------------------------------------------------------------------
 // 3) Chaîne complète du raccourci avec le VRAI yt-dlp (facultatif) :
 //    YT_DLP="python3 -m yt_dlp" ou yt-dlp dans le PATH.
